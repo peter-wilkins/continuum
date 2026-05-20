@@ -233,3 +233,14 @@ The Bluetooth headset experience should eventually feel like:
 The user should feel:
 
 > "I can let go of this thought now. The system will help me continue later."
+
+---
+
+# Open issue branches
+
+- `docs/issues/007-android-bluetooth-capture-reliability.md`
+- `docs/issues/008-low-friction-capture-activation.md`
+- `docs/issues/009-audio-competition-and-silence-detection.md`
+- `docs/issues/010-pwa-install-and-offline-shell.md`
+- `docs/issues/011-native-android-headset-spike.md`
+- `docs/issues/012-rust-wasm-audio-processing-spike.md`
