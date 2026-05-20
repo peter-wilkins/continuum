@@ -15,11 +15,11 @@ Show spoken transcript events as a live reverse-chronological log.
 
 ## Acceptance Criteria
 
-- After speech is transcribed and saved, transcript appears at top of screen.
-- Older transcript events remain visible below newer ones.
-- Metadata is hidden in normal mode.
-- Debug URL flag exposes stored metadata for inspection.
-- Main view contains no auth/user chrome and no capture controls.
+- [x] After speech is transcribed and saved, transcript appears at top of screen.
+- [x] Older transcript events remain visible below newer ones.
+- [x] Metadata is hidden in normal mode.
+- [x] Debug URL flag exposes stored metadata for inspection.
+- [ ] Main view contains no auth/user chrome and no capture controls.
 
 ## Out Of Scope
 

@@ -24,7 +24,7 @@ Create the smallest runtime database surface for Continuum in the shared Supabas
 
 - [x] Migration has been applied to the shared Supabase database.
 - [x] Schema, table, RLS, and policies have been verified against Supabase.
-- [ ] Authenticated insert/select has been tested through the application/backend.
+- [x] Authenticated insert/select has been tested through the application/backend.
 
 ## Out Of Scope
 

@@ -1,7 +1,7 @@
 import type { Session } from '@supabase/supabase-js';
 import type { ContinuumEvent } from '@continuum/shared';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { fetchEvents, transcribeAudio } from './api.js';
+import { createEvent, fetchEvents, transcribeAudio } from './api.js';
 import { type AudioCaptureChunk, useManualAudioCapture } from './audioCapture.js';
 import { getInitialSession, onAuthChange, signInWithGoogle } from './auth.js';
 
@@ -9,13 +9,6 @@ type LoadState =
   | { status: 'loading' }
   | { status: 'logged_out' }
   | { status: 'logged_in'; session: Session };
-
-type LocalTranscript = {
-  id: string;
-  transcript: string;
-  createdAt: string;
-  metadata: Record<string, unknown>;
-};
 
 type TranscriptionDebug = {
   status: 'idle' | 'transcribing' | 'done' | 'empty' | 'error';
@@ -29,7 +22,6 @@ type TranscriptionDebug = {
 export function App() {
   const [loadState, setLoadState] = useState<LoadState>({ status: 'loading' });
   const [events, setEvents] = useState<ContinuumEvent[]>([]);
-  const [localTranscripts, setLocalTranscripts] = useState<LocalTranscript[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [transcriptionDebug, setTranscriptionDebug] = useState<TranscriptionDebug>({
     status: 'idle',
@@ -113,20 +105,22 @@ export function App() {
         return;
       }
 
-      setLocalTranscripts((current) => [
-        {
-          id: chunk.id,
-          transcript: result.transcript,
-          createdAt: new Date().toISOString(),
-          metadata: {
-            audio: {
-              durationMs: chunk.durationMs,
-              sizeBytes: chunk.sizeBytes,
-              mimeType: chunk.mimeType,
-            },
-            transcription: result.metadata,
+      const savedEvent = await createEvent(session, {
+        source: 'speech',
+        transcript: result.transcript,
+        clientCreatedAt: chunk.createdAt,
+        metadata: {
+          audio: {
+            durationMs: chunk.durationMs,
+            sizeBytes: chunk.sizeBytes,
+            mimeType: chunk.mimeType,
           },
+          transcription: result.metadata,
         },
+      });
+
+      setEvents((current) => [
+        savedEvent,
         ...current,
       ]);
       setTranscriptionDebug((current) => ({
@@ -170,24 +164,10 @@ export function App() {
 
   return (
     <main className="log-screen">
-      {localTranscripts.length === 0 && events.length === 0 ? (
+      {events.length === 0 ? (
         <p className="empty">Speak in a quiet place. Transcript events will appear here.</p>
       ) : (
         <ol className="event-list">
-          {localTranscripts.map((event) => (
-            <li className="event" key={event.id}>
-              <p>{event.transcript}</p>
-              <time dateTime={event.createdAt}>
-                {new Date(event.createdAt).toLocaleTimeString([], {
-                  hour: '2-digit',
-                  minute: '2-digit',
-                })}
-              </time>
-              {debug ? (
-                <pre>{JSON.stringify(event.metadata, null, 2)}</pre>
-              ) : null}
-            </li>
-          ))}
           {events.map((event) => (
             <li className="event" key={event.id}>
               <p>{event.transcript}</p>

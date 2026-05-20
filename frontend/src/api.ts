@@ -1,5 +1,7 @@
 import {
+  CreateEventResponseSchema,
   EventsListResponseSchema,
+  type CreateEventRequest,
   TranscriptionResponseSchema,
   type ContinuumEvent,
   type TranscriptionResponse,
@@ -21,6 +23,27 @@ export async function fetchEvents(session: Session): Promise<ContinuumEvent[]> {
 
   const parsed = EventsListResponseSchema.parse(await response.json());
   return parsed.events;
+}
+
+export async function createEvent(
+  session: Session,
+  event: CreateEventRequest,
+): Promise<ContinuumEvent> {
+  const response = await fetch(`${API_URL}/api/events`, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${session.access_token}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(event),
+  });
+
+  if (!response.ok) {
+    throw new Error('Failed to save event');
+  }
+
+  const parsed = CreateEventResponseSchema.parse(await response.json());
+  return parsed.event;
 }
 
 export async function transcribeAudio(

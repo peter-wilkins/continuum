@@ -24,7 +24,7 @@ when API calls are happening.
 - [x] Press record -> microphone capture starts.
 - [x] Press again -> capture stops and the audio is sent for transcription.
 - [x] Short accidental taps are discarded locally.
-- [ ] Successful transcription appears at the top of the log.
+- [x] Successful transcription appears at the top of the log.
 
 ## Verification
 
