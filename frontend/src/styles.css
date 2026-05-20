@@ -92,10 +92,54 @@ button {
   font-size: 0.9rem;
 }
 
+.record-button {
+  position: fixed;
+  right: 18px;
+  bottom: 18px;
+  z-index: 9;
+  display: grid;
+  width: 74px;
+  height: 74px;
+  place-items: center;
+  border: 1px solid #242424;
+  border-radius: 50%;
+  background: #242424;
+  color: #fff;
+  box-shadow: 0 10px 28px rgb(28 28 26 / 18%);
+  cursor: pointer;
+}
+
+.record-button:disabled {
+  cursor: wait;
+  opacity: 0.8;
+}
+
+.record-button.is-recording {
+  border-color: #9d1f1f;
+  background: #b22525;
+}
+
+.record-dot {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.record-button.is-recording .record-dot {
+  border-radius: 4px;
+}
+
+.record-time {
+  font-size: 0.72rem;
+  font-weight: 700;
+  line-height: 1;
+}
+
 .debug-badge {
   position: fixed;
-  right: 10px;
-  bottom: 10px;
+  left: 10px;
+  top: 10px;
   z-index: 10;
   border: 1px solid #ddd8cc;
   border-radius: 6px;

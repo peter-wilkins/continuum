@@ -110,3 +110,19 @@ When the project exits MVP mode, the rule flips:
 - data preservation matters
 - destructive rewrites require explicit migration plans
 - raw source history must be protected as durable user memory
+
+## 2026-05-20 Capture Pivot
+
+Testing changed the MVP capture model.
+
+Constant foreground capture is a future possibility, not the one-day MVP. For now, Continuum
+should use a simple explicit record button:
+
+- logged out: login screen only
+- logged in: reverse-chronological transcript log plus one record control
+- press record to start microphone capture
+- press again to stop and transcribe
+- discard very short accidental recordings locally
+
+Reason: always-on foreground capture interferes with dictation/testing, can create surprise API
+usage, and makes the prototype harder to trust.

@@ -32,7 +32,7 @@ const commitHash = readCommitHash();
 export default defineConfig({
   plugins: [react()],
   define: {
-    __COMMIT_HASH__: JSON.stringify(commitHash),
+    'import.meta.env.VITE_COMMIT_HASH': JSON.stringify(commitHash),
   },
   server: {
     allowedHosts: ['peter.tail33843e.ts.net'],

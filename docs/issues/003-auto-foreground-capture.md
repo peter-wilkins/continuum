@@ -1,26 +1,30 @@
-# Issue 003: Auto Foreground Capture
+# Issue 003: Explicit Record Capture
 
 ## Goal
 
-Make the app listen automatically when logged in and focused.
+Make the app record only while the user explicitly holds the capture flow open with a mic button.
+
+The original day-one idea was automatic foreground capture. Real testing showed that constant
+capture is too noisy for the MVP: it can interfere with dictation, burn CPU, and make it unclear
+when API calls are happening.
 
 ## Scope
 
-- Start microphone capture after login when the app is visible/focused.
-- Stop capture when the app is hidden or blurred.
-- Resume automatically when focused again.
-- Add local silence filtering / speech chunking.
-- Keep a volatile recent-audio cache for retrying failed transcription.
-- Do not add a record button.
+- Show one simple record button in the logged-in transcript view.
+- Start microphone capture only when the button is pressed.
+- Stop capture when the button is pressed again.
+- Upload one recorded clip for transcription after stop.
+- Keep a volatile recent-audio cache for debugging and retrying failed transcription.
 - Do not add a pause/resume button.
 
 ## Acceptance Criteria
 
-- [x] Open/focus app while logged in -> listening starts.
-- [x] Speak in a quiet place -> a speech chunk is captured.
-- [x] Silence is not sent for transcription.
-- [x] Hide/blur app -> microphone capture stops.
-- [x] Refocus app -> listening resumes.
+- [x] Logged-out users see only the login screen.
+- [x] Logged-in users see the reverse-chronological transcript log.
+- [x] Press record -> microphone capture starts.
+- [x] Press again -> capture stops and the audio is sent for transcription.
+- [x] Short accidental taps are discarded locally.
+- [ ] Successful transcription appears at the top of the log.
 
 ## Verification
 

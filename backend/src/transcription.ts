@@ -29,6 +29,11 @@ export async function registerTranscriptionRoutes(app: FastifyInstance) {
     }
 
     try {
+      request.log.info({
+        mimeType: file.mimetype,
+        sizeBytes: audioBuffer.length,
+      }, 'transcribing audio chunk');
+
       const audioArrayBuffer = audioBuffer.buffer.slice(
         audioBuffer.byteOffset,
         audioBuffer.byteOffset + audioBuffer.byteLength,
@@ -41,9 +46,16 @@ export async function registerTranscriptionRoutes(app: FastifyInstance) {
         file: audioFile,
         model: TRANSCRIPTION_MODEL,
       });
+      const transcript = result.text.trim();
+      const voiceInstruction = extractVoiceInstruction(transcript);
+
+      request.log.info({
+        transcriptLength: transcript.length,
+        voiceInstruction,
+      }, 'audio transcription completed');
 
       return {
-        transcript: result.text.trim(),
+        transcript,
         metadata: {
           model: TRANSCRIPTION_MODEL,
           filename: file.filename,
@@ -56,4 +68,11 @@ export async function registerTranscriptionRoutes(app: FastifyInstance) {
       await reply.status(502).send({ error: 'Transcription failed' });
     }
   });
+}
+
+function extractVoiceInstruction(transcript: string) {
+  const normalized = transcript.trim();
+  if (!/^hi\b/i.test(normalized)) return null;
+
+  return normalized.replace(/^hi\b[:,]?\s*/i, '').trim();
 }
