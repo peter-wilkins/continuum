@@ -248,7 +248,7 @@ function ContinuumApp() {
   if (loadState.status === 'loading') {
     return (
       <main className="screen">
-        <DebugBadge />
+        <CommitHeader />
       </main>
     );
   }
@@ -256,17 +256,18 @@ function ContinuumApp() {
   if (loadState.status === 'logged_out') {
     return (
       <main className="login-screen">
+        <CommitHeader />
         <button className="login-button" type="button" onClick={() => void signInWithGoogle()}>
           Continue with Google
         </button>
         {error ? <p className="error">{error}</p> : null}
-        <DebugBadge />
       </main>
     );
   }
 
   return (
     <main className="log-screen">
+      <CommitHeader />
       {events.length === 0 ? (
         <p className="empty">Speak in a quiet place. Transcript events will appear here.</p>
       ) : (
@@ -328,7 +329,6 @@ function ContinuumApp() {
           ) : null}
         </section>
       ) : null}
-      <DebugBadge />
     </main>
   );
 }
@@ -437,8 +437,12 @@ function PrototypeIndex() {
   );
 }
 
-function DebugBadge() {
-  return <div className="debug-badge">commit {import.meta.env.VITE_COMMIT_HASH}</div>;
+function CommitHeader() {
+  return (
+    <header className="commit-header">
+      <span>commit {import.meta.env.VITE_COMMIT_HASH}</span>
+    </header>
+  );
 }
 
 type RecordButtonProps = {
