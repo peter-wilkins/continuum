@@ -93,6 +93,22 @@ button {
   font-size: 0.9rem;
 }
 
+.pending-notice {
+  position: fixed;
+  right: 18px;
+  bottom: 96px;
+  z-index: 9;
+  max-width: min(18rem, calc(100vw - 36px));
+  margin: 0;
+  border: 1px solid #b8aa8d;
+  border-radius: 6px;
+  background: #fffdf8;
+  color: #5f5d56;
+  padding: 8px 10px;
+  font-size: 0.85rem;
+  box-shadow: 0 8px 20px rgb(28 28 26 / 10%);
+}
+
 .index-screen {
   padding: 28px 18px 48px;
 }

@@ -4,6 +4,16 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { createEvent, fetchEvents, transcribeAudio } from './api.js';
 import { type AudioCaptureChunk, useManualAudioCapture } from './audioCapture.js';
 import { getInitialSession, onAuthChange, signInWithGoogle } from './auth.js';
+import {
+  deletePendingAudio,
+  enqueuePendingAudio,
+  getPendingAudioSummary,
+  listPendingAudio,
+  markPendingAudioFailed,
+  markPendingAudioProcessing,
+  type PendingAudioItem,
+  type PendingAudioSummary,
+} from './pendingAudioQueue.js';
 
 type LoadState =
   | { status: 'loading' }
@@ -11,7 +21,7 @@ type LoadState =
   | { status: 'logged_in'; session: Session };
 
 type TranscriptionDebug = {
-  status: 'idle' | 'transcribing' | 'done' | 'empty' | 'error';
+  status: 'idle' | 'queued' | 'transcribing' | 'done' | 'empty' | 'error';
   lastChunkId: string | null;
   lastTranscriptLength: number;
   completedCount: number;
@@ -33,6 +43,13 @@ function ContinuumApp() {
   const [loadState, setLoadState] = useState<LoadState>({ status: 'loading' });
   const [events, setEvents] = useState<ContinuumEvent[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [queueSummary, setQueueSummary] = useState<PendingAudioSummary>({
+    total: 0,
+    pending: 0,
+    processing: 0,
+    failed: 0,
+    totalSizeBytes: 0,
+  });
   const [transcriptionDebug, setTranscriptionDebug] = useState<TranscriptionDebug>({
     status: 'idle',
     lastChunkId: null,
@@ -43,6 +60,7 @@ function ContinuumApp() {
   });
   const processedChunkIds = useRef(new Set<string>());
   const transcribingRef = useRef(false);
+  const sessionRef = useRef<Session | null>(null);
 
   const debug = useMemo(() => new URLSearchParams(window.location.search).get('debug') === '1', []);
   const audioCapture = useManualAudioCapture(loadState.status === 'logged_in');
@@ -72,6 +90,10 @@ function ContinuumApp() {
   }, []);
 
   useEffect(() => {
+    sessionRef.current = loadState.status === 'logged_in' ? loadState.session : null;
+  }, [loadState]);
+
+  useEffect(() => {
     if (loadState.status !== 'logged_in') {
       setEvents([]);
       return;
@@ -86,26 +108,85 @@ function ContinuumApp() {
 
   useEffect(() => {
     if (loadState.status !== 'logged_in') return;
-    if (transcribingRef.current) return;
 
     const nextChunk = audioCapture.chunks.find((chunk) => !processedChunkIds.current.has(chunk.id));
     if (!nextChunk) return;
 
     processedChunkIds.current.add(nextChunk.id);
-    void transcribeChunk(loadState.session, nextChunk);
+    void queueChunk(nextChunk);
   }, [audioCapture.chunks, loadState]);
 
-  async function transcribeChunk(session: Session, chunk: AudioCaptureChunk) {
+  useEffect(() => {
+    void refreshQueueSummary();
+
+    function retryWhenOnline() {
+      void processPendingQueue();
+    }
+
+    window.addEventListener('online', retryWhenOnline);
+    return () => window.removeEventListener('online', retryWhenOnline);
+  }, []);
+
+  useEffect(() => {
+    if (loadState.status !== 'logged_in') return;
+    void processPendingQueue();
+  }, [loadState]);
+
+  async function queueChunk(chunk: AudioCaptureChunk) {
+    try {
+      await enqueuePendingAudio(chunk);
+      await refreshQueueSummary();
+      setTranscriptionDebug((current) => ({
+        ...current,
+        status: 'queued',
+        lastChunkId: chunk.id,
+        error: null,
+      }));
+      void processPendingQueue();
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Failed to store recording for retry';
+      setError(message);
+      setTranscriptionDebug((current) => ({
+        ...current,
+        status: 'error',
+        error: message,
+      }));
+    }
+  }
+
+  async function processPendingQueue() {
+    if (transcribingRef.current) return;
+    if (!navigator.onLine) return;
+
+    const session = sessionRef.current;
+    if (!session) return;
+
     transcribingRef.current = true;
+
+    try {
+      const items = await listPendingAudio();
+      for (const item of items) {
+        await transcribeQueuedItem(session, item);
+      }
+    } finally {
+      transcribingRef.current = false;
+      await refreshQueueSummary();
+    }
+  }
+
+  async function transcribeQueuedItem(session: Session, item: PendingAudioItem) {
+    await markPendingAudioProcessing(item.id);
+    await refreshQueueSummary();
     setTranscriptionDebug((current) => ({
       ...current,
       status: 'transcribing',
-      lastChunkId: chunk.id,
+      lastChunkId: item.id,
       error: null,
     }));
     try {
-      const result = await transcribeAudio(session, chunk.blob, chunk.durationMs);
+      const result = await transcribeAudio(session, item.blob, item.durationMs);
       if (!result.transcript) {
+        await markPendingAudioFailed(item.id, 'Transcription returned no text');
         setTranscriptionDebug((current) => ({
           ...current,
           status: 'empty',
@@ -118,17 +199,21 @@ function ContinuumApp() {
       const savedEvent = await createEvent(session, {
         source: 'speech',
         transcript: result.transcript,
-        clientCreatedAt: chunk.createdAt,
+        clientCreatedAt: item.createdAt,
         metadata: {
           audio: {
-            durationMs: chunk.durationMs,
-            sizeBytes: chunk.sizeBytes,
-            mimeType: chunk.mimeType,
+            durationMs: item.durationMs,
+            sizeBytes: item.sizeBytes,
+            mimeType: item.mimeType,
+            queuedAt: item.createdAt,
+            attemptCount: item.attemptCount + 1,
           },
           transcription: result.metadata,
         },
       });
 
+      await deletePendingAudio(item.id);
+      await refreshQueueSummary();
       setEvents((current) => [
         savedEvent,
         ...current,
@@ -141,14 +226,22 @@ function ContinuumApp() {
       }));
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : 'Failed to transcribe audio';
+      await markPendingAudioFailed(item.id, message);
+      await refreshQueueSummary();
       setError(message);
       setTranscriptionDebug((current) => ({
         ...current,
         status: 'error',
         error: message,
       }));
-    } finally {
-      transcribingRef.current = false;
+    }
+  }
+
+  async function refreshQueueSummary() {
+    try {
+      setQueueSummary(await getPendingAudioSummary());
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Failed to inspect pending recordings');
     }
   }
 
@@ -195,6 +288,11 @@ function ContinuumApp() {
         </ol>
       )}
       {error ? <p className="error">{error}</p> : null}
+      {queueSummary.total > 0 ? (
+        <p className="pending-notice">
+          {queueSummary.total} recording{queueSummary.total === 1 ? '' : 's'} waiting to sync
+        </p>
+      ) : null}
       <RecordButton
         status={audioCapture.status}
         elapsedMs={audioCapture.elapsedMs}
@@ -212,6 +310,10 @@ function ContinuumApp() {
             transcription {transcriptionDebug.status} · done {transcriptionDebug.completedCount} ·
             empty {transcriptionDebug.emptyCount} · last {transcriptionDebug.lastTranscriptLength}
             chars
+          </p>
+          <p>
+            queue {queueSummary.total} · pending {queueSummary.pending} · failed{' '}
+            {queueSummary.failed} · {formatBytes(queueSummary.totalSizeBytes)}
           </p>
           {transcriptionDebug.error ? <p className="error">{transcriptionDebug.error}</p> : null}
           {audioCapture.error ? <p className="error">{audioCapture.error}</p> : null}
@@ -339,4 +441,10 @@ function formatElapsed(elapsedMs: number) {
   const minutes = Math.floor(totalSeconds / 60);
   const seconds = totalSeconds % 60;
   return `${minutes}:${seconds.toString().padStart(2, '0')}`;
+}
+
+function formatBytes(bytes: number) {
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${Math.round(bytes / 1024)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
