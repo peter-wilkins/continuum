@@ -172,7 +172,7 @@ implement
 
 Use local Markdown issues in `docs/issues/` as the implementation tracker unless the user explicitly asks for GitHub Issues.
 
-Prefer direct HTTP calls with Axios for app/backend API communication. Avoid adding extra client libraries, generated SDK layers, or abstraction-heavy data-fetching frameworks unless there is a concrete need.
+Prefer direct HTTP calls with built-in `fetch` plus Zod validation at the boundary. Minimise dependencies and payload size. Avoid generated SDK layers, provider-specific API clients for app APIs, and abstraction-heavy data-fetching frameworks unless there is a concrete need.
 
 If the user starts a side quest while a feature is in progress, challenge the scope shift briefly. Prefer capturing the side quest as a local Markdown issue, then return to the current feature unless the user explicitly reprioritises.
 
