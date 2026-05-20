@@ -2,74 +2,198 @@
 
 ## Vision
 
-Continuum is a mobile-first AI workspace that helps users capture ideas quickly and continue where they left off.
+Continuum is a multiple-device AI workspace that helps users continue where they left off.
 
-The product turns raw captures into living project documents. A user can add voice notes, text, images, links, contacts, and other snippets without needing to organise them manually. The AI then curates summaries, decisions, next actions, open questions, and useful context.
+The product is designed around a simple idea:
+
+> People rarely need full history. They need the right context immediately before action.
+
+Continuum turns spoken thoughts into living project documents.
+
+Each document represents:
+
+- a project
+- a topic
+- an ongoing concern
+- a thread in someone's brain
+
+The AI continuously curates these documents over time.
+
+---
 
 ## Core idea
 
-People often do not need a full history. They need the right context at the moment they are about to resume work, reply to someone, make a decision, or continue a project.
+The user interacts primarily through speech.
 
-Continuum is designed to provide that context with minimal friction.
+The goal is extremely low-friction capture.
+
+The user should be able to:
+
+- speak naturally
+- dump thoughts quickly
+- continue working
+
+without:
+
+- organising information
+- naming folders
+- structuring documents
+- maintaining systems
+
+The AI handles curation and structure.
+
+---
 
 ## MVP goals
 
-1. Fast mobile capture.
-2. Reliable cross-device sync.
-3. One living document per project or topic.
-4. Append-only raw capture history.
-5. Clearly separated AI-maintained sections.
-6. Semantic search and retrieval.
-7. User-supplied AI API key support.
+1. Speech-first capture.
+2. Reliable sync across devices.
+3. One evolving document per project or mental thread.
+4. AI-maintained contextual summaries.
+5. Extremely fast context recovery.
+6. User-supplied AI API key support.
 
-## Suggested stack
+---
+
+## Document structure
+
+Each project document should feel like:
+
+> resuming an ongoing conversation with yourself.
+
+The document should contain layered context.
+
+### 1. Instant Reminder
+
+At the very top:
+
+A very short summary designed to instantly reorient the user.
+
+Examples:
+
+- "Bathroom quote waiting for revised pricing. Customer worried about timing."
+- "Need to finish API sync before mobile testing."
+- "Ongoing concern about supplier reliability."
+
+The purpose is rapid mental reacquisition.
+
+---
+
+### 2. Current Context
+
+Below the instant reminder:
+
+The AI's best guess about the current situation.
+
+Examples:
+
+- what matters right now
+- latest developments
+- unresolved issues
+- current priorities
+- likely next actions
+- emotional or operational context
+
+This section should feel like:
+
+> "Here's where things currently stand."
+
+---
+
+### 3. Deeper Context
+
+Scrolling further down reveals:
+
+- longer summaries
+- timelines
+- previous discussions
+- supporting details
+- historical captures
+- AI annotations
+- relevant media or references added by the AI
+
+The depth should progressively increase as the user scrolls.
+
+---
+
+## AI behaviour principles
+
+### Preserve source material
+
+Raw spoken captures should remain preserved.
+
+The AI should curate around the source material rather than silently rewriting it.
+
+---
+
+### Reduce maintenance burden
+
+The system should minimise:
+
+- tagging
+- folder management
+- manual organisation
+- setup complexity
+
+The product should feel lightweight and calming.
+
+---
+
+### Retrieval over storage
+
+The most important feature is not storage.
+
+It is helping the user rapidly regain context before action.
+
+Examples:
+
+- before speaking to someone
+- before resuming work
+- before replying
+- before entering a meeting
+- before continuing a project
+
+---
+
+## Suggested MVP stack
+
+### Frontend
 
 - React
 - TypeScript
 - Progressive Web App
+
+### Backend
+
 - Supabase or Firebase
-- OpenAI-compatible API support
-- IndexedDB for local capture queue
-- Optional Web Share Target support
+- realtime sync
+- authentication
+- storage
 
-## Document model
+### AI
 
-Each project document should contain:
+- user-supplied API keys
+- OpenAI-compatible APIs
+- optional support for multiple providers later
 
-### Raw Capture Feed
-
-An append-only record of user input. The AI should not silently rewrite this source material.
-
-### AI-Maintained Sections
-
-- Current Summary
-- Key Decisions
-- Next Actions
-- Open Questions
-- Timeline
-- Related People
-- Important Context
-
-## Product principles
-
-- Capture should be faster than organising.
-- AI should reduce maintenance burden.
-- Source material should remain trustworthy.
-- Retrieval is more important than storage.
-- The mobile experience should be simple and one-handed.
+---
 
 ## Future ideas
 
-- Google Docs integration.
-- Offline-first storage.
-- Local image compression.
-- Voice transcription.
-- Web Share Target support for images, links, text, and contacts.
-- Project-specific AI agents.
-- Shared project documents.
+- Google Docs integration
+- semantic search
+- offline-first storage
+- local transcription
+- AI-generated relationship mapping
+- collaborative shared project spaces
+- AI-generated reminders and resurfacing
+
+---
 
 ## Positioning
 
 Continuum is not a traditional notes app, task manager, or document editor.
 
-Continuum is an evolving project memory system that helps users instantly regain context and continue work.
+Continuum is:
+
+> an evolving operational memory system that helps users instantly regain context and continue where they left off.
