@@ -14,11 +14,17 @@ Transcribe captured speech chunks through a backend-only OpenAI integration.
 
 ## Acceptance Criteria
 
-- Frontend can upload a captured audio chunk to backend.
-- Backend transcribes it with OpenAI.
-- Backend returns transcript text.
-- Failed transcription leaves recent audio available for retry while cache exists.
-- No OpenAI secret is present in frontend code or committed files.
+- [x] Frontend can upload a captured audio chunk to backend.
+- [x] Backend transcribes it with OpenAI.
+- [x] Backend returns transcript text.
+- [x] Failed transcription leaves recent audio available for retry while cache exists.
+- [x] No OpenAI secret is present in frontend code or committed files.
+
+## Verification
+
+- [x] TypeScript production build passes.
+- [ ] Real-device transcription has been tested through the app.
+- [ ] Backend transcription endpoint has been tested with a real Supabase session and audio chunk.
 
 ## Out Of Scope
 

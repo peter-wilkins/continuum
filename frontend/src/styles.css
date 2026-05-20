@@ -106,3 +106,25 @@ button {
     monospace;
   font-size: 0.75rem;
 }
+
+.debug-panel {
+  max-width: 42rem;
+  margin-top: 24px;
+  border-top: 1px solid #ddd8cc;
+  padding-top: 12px;
+  color: #5f5d56;
+  font-size: 0.8rem;
+}
+
+.debug-panel p {
+  margin: 0 0 8px;
+}
+
+.debug-panel ol {
+  display: grid;
+  gap: 4px;
+  margin: 0;
+  padding-left: 18px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono",
+    monospace;
+}

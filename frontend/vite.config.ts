@@ -35,6 +35,7 @@ export default defineConfig({
     __COMMIT_HASH__: JSON.stringify(commitHash),
   },
   server: {
+    allowedHosts: ['peter.tail33843e.ts.net'],
     proxy: {
       '/api': 'http://127.0.0.1:3000',
     },

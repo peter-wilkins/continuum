@@ -16,11 +16,16 @@ Make the app listen automatically when logged in and focused.
 
 ## Acceptance Criteria
 
-- Open/focus app while logged in -> listening starts.
-- Speak in a quiet place -> a speech chunk is captured.
-- Silence is not sent for transcription.
-- Hide/blur app -> microphone capture stops.
-- Refocus app -> listening resumes.
+- [x] Open/focus app while logged in -> listening starts.
+- [x] Speak in a quiet place -> a speech chunk is captured.
+- [x] Silence is not sent for transcription.
+- [x] Hide/blur app -> microphone capture stops.
+- [x] Refocus app -> listening resumes.
+
+## Verification
+
+- [x] TypeScript production build passes.
+- [ ] Real-device microphone capture has been tested in mobile browser/PWA.
 
 ## Out Of Scope
 

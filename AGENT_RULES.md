@@ -157,6 +157,18 @@ Avoid:
 
 # Workflow preferences
 
+Default communication mode for this repo:
+
+```text
+Caveman + Treat Me Like I'm 5 + I'm Lazy
+```
+
+Caveman means terse, direct, and technical.
+
+Treat Me Like I'm 5 means exact links, exact commands, tiny steps, and no assumed dashboard/navigation knowledge. Never mention an external dashboard, console, or setup page without a direct link.
+
+I'm Lazy means do the task directly when tools and permissions allow it. Ask for confirmation only when permission, secrets, cost, external side effects, or destructive actions are involved.
+
 Before implementation work, check `git status --short`.
 
 The user prefers a clean tree. Commit completed work before starting new implementation threads unless the user explicitly asks to keep changes uncommitted.

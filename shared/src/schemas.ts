@@ -29,6 +29,11 @@ export const CreateEventResponseSchema = z.object({
   event: ContinuumEventSchema,
 });
 
+export const TranscriptionResponseSchema = z.object({
+  transcript: z.string(),
+  metadata: z.record(z.unknown()).default({}),
+});
+
 export const ErrorResponseSchema = z.object({
   error: z.string(),
 });
@@ -38,4 +43,5 @@ export type ContinuumEvent = z.infer<typeof ContinuumEventSchema>;
 export type CreateEventRequest = z.infer<typeof CreateEventRequestSchema>;
 export type EventsListResponse = z.infer<typeof EventsListResponseSchema>;
 export type CreateEventResponse = z.infer<typeof CreateEventResponseSchema>;
+export type TranscriptionResponse = z.infer<typeof TranscriptionResponseSchema>;
 export type ErrorResponse = z.infer<typeof ErrorResponseSchema>;
