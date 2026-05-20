@@ -36,9 +36,8 @@ The logged-out app should show only `Continue with Google`.
 Once both local servers are running, expose the frontend:
 
 ```bash
-tailscale serve --bg http://127.0.0.1:5173
-tailscale funnel 443 on
-tailscale serve status
+tailscale funnel --bg --https=443 localhost:5173
+tailscale funnel status
 ```
 
 Use the HTTPS Funnel URL with `?debug=1`:
@@ -47,11 +46,25 @@ Use the HTTPS Funnel URL with `?debug=1`:
 https://<your-funnel-host>/?debug=1
 ```
 
-If Funnel is already configured, `tailscale serve status` should show the current public URL and target.
+If Funnel is already configured, `tailscale funnel status` should show the current public URL and target.
 
 ## Stop Funnel
 
 ```bash
-tailscale funnel 443 off
+tailscale funnel --https=443 localhost:5173 off
+tailscale funnel reset
+```
+
+For tailnet-only sharing instead of public internet sharing, use Serve:
+
+```bash
+tailscale serve --bg --https=443 localhost:5173
+tailscale serve status
+```
+
+Stop Serve with:
+
+```bash
+tailscale serve --https=443 localhost:5173 off
 tailscale serve reset
 ```
