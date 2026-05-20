@@ -91,3 +91,18 @@ button {
   color: #8d1f1f;
   font-size: 0.9rem;
 }
+
+.debug-badge {
+  position: fixed;
+  right: 10px;
+  bottom: 10px;
+  z-index: 10;
+  border: 1px solid #ddd8cc;
+  border-radius: 6px;
+  background: #fffdf8;
+  color: #5f5d56;
+  padding: 5px 7px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono",
+    monospace;
+  font-size: 0.75rem;
+}

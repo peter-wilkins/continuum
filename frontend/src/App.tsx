@@ -54,7 +54,11 @@ export function App() {
   }, [loadState]);
 
   if (loadState.status === 'loading') {
-    return <main className="screen" />;
+    return (
+      <main className="screen">
+        {debug ? <DebugBadge /> : null}
+      </main>
+    );
   }
 
   if (loadState.status === 'logged_out') {
@@ -64,6 +68,7 @@ export function App() {
           Continue with Google
         </button>
         {error ? <p className="error">{error}</p> : null}
+        {debug ? <DebugBadge /> : null}
       </main>
     );
   }
@@ -91,6 +96,11 @@ export function App() {
         </ol>
       )}
       {error ? <p className="error">{error}</p> : null}
+      {debug ? <DebugBadge /> : null}
     </main>
   );
+}
+
+function DebugBadge() {
+  return <div className="debug-badge">commit {__COMMIT_HASH__}</div>;
 }
