@@ -294,3 +294,9 @@ button {
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono",
     monospace;
 }
+
+.debug-subsection {
+  margin-top: 12px;
+  border-top: 1px solid #ddd8cc;
+  padding-top: 10px;
+}

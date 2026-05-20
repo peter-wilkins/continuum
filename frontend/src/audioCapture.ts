@@ -11,14 +11,34 @@ export type AudioCaptureChunk = {
   mimeType: string;
 };
 
+export type AudioInputDevice = {
+  deviceId: string;
+  groupId: string;
+  label: string;
+};
+
+export type ActiveAudioTrack = {
+  label: string;
+  deviceId?: string;
+  groupId?: string;
+  sampleRate?: number;
+  channelCount?: number;
+  echoCancellation?: boolean;
+  noiseSuppression?: boolean;
+  autoGainControl?: boolean;
+};
+
 export type AudioCaptureState = {
   status: AudioCaptureStatus;
   error: string | null;
   chunks: AudioCaptureChunk[];
+  inputDevices: AudioInputDevice[];
+  activeTrack: ActiveAudioTrack | null;
   recordingStartedAt: string | null;
   elapsedMs: number;
   startRecording(): Promise<void>;
   stopRecording(): void;
+  refreshDevices(): Promise<void>;
 };
 
 const RECENT_CHUNK_LIMIT = 12;
@@ -27,6 +47,8 @@ export function useManualAudioCapture(enabled: boolean): AudioCaptureState {
   const [status, setStatus] = useState<AudioCaptureStatus>('idle');
   const [error, setError] = useState<string | null>(null);
   const [chunks, setChunks] = useState<AudioCaptureChunk[]>([]);
+  const [inputDevices, setInputDevices] = useState<AudioInputDevice[]>([]);
+  const [activeTrack, setActiveTrack] = useState<ActiveAudioTrack | null>(null);
   const [recordingStartedAt, setRecordingStartedAt] = useState<string | null>(null);
   const [elapsedMs, setElapsedMs] = useState(0);
   const recorderRef = useRef<MediaRecorder | null>(null);
@@ -40,6 +62,7 @@ export function useManualAudioCapture(enabled: boolean): AudioCaptureState {
     recorderRef.current = null;
     streamRef.current?.getTracks().forEach((track) => track.stop());
     streamRef.current = null;
+    setActiveTrack(null);
     startedAtRef.current = 0;
     setRecordingStartedAt(null);
     setElapsedMs(0);
@@ -51,6 +74,19 @@ export function useManualAudioCapture(enabled: boolean): AudioCaptureState {
 
     setStatus('stopping');
     recorder.stop();
+  }, []);
+
+  const refreshDevices = useCallback(async () => {
+    if (!navigator.mediaDevices?.enumerateDevices) return;
+
+    const devices = await navigator.mediaDevices.enumerateDevices();
+    setInputDevices(devices
+      .filter((device) => device.kind === 'audioinput')
+      .map((device, index) => ({
+        deviceId: device.deviceId,
+        groupId: device.groupId,
+        label: device.label || `Audio input ${index + 1}`,
+      })));
   }, []);
 
   const startRecording = useCallback(async () => {
@@ -79,6 +115,7 @@ export function useManualAudioCapture(enabled: boolean): AudioCaptureState {
           autoGainControl: true,
         },
       });
+      const audioTrack = stream.getAudioTracks()[0] ?? null;
       const mimeType = chooseMimeType();
       const recorder = mimeType
         ? new MediaRecorder(stream, { mimeType })
@@ -90,6 +127,8 @@ export function useManualAudioCapture(enabled: boolean): AudioCaptureState {
       streamRef.current = stream;
       recorderRef.current = recorder;
       startedAtRef.current = startedAt;
+      setActiveTrack(audioTrack ? toActiveAudioTrack(audioTrack) : null);
+      void refreshDevices();
 
       recorder.addEventListener('dataavailable', (event) => {
         if (event.data.size > 0) parts.push(event.data);
@@ -135,7 +174,7 @@ export function useManualAudioCapture(enabled: boolean): AudioCaptureState {
       setStatus('error');
       setError(err instanceof Error ? err.message : 'Audio recording failed');
     }
-  }, [enabled, resetRecorder, status]);
+  }, [enabled, refreshDevices, resetRecorder, status]);
 
   useEffect(() => {
     if (enabled) return;
@@ -152,18 +191,58 @@ export function useManualAudioCapture(enabled: boolean): AudioCaptureState {
     };
   }, [resetRecorder]);
 
+  useEffect(() => {
+    void refreshDevices();
+
+    if (!navigator.mediaDevices?.addEventListener) return;
+
+    navigator.mediaDevices.addEventListener('devicechange', refreshDevices);
+    return () => navigator.mediaDevices.removeEventListener('devicechange', refreshDevices);
+  }, [refreshDevices]);
+
   return useMemo(
     () => ({
       status,
       error,
       chunks,
+      inputDevices,
+      activeTrack,
       recordingStartedAt,
       elapsedMs,
       startRecording,
       stopRecording,
+      refreshDevices,
     }),
-    [chunks, elapsedMs, error, recordingStartedAt, startRecording, status, stopRecording],
+    [
+      activeTrack,
+      chunks,
+      elapsedMs,
+      error,
+      inputDevices,
+      recordingStartedAt,
+      refreshDevices,
+      startRecording,
+      status,
+      stopRecording,
+    ],
   );
+}
+
+function toActiveAudioTrack(track: MediaStreamTrack): ActiveAudioTrack {
+  const settings = track.getSettings();
+  const activeTrack: ActiveAudioTrack = {
+    label: track.label || 'Unknown audio input',
+  };
+
+  if (settings.deviceId) activeTrack.deviceId = settings.deviceId;
+  if (settings.groupId) activeTrack.groupId = settings.groupId;
+  if (settings.sampleRate) activeTrack.sampleRate = settings.sampleRate;
+  if (settings.channelCount) activeTrack.channelCount = settings.channelCount;
+  if (settings.echoCancellation !== undefined) activeTrack.echoCancellation = settings.echoCancellation;
+  if (settings.noiseSuppression !== undefined) activeTrack.noiseSuppression = settings.noiseSuppression;
+  if (settings.autoGainControl !== undefined) activeTrack.autoGainControl = settings.autoGainControl;
+
+  return activeTrack;
 }
 
 function chooseMimeType() {

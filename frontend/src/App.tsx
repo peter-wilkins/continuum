@@ -311,6 +311,24 @@ function ContinuumApp() {
           </p>
           {transcriptionDebug.error ? <p className="error">{transcriptionDebug.error}</p> : null}
           {audioCapture.error ? <p className="error">{audioCapture.error}</p> : null}
+          <div className="debug-subsection">
+            <p>active mic {audioCapture.activeTrack?.label ?? 'unknown'}</p>
+            {audioCapture.activeTrack ? (
+              <pre>{JSON.stringify(audioCapture.activeTrack, null, 2)}</pre>
+            ) : null}
+            <p>audio inputs {audioCapture.inputDevices.length}</p>
+            {audioCapture.inputDevices.length > 0 ? (
+              <ol>
+                {audioCapture.inputDevices.map((device) => (
+                  <li key={device.deviceId || device.label}>
+                    {device.label}
+                    {device.groupId ? ` · group ${shortId(device.groupId)}` : ''}
+                    {device.deviceId ? ` · device ${shortId(device.deviceId)}` : ''}
+                  </li>
+                ))}
+              </ol>
+            ) : null}
+          </div>
           {audioCapture.chunks.length > 0 ? (
             <ol>
               {audioCapture.chunks.map((chunk) => (
@@ -468,4 +486,9 @@ function formatBytes(bytes: number) {
   if (bytes < 1024) return `${bytes} B`;
   if (bytes < 1024 * 1024) return `${Math.round(bytes / 1024)} KB`;
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+}
+
+function shortId(id: string) {
+  if (id.length <= 8) return id;
+  return id.slice(0, 4);
 }
