@@ -21,6 +21,47 @@ The AI continuously curates these documents over time.
 
 ---
 
+## High-level concept
+
+The goal of Continuum is to reduce the friction between the human brain and the system.
+
+Most software forces people to:
+
+- translate thoughts into interfaces
+- navigate systems
+- organise information manually
+- remember where things were stored
+- repeatedly reconstruct context
+
+Continuum should feel much closer to direct thought continuation.
+
+The interaction model is:
+
+> the user speaks naturally, and the system immediately reshapes itself around the likely context of that thought.
+
+The screen should not behave like a static document editor.
+
+It should behave more like:
+
+- a living memory surface
+- an evolving contextual field
+- an AI-curated continuation of the user's train of thought
+
+When the user says something, the system should proactively surface:
+
+- what they were probably thinking about
+- related previous thoughts
+- unresolved concerns
+- likely next questions
+- important historical context
+- associated projects or people
+
+The experience should feel like:
+
+> the system is already moving toward the user's next thought.
+
+---
+
 ## Core idea
 
 The user interacts primarily through speech.
@@ -41,6 +82,23 @@ without:
 - maintaining systems
 
 The AI handles curation and structure.
+
+Over time, the AI and user may develop shorthand language patterns.
+
+Examples:
+
+- "Continue Jenkins"
+- "The supplier thing"
+- "That bathroom issue"
+- "What was I worried about yesterday?"
+
+The system should gradually learn:
+
+- recurring concepts
+- relationships between projects
+- emotional patterns
+- user shorthand
+- operational context
 
 ---
 
@@ -113,6 +171,17 @@ Scrolling further down reveals:
 - relevant media or references added by the AI
 
 The depth should progressively increase as the user scrolls.
+
+Browsing should stimulate memory and new thoughts.
+
+The visual experience should optimise for:
+
+- recognition
+- resurfacing
+- rediscovery
+- continuation
+
+rather than only direct search.
 
 ---
 
