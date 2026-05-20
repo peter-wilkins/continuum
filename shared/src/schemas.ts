@@ -3,21 +3,22 @@ import { z } from 'zod';
 export const EventMetadataSchema = z.record(z.unknown()).default({});
 
 export const EventSourceSchema = z.string().trim().min(1).default('speech');
+export const EventDateTimeSchema = z.string().datetime({ offset: true });
 
 export const ContinuumEventSchema = z.object({
   id: z.string().uuid(),
   userId: z.string().uuid(),
   source: EventSourceSchema,
   transcript: z.string().trim().min(1),
-  clientCreatedAt: z.string().datetime(),
-  serverCreatedAt: z.string().datetime(),
+  clientCreatedAt: EventDateTimeSchema,
+  serverCreatedAt: EventDateTimeSchema,
   metadata: EventMetadataSchema,
 });
 
 export const CreateEventRequestSchema = z.object({
   source: EventSourceSchema.optional(),
   transcript: z.string().trim().min(1),
-  clientCreatedAt: z.string().datetime(),
+  clientCreatedAt: EventDateTimeSchema,
   metadata: EventMetadataSchema.optional(),
 });
 
