@@ -102,6 +102,60 @@ The system should gradually learn:
 
 ---
 
+## Foundational architecture
+
+The foundation of Continuum should be extremely simple and trustworthy.
+
+At the core of the system is:
+
+> an append-only source log.
+
+Every spoken capture is stored permanently as a chronological event.
+
+Examples:
+
+- voice transcripts
+- timestamps
+- AI summaries
+- thread associations
+- metadata
+
+The source log should never be destructively rewritten.
+
+This creates:
+
+- trustworthiness
+- recoverability
+- auditability
+- simple mental models
+- resilient AI curation
+
+The AI layer should sit on top of this append-only history.
+
+The AI can:
+
+- summarise
+- annotate
+- connect ideas
+- surface patterns
+- generate context
+- reorganise views
+
+But the underlying event stream remains intact.
+
+Conceptually:
+
+```text
+append-only memory stream
+→ AI interpretation layers
+→ contextual views
+→ conversational retrieval
+```
+
+This should make the product feel stable, trustworthy, and difficult to corrupt.
+
+---
+
 ## MVP goals
 
 1. Speech-first capture.
@@ -110,6 +164,7 @@ The system should gradually learn:
 4. AI-maintained contextual summaries.
 5. Extremely fast context recovery.
 6. User-supplied AI API key support.
+7. Immutable append-only source history.
 
 ---
 
