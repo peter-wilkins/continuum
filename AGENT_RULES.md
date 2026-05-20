@@ -155,6 +155,29 @@ Avoid:
 
 ---
 
+# Workflow preferences
+
+Before implementation work, check `git status --short`.
+
+The user prefers a clean tree. Commit completed work before starting new implementation threads unless the user explicitly asks to keep changes uncommitted.
+
+For this solo prototype, do not open pull requests by default. Prefer:
+
+```text
+implement
+→ verify
+→ commit
+→ push
+```
+
+Use local Markdown issues in `docs/issues/` as the implementation tracker unless the user explicitly asks for GitHub Issues.
+
+If the user starts a side quest while a feature is in progress, challenge the scope shift briefly. Prefer capturing the side quest as a local Markdown issue, then return to the current feature unless the user explicitly reprioritises.
+
+When a task changes user-visible UI, include a short final note listing the screens or flows the user should manually spot-check. Do not maintain a long-lived QA queue unless explicitly requested.
+
+---
+
 # Final principle
 
 When evaluating product decisions, ask:

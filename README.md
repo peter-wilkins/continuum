@@ -185,5 +185,7 @@ Current constraints and principles:
 - `docs/SPEC.md` — evolving product specification
 - `docs/PHILOSOPHY.md` — philosophical direction
 - `docs/MVP_RULES.md` — MVP engineering rules
+- `docs/GOAL_LOG.md` — append-only goals, decisions, and daily targets
+- `docs/issues/` — local Markdown implementation issues
 - `docs/CONTINUITY_NOTES.md` — continuity and trust concepts
 - `AGENT_RULES.md` — behavioural guardrails for coding agents
