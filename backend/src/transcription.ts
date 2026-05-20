@@ -1,11 +1,9 @@
 import type { FastifyInstance } from 'fastify';
 import { requireAuth } from './auth.js';
+import { env } from './env.js';
 import { openai } from './openai.js';
 
 const MAX_AUDIO_BYTES = 12 * 1024 * 1024;
-const TRANSCRIPTION_MODEL = 'gpt-4o-mini-transcribe';
-const TRANSCRIPTION_LANGUAGE = 'en';
-const COMPARISON_TRANSCRIPTION_MODEL = 'whisper-1';
 
 export async function registerTranscriptionRoutes(app: FastifyInstance) {
   app.post('/api/transcribe', async (request, reply) => {
@@ -36,60 +34,31 @@ export async function registerTranscriptionRoutes(app: FastifyInstance) {
         sizeBytes: audioBuffer.length,
       }, 'transcribing audio chunk');
 
-      const [primaryResult, comparisonResult] = await Promise.allSettled([
-        transcribeAudioBuffer({
-          audioBuffer,
-          filename: file.filename || 'speech.webm',
-          mimeType: file.mimetype || 'audio/webm',
-          model: TRANSCRIPTION_MODEL,
-        }),
-        transcribeAudioBuffer({
-          audioBuffer,
-          filename: file.filename || 'speech.webm',
-          mimeType: file.mimetype || 'audio/webm',
-          model: COMPARISON_TRANSCRIPTION_MODEL,
-        }),
-      ]);
-
-      if (primaryResult.status === 'rejected') {
-        throw primaryResult.reason;
-      }
-
-      const transcript = primaryResult.value.transcript;
+      const result = await transcribeAudioBuffer({
+        audioBuffer,
+        filename: file.filename || 'speech.webm',
+        mimeType: file.mimetype || 'audio/webm',
+        model: env.OPENAI_TRANSCRIPTION_MODEL,
+        language: env.OPENAI_TRANSCRIPTION_LANGUAGE,
+      });
+      const transcript = result.transcript;
       const voiceInstruction = extractVoiceInstruction(transcript);
-      const comparisonError = comparisonResult.status === 'rejected'
-        ? comparisonResult.reason instanceof Error
-          ? comparisonResult.reason.message
-          : 'Comparison transcription failed'
-        : null;
-      const comparisons = [
-        primaryResult.value,
-        comparisonResult.status === 'fulfilled'
-          ? comparisonResult.value
-          : {
-              model: COMPARISON_TRANSCRIPTION_MODEL,
-              language: TRANSCRIPTION_LANGUAGE,
-              transcript: '',
-              error: comparisonError,
-            },
-      ];
 
       request.log.info({
         transcriptLength: transcript.length,
-        comparisonTranscriptLength: comparisons[1]?.transcript.length,
-        comparisonError,
+        model: result.model,
+        language: result.language,
         voiceInstruction,
       }, 'audio transcription completed');
 
       return {
         transcript,
         metadata: {
-          model: TRANSCRIPTION_MODEL,
+          model: result.model,
           filename: file.filename,
           mimeType: file.mimetype,
           sizeBytes: audioBuffer.length,
-          language: TRANSCRIPTION_LANGUAGE,
-          comparisons,
+          language: result.language,
         },
       };
     } catch (error) {
@@ -104,6 +73,7 @@ type TranscriptionExperiment = {
   filename: string;
   mimeType: string;
   model: string;
+  language: string;
 };
 
 async function transcribeAudioBuffer({
@@ -111,6 +81,7 @@ async function transcribeAudioBuffer({
   filename,
   mimeType,
   model,
+  language,
 }: TranscriptionExperiment) {
   const audioArrayBuffer = audioBuffer.buffer.slice(
     audioBuffer.byteOffset,
@@ -120,12 +91,12 @@ async function transcribeAudioBuffer({
   const result = await openai.audio.transcriptions.create({
     file: audioFile,
     model,
-    language: TRANSCRIPTION_LANGUAGE,
+    language,
   });
 
   return {
     model,
-    language: TRANSCRIPTION_LANGUAGE,
+    language,
     transcript: result.text.trim(),
   };
 }
