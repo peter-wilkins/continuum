@@ -4,7 +4,7 @@ import {
 } from '@continuum/shared';
 import type { Session } from '@supabase/supabase-js';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+const API_URL = import.meta.env.VITE_API_URL || '';
 
 export async function fetchEvents(session: Session): Promise<ContinuumEvent[]> {
   const response = await fetch(`${API_URL}/api/events`, {

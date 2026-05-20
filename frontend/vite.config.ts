@@ -34,4 +34,9 @@ export default defineConfig({
   define: {
     __COMMIT_HASH__: JSON.stringify(commitHash),
   },
+  server: {
+    proxy: {
+      '/api': 'http://127.0.0.1:3000',
+    },
+  },
 });

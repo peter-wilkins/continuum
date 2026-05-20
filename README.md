@@ -187,5 +187,6 @@ Current constraints and principles:
 - `docs/MVP_RULES.md` — MVP engineering rules
 - `docs/GOAL_LOG.md` — append-only goals, decisions, and daily targets
 - `docs/issues/` — local Markdown implementation issues
+- `docs/LOCAL_TESTING.md` — local, OAuth, and Tailscale Funnel testing notes
 - `docs/CONTINUITY_NOTES.md` — continuity and trust concepts
 - `AGENT_RULES.md` — behavioural guardrails for coding agents
