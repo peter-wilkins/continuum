@@ -102,7 +102,7 @@ export function App() {
       error: null,
     }));
     try {
-      const result = await transcribeAudio(session, chunk.blob);
+      const result = await transcribeAudio(session, chunk.blob, chunk.durationMs);
       if (!result.transcript) {
         setTranscriptionDebug((current) => ({
           ...current,

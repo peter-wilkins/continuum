@@ -1,4 +1,5 @@
 import type { FastifyReply, FastifyRequest } from 'fastify';
+import { env } from './env.js';
 import { supabaseAdmin } from './supabase.js';
 
 export type AuthUser = {
@@ -19,6 +20,12 @@ export async function requireAuth(request: FastifyRequest, reply: FastifyReply):
 
   if (error || !data.user) {
     await reply.status(401).send({ error: 'Invalid or expired token' });
+    return null;
+  }
+
+  const email = data.user.email?.toLowerCase();
+  if (env.ALLOWED_EMAILS.length > 0 && (!email || !env.ALLOWED_EMAILS.includes(email))) {
+    await reply.status(403).send({ error: 'Account is not allowed' });
     return null;
   }
 

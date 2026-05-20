@@ -2,6 +2,13 @@ import type { FastifyInstance } from 'fastify';
 import { requireAuth } from './auth.js';
 import { env } from './env.js';
 import { openai } from './openai.js';
+import {
+  DailyTranscriptionBudgetExceeded,
+  assertDailyTranscriptionBudget,
+  estimateTranscriptionUsage,
+  parseDurationHeader,
+  recordTranscriptionUsage,
+} from './transcriptionUsage.js';
 
 const MAX_AUDIO_BYTES = 12 * 1024 * 1024;
 
@@ -28,10 +35,24 @@ export async function registerTranscriptionRoutes(app: FastifyInstance) {
       return;
     }
 
+    const durationMs = parseDurationHeader(request.headers['x-audio-duration-ms']);
+    if (!durationMs) {
+      await reply.status(400).send({ error: 'Audio duration is required' });
+      return;
+    }
+
+    const usage = estimateTranscriptionUsage(durationMs);
+
     try {
+      const budget = await assertDailyTranscriptionBudget(user.id, usage.estimatedCostUsd);
+
       request.log.info({
         mimeType: file.mimetype,
         sizeBytes: audioBuffer.length,
+        durationMs,
+        estimatedCostUsd: usage.estimatedCostUsd,
+        spentTodayUsd: budget.spentTodayUsd,
+        remainingTodayUsd: budget.remainingTodayUsd,
       }, 'transcribing audio chunk');
 
       const result = await transcribeAudioBuffer({
@@ -44,10 +65,25 @@ export async function registerTranscriptionRoutes(app: FastifyInstance) {
       const transcript = result.transcript;
       const voiceInstruction = extractVoiceInstruction(transcript);
 
+      await recordTranscriptionUsage({
+        userId: user.id,
+        model: result.model,
+        language: result.language,
+        durationMs: usage.durationMs,
+        billedSeconds: usage.billedSeconds,
+        estimatedCostUsd: usage.estimatedCostUsd,
+        audioSizeBytes: audioBuffer.length,
+        metadata: {
+          filename: file.filename,
+          mimeType: file.mimetype,
+        },
+      });
+
       request.log.info({
         transcriptLength: transcript.length,
         model: result.model,
         language: result.language,
+        estimatedCostUsd: usage.estimatedCostUsd,
         voiceInstruction,
       }, 'audio transcription completed');
 
@@ -58,10 +94,22 @@ export async function registerTranscriptionRoutes(app: FastifyInstance) {
           filename: file.filename,
           mimeType: file.mimetype,
           sizeBytes: audioBuffer.length,
+          durationMs: usage.durationMs,
+          billedSeconds: usage.billedSeconds,
+          estimatedCostUsd: usage.estimatedCostUsd,
           language: result.language,
         },
       };
     } catch (error) {
+      if (error instanceof DailyTranscriptionBudgetExceeded) {
+        await reply.status(429).send({
+          error: 'Daily transcription budget exceeded',
+          spentTodayUsd: error.spentTodayUsd,
+          remainingTodayUsd: error.remainingTodayUsd,
+        });
+        return;
+      }
+
       request.log.error(error);
       await reply.status(502).send({ error: 'Transcription failed' });
     }

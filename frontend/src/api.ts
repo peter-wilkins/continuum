@@ -23,7 +23,11 @@ export async function fetchEvents(session: Session): Promise<ContinuumEvent[]> {
   return parsed.events;
 }
 
-export async function transcribeAudio(session: Session, audioBlob: Blob): Promise<TranscriptionResponse> {
+export async function transcribeAudio(
+  session: Session,
+  audioBlob: Blob,
+  durationMs: number,
+): Promise<TranscriptionResponse> {
   const formData = new FormData();
   formData.append('audio', audioBlob, `speech-${Date.now()}.webm`);
 
@@ -31,6 +35,7 @@ export async function transcribeAudio(session: Session, audioBlob: Blob): Promis
     method: 'POST',
     headers: {
       Authorization: `Bearer ${session.access_token}`,
+      'X-Audio-Duration-Ms': String(Math.round(durationMs)),
     },
     body: formData,
   });
