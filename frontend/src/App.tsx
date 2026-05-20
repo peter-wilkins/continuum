@@ -375,6 +375,30 @@ function PrototypeIndex() {
             Open Continuum
           </a>
         </article>
+        <article className="prototype-card">
+          <div>
+            <p className="status-pill">Live prototype</p>
+            <h3>JobDone</h3>
+            <p>
+              A lightweight capture tool for turning quick notes into structured job records. It is
+              the earlier prototype that taught us useful lessons about auth, recording, and mobile
+              workflow.
+            </p>
+          </div>
+          <dl className="prototype-details">
+            <div>
+              <dt>Try</dt>
+              <dd>Open it, sign in, and capture a small job note from the phone.</dd>
+            </div>
+            <div>
+              <dt>Status</dt>
+              <dd>Hosted on Vercel as a separate prototype.</dd>
+            </div>
+          </dl>
+          <a className="prototype-link" href="https://frontend-jobdone1.vercel.app/">
+            Open JobDone
+          </a>
+        </article>
       </section>
 
       <section className="blog-section" aria-labelledby="blog-heading">
@@ -389,6 +413,14 @@ function PrototypeIndex() {
             Today&apos;s goal was to get one loop working: record speech, transcribe it, and keep
             the result as an append-only event. We tried always-on capture, then moved to a manual
             record button because it is clearer, cheaper, and easier to trust.
+          </p>
+        </article>
+        <article className="blog-entry">
+          <time dateTime="2026-05-20">20 May 2026</time>
+          <h3>JobDone joins the bench</h3>
+          <p>
+            JobDone is now linked from the MVP bench alongside Continuum. It is useful as its own
+            experiment and as a reference point for login, recording, and phone-first workflow.
           </p>
         </article>
         <article className="blog-entry">
