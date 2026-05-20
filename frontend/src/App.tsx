@@ -248,7 +248,7 @@ function ContinuumApp() {
   if (loadState.status === 'loading') {
     return (
       <main className="screen">
-        {debug ? <DebugBadge /> : null}
+        <DebugBadge />
       </main>
     );
   }
@@ -260,7 +260,7 @@ function ContinuumApp() {
           Continue with Google
         </button>
         {error ? <p className="error">{error}</p> : null}
-        {debug ? <DebugBadge /> : null}
+        <DebugBadge />
       </main>
     );
   }
@@ -328,7 +328,7 @@ function ContinuumApp() {
           ) : null}
         </section>
       ) : null}
-      {debug ? <DebugBadge /> : null}
+      <DebugBadge />
     </main>
   );
 }
