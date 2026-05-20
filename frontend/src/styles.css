@@ -22,7 +22,8 @@ button {
 
 .screen,
 .login-screen,
-.log-screen {
+.log-screen,
+.index-screen {
   min-height: 100vh;
 }
 
@@ -90,6 +91,126 @@ button {
 .error {
   color: #8d1f1f;
   font-size: 0.9rem;
+}
+
+.index-screen {
+  padding: 28px 18px 48px;
+}
+
+.index-header,
+.prototype-section,
+.blog-section {
+  width: min(100%, 760px);
+  margin: 0 auto;
+}
+
+.index-header {
+  padding: 28px 0 34px;
+  border-bottom: 1px solid #ddd8cc;
+}
+
+.index-kicker {
+  margin: 0 0 8px;
+  color: #7a4838;
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0;
+  text-transform: uppercase;
+}
+
+.index-header h1 {
+  max-width: 13ch;
+  margin: 0;
+  font-size: clamp(2.4rem, 2rem + 1.7vw, 4rem);
+  line-height: 0.98;
+}
+
+.index-header p:last-child {
+  max-width: 38rem;
+  margin: 18px 0 0;
+  color: #5f5d56;
+  font-size: 1.05rem;
+  line-height: 1.55;
+}
+
+.prototype-section,
+.blog-section {
+  padding-top: 34px;
+}
+
+.section-heading {
+  margin-bottom: 14px;
+}
+
+.section-heading h2 {
+  margin: 0;
+  font-size: 1.35rem;
+}
+
+.prototype-card,
+.blog-entry {
+  border-top: 1px solid #ddd8cc;
+  padding: 18px 0;
+}
+
+.prototype-card {
+  display: grid;
+  gap: 18px;
+}
+
+.status-pill {
+  width: fit-content;
+  margin: 0 0 10px;
+  border: 1px solid #b8aa8d;
+  border-radius: 999px;
+  padding: 4px 8px;
+  color: #5f5d56;
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.prototype-card h3,
+.blog-entry h3 {
+  margin: 0 0 8px;
+  font-size: 1.35rem;
+}
+
+.prototype-card p,
+.blog-entry p,
+.prototype-details dd {
+  margin: 0;
+  color: #5f5d56;
+  line-height: 1.5;
+}
+
+.prototype-details {
+  display: grid;
+  gap: 12px;
+  margin: 0;
+}
+
+.prototype-details dt {
+  margin-bottom: 3px;
+  color: #1c1c1a;
+  font-size: 0.84rem;
+  font-weight: 800;
+}
+
+.prototype-link {
+  width: fit-content;
+  border: 1px solid #242424;
+  border-radius: 6px;
+  background: #242424;
+  color: #fff;
+  padding: 10px 12px;
+  text-decoration: none;
+}
+
+.blog-entry time {
+  display: block;
+  margin-bottom: 8px;
+  color: #747169;
+  font-size: 0.84rem;
 }
 
 .record-button {

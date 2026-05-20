@@ -20,6 +20,16 @@ type TranscriptionDebug = {
 };
 
 export function App() {
+  const path = window.location.pathname;
+
+  if (path === '/' || path === '/index.html') {
+    return <PrototypeIndex />;
+  }
+
+  return <ContinuumApp />;
+}
+
+function ContinuumApp() {
   const [loadState, setLoadState] = useState<LoadState>({ status: 'loading' });
   const [events, setEvents] = useState<ContinuumEvent[]>([]);
   const [error, setError] = useState<string | null>(null);
@@ -217,6 +227,78 @@ export function App() {
         </section>
       ) : null}
       {debug ? <DebugBadge /> : null}
+    </main>
+  );
+}
+
+function PrototypeIndex() {
+  const continuumUrl = `/continuum${window.location.search}`;
+
+  return (
+    <main className="index-screen">
+      <header className="index-header">
+        <p className="index-kicker">Peter's MVP bench</p>
+        <h1>Small prototypes, live enough to try.</h1>
+        <p>
+          A lightweight lab page for sharing rough but working experiments with friends and family.
+          These are personal MVPs: useful, incomplete, and changing quickly.
+        </p>
+      </header>
+
+      <section className="prototype-section" aria-labelledby="prototype-heading">
+        <div className="section-heading">
+          <p className="index-kicker">Prototype</p>
+          <h2 id="prototype-heading">Available now</h2>
+        </div>
+        <article className="prototype-card">
+          <div>
+            <p className="status-pill">Testing today</p>
+            <h3>Continuum</h3>
+            <p>
+              A speech-first log for thinking out loud when you are alone in a quiet place. Press
+              record, speak naturally, and save a transcript into an immutable timeline.
+            </p>
+          </div>
+          <dl className="prototype-details">
+            <div>
+              <dt>Try</dt>
+              <dd>Record a short thought, stop, then check the newest transcript at the top.</dd>
+            </div>
+            <div>
+              <dt>Status</dt>
+              <dd>Google login, Whisper transcription, saved event log, debug metadata.</dd>
+            </div>
+          </dl>
+          <a className="prototype-link" href={continuumUrl}>
+            Open Continuum
+          </a>
+        </article>
+      </section>
+
+      <section className="blog-section" aria-labelledby="blog-heading">
+        <div className="section-heading">
+          <p className="index-kicker">Notebook</p>
+          <h2 id="blog-heading">Build notes</h2>
+        </div>
+        <article className="blog-entry">
+          <time dateTime="2026-05-20">20 May 2026</time>
+          <h3>Day one: capture the thought first</h3>
+          <p>
+            Today&apos;s goal was to get one loop working: record speech, transcribe it, and keep
+            the result as an append-only event. We tried always-on capture, then moved to a manual
+            record button because it is clearer, cheaper, and easier to trust.
+          </p>
+        </article>
+        <article className="blog-entry">
+          <time dateTime="2026-05-20">20 May 2026</time>
+          <h3>Security before cleverness</h3>
+          <p>
+            The prototype is behind login, uses backend-only API keys, tracks transcription spend,
+            and keeps SQL migrations in the repo. The AI parts are intentionally simple until the
+            log is solid.
+          </p>
+        </article>
+      </section>
     </main>
   );
 }

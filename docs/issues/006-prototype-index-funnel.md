@@ -16,10 +16,11 @@ Create a small public-facing web entrypoint for sharing MVP prototypes with frie
 
 ## Acceptance Criteria
 
-- A single local server can serve the index and Continuum prototype.
-- Index has a lightweight showcase/lab feel.
-- Continuum listing includes intended use: alone in a quiet place.
-- Description avoids overpromising AI context features not built yet.
+- [x] A single local server can serve the index and Continuum prototype.
+- [x] Index has a lightweight showcase/lab feel.
+- [x] Continuum listing includes intended use: alone in a quiet place.
+- [x] Description avoids overpromising AI context features not built yet.
+- [x] Index includes a small blog/build-notes section.
 
 ## Out Of Scope
 
