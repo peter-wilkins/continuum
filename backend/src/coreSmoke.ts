@@ -1,7 +1,7 @@
 import {
+  createAmbiguousResumeSurface,
   createImportedEntryFromCanonicalEvent,
   debugRankingProfiles,
-  retrieveContinuationCandidates,
   type CanonicalEvent,
 } from '@continuum/core';
 
@@ -47,31 +47,29 @@ const canonicalEvent: CanonicalEvent = {
 };
 
 const entry = createImportedEntryFromCanonicalEvent(canonicalEvent);
-const candidates = retrieveContinuationCandidates({
+const surface = createAmbiguousResumeSurface({
   resumeRequest: {
     text: 'Resume boiler quote',
     requestedAt: '2026-05-21T12:05:00.000Z',
   },
   entries: [entry],
   rankingProfile: debugRankingProfiles.balanced,
+  narrowSpreadThreshold: 0.1,
 });
 
-if (candidates.length < 1) {
+if (surface.topCandidate === null) {
   throw new Error('Expected at least one Continuum Core continuation candidate');
-}
-
-const topCandidate = candidates[0];
-if (!topCandidate) {
-  throw new Error('Continuum Core returned an empty candidate list after length check');
 }
 
 console.log(JSON.stringify({
   importedEntryId: entry.id,
-  candidateCount: candidates.length,
+  candidateCount: surface.candidates.length,
+  candidateSpread: surface.candidateSpread,
+  isAmbiguous: surface.isAmbiguous,
   topCandidate: {
-    id: topCandidate.id,
-    title: topCandidate.title,
-    confidence: topCandidate.confidence,
-    supportingEntryIds: topCandidate.supportingEntryIds,
+    id: surface.topCandidate.id,
+    title: surface.topCandidate.title,
+    confidence: surface.topCandidate.confidence,
+    supportingEntryIds: surface.topCandidate.supportingEntryIds,
   },
 }, null, 2));
