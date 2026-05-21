@@ -1,5 +1,7 @@
 # Issue 014: SQLite Local Source Cache
 
+Status: done
+
 ## Goal
 
 Add an app-side Local Source Cache backed by SQLite so imported Canonical Event JSONL can be
