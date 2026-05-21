@@ -1,9 +1,10 @@
 import type { Session } from '@supabase/supabase-js';
 import type { ContinuumEvent } from '@continuum/shared';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { createEvent, fetchEvents, transcribeAudio } from './api.js';
 import { type AudioCaptureChunk, useManualAudioCapture } from './audioCapture.js';
 import { getInitialSession, onAuthChange, signInWithGoogle } from './auth.js';
+import { useHeadsetMediaControls } from './headsetMediaControls.js';
 import {
   deletePendingAudio,
   enqueuePendingAudio,
@@ -62,8 +63,36 @@ function ContinuumApp() {
   const transcribingRef = useRef(false);
   const sessionRef = useRef<Session | null>(null);
 
-  const debug = useMemo(() => new URLSearchParams(window.location.search).get('debug') === '1', []);
+  const searchParams = useMemo(() => new URLSearchParams(window.location.search), []);
+  const debug = searchParams.get('debug') === '1';
+  const headsetExperiment = searchParams.get('headset') === '1';
   const audioCapture = useManualAudioCapture(loadState.status === 'logged_in');
+  const recordingActive = audioCapture.status === 'recording' || audioCapture.status === 'starting';
+  const toggleRecording = useCallback(() => {
+    if (audioCapture.status === 'recording') {
+      audioCapture.stopRecording();
+      return;
+    }
+
+    if (audioCapture.status === 'idle' || audioCapture.status === 'error') {
+      void audioCapture.startRecording();
+    }
+  }, [audioCapture]);
+  const headsetControls = useHeadsetMediaControls(
+    headsetExperiment && loadState.status === 'logged_in',
+    recordingActive,
+    toggleRecording,
+  );
+
+  const armHeadsetControls = useCallback(() => {
+    if (!headsetExperiment || loadState.status !== 'logged_in') return;
+    void headsetControls.arm();
+  }, [headsetControls, headsetExperiment, loadState.status]);
+
+  const startFromButton = useCallback(() => {
+    armHeadsetControls();
+    void audioCapture.startRecording();
+  }, [armHeadsetControls, audioCapture]);
 
   useEffect(() => {
     let mounted = true;
@@ -261,7 +290,7 @@ function ContinuumApp() {
   }
 
   return (
-    <main className="log-screen">
+    <main className="log-screen" onPointerDown={armHeadsetControls}>
       {events.length === 0 ? (
         <p className="empty">Speak in a quiet place. Transcript events will appear here.</p>
       ) : (
@@ -291,9 +320,18 @@ function ContinuumApp() {
       <RecordButton
         status={audioCapture.status}
         elapsedMs={audioCapture.elapsedMs}
-        onStart={() => void audioCapture.startRecording()}
+        onStart={startFromButton}
         onStop={audioCapture.stopRecording}
       />
+      {headsetExperiment ? (
+        <section className="headset-panel" aria-label="Headset button experiment">
+          <p>
+            headset {headsetControls.status}
+            {headsetControls.lastAction ? ` · last ${headsetControls.lastAction}` : ''}
+          </p>
+          {headsetControls.error ? <p className="error">{headsetControls.error}</p> : null}
+        </section>
+      ) : null}
       {debug ? (
         <section className="debug-panel" aria-label="Audio capture debug">
           <p>audio {audioCapture.status}</p>
@@ -309,6 +347,9 @@ function ContinuumApp() {
             queue {queueSummary.total} · pending {queueSummary.pending} · failed{' '}
             {queueSummary.failed} · {formatBytes(queueSummary.totalSizeBytes)}
           </p>
+          {headsetExperiment ? (
+            <p>headset handlers {headsetControls.supportedActions.join(', ') || 'none'}</p>
+          ) : null}
           {transcriptionDebug.error ? <p className="error">{transcriptionDebug.error}</p> : null}
           {audioCapture.error ? <p className="error">{audioCapture.error}</p> : null}
           <div className="debug-subsection">
