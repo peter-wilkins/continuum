@@ -12,6 +12,8 @@ AFK.
 ## Scope
 
 - Add the SQLite dependency to the Continuum app only.
+- Import `canonicalEventToLocalSourceCacheEventRow` and `type LocalSourceCacheEventRow` from
+  `@continuum/core`; do not define an app-local row mapper.
 - Store the local database at `data/local-source-cache.sqlite`.
 - Ensure `data/` stays gitignored.
 - Create tables:
@@ -27,6 +29,7 @@ AFK.
 ## Acceptance Criteria
 
 - [ ] SQLite database file is created under gitignored `data/local-source-cache.sqlite`.
+- [ ] Cache rows are produced with `canonicalEventToLocalSourceCacheEventRow(event, ingestedAt)` from `@continuum/core`.
 - [ ] Schema includes `local_source_events`, `local_import_batches`, `local_import_batch_events`, and `local_import_quarantine`.
 - [ ] `local_source_events` includes flat serving columns plus full `event_json`.
 - [ ] Indexes exist for `created_at`, `source_platform`, and `local_import_batch_events.event_id`.
@@ -39,7 +42,8 @@ AFK.
 
 ## Blocked By
 
-- `../continuum-core/docs/issues/056-define-local-source-cache-row-contract.md`
+- None. Core issue `../continuum-core/docs/issues/056-define-local-source-cache-row-contract.md`
+  is complete.
 
 ## Out Of Scope
 
