@@ -24,6 +24,8 @@ AFK.
   - `local_import_batch_events`
   - `local_import_quarantine`
 - Add indexes for event time, source platform, and batch event lookup.
+- Use camelCase column names in SQLite to match `LocalSourceCacheEventRow`; table names remain
+  snake_case.
 - Load Canonical Event JSONL into the cache using the row contract from Continuum Core.
 - Add backend endpoints for timeline, detail, and source-filter reads.
 - Keep this as a local serving bridge, not the Source Log, Memory Layer, or future Arrow substrate.
@@ -33,8 +35,8 @@ AFK.
 - [x] SQLite database file is created under gitignored `data/local-source-cache.sqlite`.
 - [x] Cache rows are produced with `canonicalEventToLocalSourceCacheEventRow(event, ingestedAt)` from `@continuum/core`.
 - [x] Schema includes `local_source_events`, `local_import_batches`, `local_import_batch_events`, and `local_import_quarantine`.
-- [x] `local_source_events` includes flat serving columns plus full `event_json`.
-- [x] Indexes exist for `created_at`, `source_platform`, and `local_import_batch_events.event_id`.
+- [x] `local_source_events` includes flat serving columns plus full `eventJson`.
+- [x] Indexes exist for `createdAt`, `sourcePlatform`, and `local_import_batch_events.eventId`.
 - [x] Canonical Event JSONL can be loaded into the cache and associated with an import batch.
 - [x] Invalid or unparseable rows are captured in `local_import_quarantine` without stopping the whole import.
 - [x] Backend can serve timeline rows in reverse chronological order.

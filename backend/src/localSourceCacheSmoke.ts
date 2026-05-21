@@ -83,9 +83,9 @@ for (const table of [
 }
 
 for (const index of [
-  'idx_local_source_events_created_at',
-  'idx_local_source_events_source_platform',
-  'idx_local_import_batch_events_event_id',
+  'local_source_events_created_at_idx',
+  'local_source_events_source_platform_idx',
+  'local_import_batch_events_event_id_idx',
 ]) {
   if (!indexes.has(index)) {
     throw new Error(`Missing index ${index}`);

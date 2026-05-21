@@ -14,7 +14,6 @@ import {
 import {
   canonicalEventToLocalSourceCacheEventRow,
   type CanonicalEvent,
-  type LocalSourceCacheEventRow,
 } from '@continuum/core';
 import { requireAuth } from './auth.js';
 
@@ -24,28 +23,28 @@ const defaultDatabasePath = resolve(repoRoot, 'data/local-source-cache.sqlite');
 
 type SqliteEventRow = {
   id: string;
-  source_platform: string;
-  source_name: string;
-  source_key: string;
-  external_conversation_id: string;
-  external_message_id: string;
-  created_at: string;
-  created_at_confidence: string;
-  ingested_at: string;
-  actor_role: string;
+  sourcePlatform: string;
+  sourceName: string;
+  sourceKey: string;
+  externalConversationId: string;
+  externalMessageId: string;
+  createdAt: string;
+  createdAtConfidence: string;
+  ingestedAt: string;
+  actorRole: string;
   subject: string | null;
   text: string;
-  event_json: string;
+  eventJson: string;
 };
 
 type ImportBatchRow = {
   id: string;
-  source_name: string | null;
-  import_started_at: string;
-  import_finished_at: string;
-  total_rows: number;
-  imported_rows: number;
-  quarantined_rows: number;
+  sourceName: string | null;
+  importStartedAt: string;
+  importFinishedAt: string;
+  totalRows: number;
+  importedRows: number;
+  quarantinedRows: number;
 };
 
 type ImportResult = LocalSourceCacheImportResponse['batch'];
@@ -83,12 +82,12 @@ export class LocalSourceCache {
     const insertBatch = this.db.prepare(`
       insert into local_import_batches (
         id,
-        source_name,
-        import_started_at,
-        import_finished_at,
-        total_rows,
-        imported_rows,
-        quarantined_rows
+        sourceName,
+        importStartedAt,
+        importFinishedAt,
+        totalRows,
+        importedRows,
+        quarantinedRows
       ) values (
         @id,
         @sourceName,
@@ -101,26 +100,26 @@ export class LocalSourceCache {
     `);
     const updateBatch = this.db.prepare(`
       update local_import_batches
-      set import_finished_at = @importFinishedAt,
-          imported_rows = @importedRows,
-          quarantined_rows = @quarantinedRows
+      set importFinishedAt = @importFinishedAt,
+          importedRows = @importedRows,
+          quarantinedRows = @quarantinedRows
       where id = @id
     `);
     const insertEvent = this.db.prepare(`
       insert into local_source_events (
         id,
-        source_platform,
-        source_name,
-        source_key,
-        external_conversation_id,
-        external_message_id,
-        created_at,
-        created_at_confidence,
-        ingested_at,
-        actor_role,
+        sourcePlatform,
+        sourceName,
+        sourceKey,
+        externalConversationId,
+        externalMessageId,
+        createdAt,
+        createdAtConfidence,
+        ingestedAt,
+        actorRole,
         subject,
         text,
-        event_json
+        eventJson
       ) values (
         @id,
         @sourcePlatform,
@@ -137,30 +136,30 @@ export class LocalSourceCache {
         @eventJson
       )
       on conflict(id) do update set
-        source_platform = excluded.source_platform,
-        source_name = excluded.source_name,
-        source_key = excluded.source_key,
-        external_conversation_id = excluded.external_conversation_id,
-        external_message_id = excluded.external_message_id,
-        created_at = excluded.created_at,
-        created_at_confidence = excluded.created_at_confidence,
-        ingested_at = excluded.ingested_at,
-        actor_role = excluded.actor_role,
+        sourcePlatform = excluded.sourcePlatform,
+        sourceName = excluded.sourceName,
+        sourceKey = excluded.sourceKey,
+        externalConversationId = excluded.externalConversationId,
+        externalMessageId = excluded.externalMessageId,
+        createdAt = excluded.createdAt,
+        createdAtConfidence = excluded.createdAtConfidence,
+        ingestedAt = excluded.ingestedAt,
+        actorRole = excluded.actorRole,
         subject = excluded.subject,
         text = excluded.text,
-        event_json = excluded.event_json
+        eventJson = excluded.eventJson
     `);
     const linkBatchEvent = this.db.prepare(`
-      insert or ignore into local_import_batch_events (batch_id, event_id)
+      insert or ignore into local_import_batch_events (batchId, eventId)
       values (@batchId, @eventId)
     `);
     const quarantine = this.db.prepare(`
       insert into local_import_quarantine (
-        batch_id,
-        row_number,
-        raw_line,
+        batchId,
+        rowNumber,
+        rawLine,
         error,
-        quarantined_at
+        quarantinedAt
       ) values (
         @batchId,
         @rowNumber,
@@ -185,7 +184,7 @@ export class LocalSourceCache {
         try {
           const event = JSON.parse(line.raw) as CanonicalEvent;
           const row = canonicalEventToLocalSourceCacheEventRow(event, ingestedAt);
-          insertEvent.run(toSqliteEventRow(row));
+          insertEvent.run(row);
           linkBatchEvent.run({ batchId, eventId: row.id });
           importedRows += 1;
         } catch (error) {
@@ -227,8 +226,8 @@ export class LocalSourceCache {
           .prepare(`
             select *
             from local_source_events
-            where source_platform = ?
-            order by created_at desc, id desc
+            where sourcePlatform = ?
+            order by createdAt desc, id desc
             limit ?
           `)
           .all(input.sourcePlatform, limit)
@@ -236,7 +235,7 @@ export class LocalSourceCache {
           .prepare(`
             select *
             from local_source_events
-            order by created_at desc, id desc
+            order by createdAt desc, id desc
             limit ?
           `)
           .all(limit);
@@ -252,56 +251,73 @@ export class LocalSourceCache {
   }
 
   private migrate() {
+    this.dropDisposableSnakeCaseSchema();
     this.db.exec(`
       create table if not exists local_source_events (
         id text primary key,
-        source_platform text not null,
-        source_name text not null,
-        source_key text not null,
-        external_conversation_id text not null,
-        external_message_id text not null,
-        created_at text not null,
-        created_at_confidence text not null,
-        ingested_at text not null,
-        actor_role text not null,
+        sourcePlatform text not null,
+        sourceName text not null,
+        sourceKey text not null,
+        externalConversationId text not null,
+        externalMessageId text not null,
+        createdAt text not null,
+        createdAtConfidence text not null,
+        ingestedAt text not null,
+        actorRole text not null,
         subject text,
         text text not null,
-        event_json text not null
+        eventJson text not null
       );
 
       create table if not exists local_import_batches (
         id text primary key,
-        source_name text,
-        import_started_at text not null,
-        import_finished_at text not null,
-        total_rows integer not null,
-        imported_rows integer not null,
-        quarantined_rows integer not null
+        sourceName text,
+        importStartedAt text not null,
+        importFinishedAt text not null,
+        totalRows integer not null,
+        importedRows integer not null,
+        quarantinedRows integer not null
       );
 
       create table if not exists local_import_batch_events (
-        batch_id text not null references local_import_batches(id) on delete cascade,
-        event_id text not null references local_source_events(id) on delete cascade,
-        primary key (batch_id, event_id)
+        batchId text not null references local_import_batches(id) on delete cascade,
+        eventId text not null references local_source_events(id) on delete cascade,
+        primary key (batchId, eventId)
       );
 
       create table if not exists local_import_quarantine (
         id integer primary key autoincrement,
-        batch_id text not null references local_import_batches(id) on delete cascade,
-        row_number integer not null,
-        raw_line text not null,
+        batchId text not null references local_import_batches(id) on delete cascade,
+        rowNumber integer not null,
+        rawLine text not null,
         error text not null,
-        quarantined_at text not null
+        quarantinedAt text not null
       );
 
-      create index if not exists idx_local_source_events_created_at
-        on local_source_events(created_at desc);
+      create index if not exists local_source_events_created_at_idx
+        on local_source_events(createdAt desc);
 
-      create index if not exists idx_local_source_events_source_platform
-        on local_source_events(source_platform);
+      create index if not exists local_source_events_source_platform_idx
+        on local_source_events(sourcePlatform);
 
-      create index if not exists idx_local_import_batch_events_event_id
-        on local_import_batch_events(event_id);
+      create index if not exists local_import_batch_events_event_id_idx
+        on local_import_batch_events(eventId);
+    `);
+  }
+
+  private dropDisposableSnakeCaseSchema() {
+    const oldColumn = this.db
+      .prepare("select name from pragma_table_info('local_source_events') where name = 'source_platform'")
+      .get();
+    if (!oldColumn) {
+      return;
+    }
+
+    this.db.exec(`
+      drop table if exists local_import_quarantine;
+      drop table if exists local_import_batch_events;
+      drop table if exists local_import_batches;
+      drop table if exists local_source_events;
     `);
   }
 }
@@ -369,8 +385,8 @@ export async function registerLocalSourceCacheRoutes(app: FastifyInstance) {
   });
 }
 
-function toSqliteEventRow(row: LocalSourceCacheEventRow) {
-  return {
+function mapEventRow(row: SqliteEventRow): LocalSourceCacheEvent {
+  return LocalSourceCacheEventSchema.parse({
     id: row.id,
     sourcePlatform: row.sourcePlatform,
     sourceName: row.sourceName,
@@ -384,35 +400,17 @@ function toSqliteEventRow(row: LocalSourceCacheEventRow) {
     subject: row.subject,
     text: row.text,
     eventJson: row.eventJson,
-  };
-}
-
-function mapEventRow(row: SqliteEventRow): LocalSourceCacheEvent {
-  return LocalSourceCacheEventSchema.parse({
-    id: row.id,
-    sourcePlatform: row.source_platform,
-    sourceName: row.source_name,
-    sourceKey: row.source_key,
-    externalConversationId: row.external_conversation_id,
-    externalMessageId: row.external_message_id,
-    createdAt: row.created_at,
-    createdAtConfidence: row.created_at_confidence,
-    ingestedAt: row.ingested_at,
-    actorRole: row.actor_role,
-    subject: row.subject,
-    text: row.text,
-    eventJson: row.event_json,
   });
 }
 
 function mapBatchRow(row: ImportBatchRow): ImportResult {
   return {
     id: row.id,
-    sourceName: row.source_name,
-    importStartedAt: row.import_started_at,
-    importFinishedAt: row.import_finished_at,
-    totalRows: row.total_rows,
-    importedRows: row.imported_rows,
-    quarantinedRows: row.quarantined_rows,
+    sourceName: row.sourceName,
+    importStartedAt: row.importStartedAt,
+    importFinishedAt: row.importFinishedAt,
+    totalRows: row.totalRows,
+    importedRows: row.importedRows,
+    quarantinedRows: row.quarantinedRows,
   };
 }
