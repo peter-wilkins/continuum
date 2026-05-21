@@ -274,6 +274,16 @@ function ContinuumApp() {
     }
   }
 
+  function toggleDebug() {
+    const nextUrl = new URL(window.location.href);
+    if (debug) {
+      nextUrl.searchParams.delete('debug');
+    } else {
+      nextUrl.searchParams.set('debug', '1');
+    }
+    window.location.assign(nextUrl);
+  }
+
   if (loadState.status === 'loading') {
     return <main className="screen" />;
   }
@@ -291,6 +301,24 @@ function ContinuumApp() {
 
   return (
     <main className="log-screen" onPointerDown={armHeadsetControls}>
+      <button
+        aria-label={debug ? 'Hide debug panel' : 'Show debug panel'}
+        className={`debug-toggle${debug ? ' is-active' : ''}`}
+        title={debug ? 'Hide debug panel' : 'Show debug panel'}
+        type="button"
+        onClick={toggleDebug}
+      >
+        i
+      </button>
+      {debug ? (
+        <DebugPanel
+          audioCapture={audioCapture}
+          headsetControls={headsetControls}
+          headsetExperiment={headsetExperiment}
+          queueSummary={queueSummary}
+          transcriptionDebug={transcriptionDebug}
+        />
+      ) : null}
       {events.length === 0 ? (
         <p className="empty">Speak in a quiet place. Transcript events will appear here.</p>
       ) : (
@@ -313,9 +341,7 @@ function ContinuumApp() {
       )}
       {error ? <p className="error">{error}</p> : null}
       {queueSummary.total > 0 ? (
-        <p className="pending-notice">
-          {queueSummary.total} recording{queueSummary.total === 1 ? '' : 's'} waiting to sync
-        </p>
+        <p className="pending-notice">{formatQueueNotice(queueSummary)}</p>
       ) : null}
       <RecordButton
         status={audioCapture.status}
@@ -328,60 +354,103 @@ function ContinuumApp() {
           <p>
             headset {headsetControls.status}
             {headsetControls.lastAction ? ` · last ${headsetControls.lastAction}` : ''}
+            {headsetControls.actionCount > 0 ? ` · ${headsetControls.actionCount}` : ''}
           </p>
           {headsetControls.error ? <p className="error">{headsetControls.error}</p> : null}
         </section>
       ) : null}
-      {debug ? (
-        <section className="debug-panel" aria-label="Audio capture debug">
-          <p>audio {audioCapture.status}</p>
+    </main>
+  );
+}
+
+type DebugPanelProps = {
+  audioCapture: ReturnType<typeof useManualAudioCapture>;
+  headsetControls: ReturnType<typeof useHeadsetMediaControls>;
+  headsetExperiment: boolean;
+  queueSummary: PendingAudioSummary;
+  transcriptionDebug: TranscriptionDebug;
+};
+
+function DebugPanel({
+  audioCapture,
+  headsetControls,
+  headsetExperiment,
+  queueSummary,
+  transcriptionDebug,
+}: DebugPanelProps) {
+  return (
+    <section className="debug-panel" aria-label="Audio capture debug">
+      <div className="debug-grid">
+        <div>
+          <p className="debug-label">audio</p>
+          <p className="debug-value">{audioCapture.status}</p>
           {audioCapture.recordingStartedAt ? (
-            <p>recording started {new Date(audioCapture.recordingStartedAt).toLocaleTimeString()}</p>
+            <p>started {new Date(audioCapture.recordingStartedAt).toLocaleTimeString()}</p>
           ) : null}
-          <p>
-            transcription {transcriptionDebug.status} · done {transcriptionDebug.completedCount} ·
-            empty {transcriptionDebug.emptyCount} · last {transcriptionDebug.lastTranscriptLength}
-            chars
-          </p>
-          <p>
-            queue {queueSummary.total} · pending {queueSummary.pending} · failed{' '}
-            {queueSummary.failed} · {formatBytes(queueSummary.totalSizeBytes)}
-          </p>
-          {headsetExperiment ? (
-            <p>headset handlers {headsetControls.supportedActions.join(', ') || 'none'}</p>
-          ) : null}
-          {transcriptionDebug.error ? <p className="error">{transcriptionDebug.error}</p> : null}
           {audioCapture.error ? <p className="error">{audioCapture.error}</p> : null}
-          <div className="debug-subsection">
-            <p>active mic {audioCapture.activeTrack?.label ?? 'unknown'}</p>
-            {audioCapture.activeTrack ? (
-              <pre>{JSON.stringify(audioCapture.activeTrack, null, 2)}</pre>
-            ) : null}
-            <p>audio inputs {audioCapture.inputDevices.length}</p>
-            {audioCapture.inputDevices.length > 0 ? (
-              <ol>
-                {audioCapture.inputDevices.map((device) => (
-                  <li key={device.deviceId || device.label}>
-                    {device.label}
-                    {device.groupId ? ` · group ${shortId(device.groupId)}` : ''}
-                    {device.deviceId ? ` · device ${shortId(device.deviceId)}` : ''}
-                  </li>
-                ))}
-              </ol>
-            ) : null}
-          </div>
-          {audioCapture.chunks.length > 0 ? (
+        </div>
+        <div>
+          <p className="debug-label">active mic</p>
+          <p className="debug-value">{audioCapture.activeTrack?.label ?? 'unknown'}</p>
+          {audioCapture.activeTrack ? (
+            <pre>{JSON.stringify(audioCapture.activeTrack, null, 2)}</pre>
+          ) : null}
+        </div>
+        <div>
+          <p className="debug-label">audio inputs</p>
+          <p className="debug-value">{audioCapture.inputDevices.length}</p>
+          {audioCapture.inputDevices.length > 0 ? (
             <ol>
-              {audioCapture.chunks.map((chunk) => (
-                <li key={chunk.id}>
-                  {Math.round(chunk.durationMs)}ms · {chunk.sizeBytes} bytes
+              {audioCapture.inputDevices.map((device) => (
+                <li key={device.deviceId || device.label}>
+                  {device.label}
+                  {device.groupId ? ` · group ${shortId(device.groupId)}` : ''}
+                  {device.deviceId ? ` · device ${shortId(device.deviceId)}` : ''}
                 </li>
               ))}
             </ol>
           ) : null}
-        </section>
+        </div>
+      </div>
+      <div className="debug-subsection">
+        <p>
+          transcription {transcriptionDebug.status} · done {transcriptionDebug.completedCount} ·
+          empty {transcriptionDebug.emptyCount} · last {transcriptionDebug.lastTranscriptLength}
+          chars
+        </p>
+        <p>
+          queue {queueSummary.total} · pending {queueSummary.pending} · processing{' '}
+          {queueSummary.processing} · failed {queueSummary.failed} ·{' '}
+          {formatBytes(queueSummary.totalSizeBytes)}
+        </p>
+        {headsetExperiment ? (
+          <>
+            <p>
+              headset {headsetControls.status} · actions {headsetControls.actionCount} · last{' '}
+              {headsetControls.lastAction ?? 'none'}
+              {headsetControls.lastActionAt
+                ? ` at ${new Date(headsetControls.lastActionAt).toLocaleTimeString()}`
+                : ''}
+            </p>
+            <p>headset handlers {headsetControls.supportedActions.join(', ') || 'none'}</p>
+          </>
+        ) : null}
+        {transcriptionDebug.error ? <p className="error">{transcriptionDebug.error}</p> : null}
+        {headsetControls.error ? <p className="error">{headsetControls.error}</p> : null}
+      </div>
+      {audioCapture.chunks.length > 0 ? (
+        <div className="debug-subsection">
+          <p className="debug-label">recent chunks</p>
+          <ol>
+            {audioCapture.chunks.map((chunk) => (
+              <li key={chunk.id}>
+                {Math.round(chunk.durationMs)}ms · {chunk.sizeBytes} bytes
+              </li>
+            ))}
+          </ol>
+        </div>
       ) : null}
-    </main>
+    </section>
   );
 }
 
@@ -527,6 +596,20 @@ function formatBytes(bytes: number) {
   if (bytes < 1024) return `${bytes} B`;
   if (bytes < 1024 * 1024) return `${Math.round(bytes / 1024)} KB`;
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+}
+
+function formatQueueNotice(summary: PendingAudioSummary) {
+  const recordingLabel = `${summary.total} recording${summary.total === 1 ? '' : 's'}`;
+
+  if (summary.failed > 0 && summary.pending === 0 && summary.processing === 0) {
+    return `${recordingLabel} kept after transcription failed`;
+  }
+
+  if (summary.failed > 0) {
+    return `${recordingLabel} queued; ${summary.failed} failed`;
+  }
+
+  return `${recordingLabel} waiting to sync`;
 }
 
 function shortId(id: string) {

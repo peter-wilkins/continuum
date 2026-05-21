@@ -6,6 +6,8 @@ export type HeadsetMediaControlState = {
   status: HeadsetMediaControlStatus;
   error: string | null;
   lastAction: string | null;
+  lastActionAt: string | null;
+  actionCount: number;
   supportedActions: string[];
   arm(): Promise<void>;
 };
@@ -33,6 +35,8 @@ export function useHeadsetMediaControls(
   const [status, setStatus] = useState<HeadsetMediaControlStatus>(enabled ? 'idle' : 'disabled');
   const [error, setError] = useState<string | null>(null);
   const [lastAction, setLastAction] = useState<string | null>(null);
+  const [lastActionAt, setLastActionAt] = useState<string | null>(null);
+  const [actionCount, setActionCount] = useState(0);
   const [supportedActions, setSupportedActions] = useState<string[]>([]);
   const mediaLoopRef = useRef<MediaLoop | null>(null);
   const onToggleRecordingRef = useRef(onToggleRecording);
@@ -104,6 +108,8 @@ export function useHeadsetMediaControls(
       setStatus('disabled');
       setError(null);
       setLastAction(null);
+      setLastActionAt(null);
+      setActionCount(0);
       setSupportedActions([]);
       stopMediaLoop();
       return;
@@ -127,6 +133,8 @@ export function useHeadsetMediaControls(
       try {
         navigator.mediaSession.setActionHandler(action as MediaSessionAction, () => {
           setLastAction(action);
+          setLastActionAt(new Date().toISOString());
+          setActionCount((current) => current + 1);
           onToggleRecordingRef.current();
           if (mediaLoopRef.current) {
             void mediaLoopRef.current.context.resume();
@@ -157,7 +165,7 @@ export function useHeadsetMediaControls(
 
   useEffect(() => {
     if (!enabled || !('mediaSession' in navigator)) return;
-    navigator.mediaSession.playbackState = recording ? 'playing' : 'paused';
+    navigator.mediaSession.playbackState = 'playing';
   }, [enabled, recording]);
 
   return useMemo(
@@ -165,9 +173,11 @@ export function useHeadsetMediaControls(
       status,
       error,
       lastAction,
+      lastActionAt,
+      actionCount,
       supportedActions,
       arm,
     }),
-    [arm, error, lastAction, status, supportedActions],
+    [actionCount, arm, error, lastAction, lastActionAt, status, supportedActions],
   );
 }
