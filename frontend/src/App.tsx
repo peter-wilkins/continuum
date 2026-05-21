@@ -386,6 +386,9 @@ function ContinuumApp() {
             {headsetControls.lastAction ? ` · last ${headsetControls.lastAction}` : ''}
             {headsetControls.actionCount > 0 ? ` · ${headsetControls.actionCount}` : ''}
           </p>
+          <button className="headset-arm-button" type="button" onClick={armHeadsetControls}>
+            Arm headset buttons
+          </button>
           {headsetControls.error ? <p className="error">{headsetControls.error}</p> : null}
         </section>
       ) : null}

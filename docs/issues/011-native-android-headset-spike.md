@@ -10,6 +10,8 @@ than a PWA.
 - Android Chrome can record through the in-app button.
 - Android Chrome does not appear to receive AeroFit 2 headset taps through the web Media Session
   experiment.
+- VLC can still receive AeroFit 2 play/pause taps on Android after a normal in-app stop, suggesting
+  media-button focus can remain owned by another app instead of Chrome.
 - Desktop Bluetooth behaviour is no longer part of this decision; desktop can use the system mic or
   a custom local setup.
 - Next experiment: a minimal Android shell owns headset media-button events natively, then calls the
@@ -24,6 +26,7 @@ than a PWA.
 - Keep PWA as learning rig unless evidence says it blocks the target product.
 - Test whether Android native `MediaSession` receives AeroFit 2 play/pause taps reliably enough to
   toggle Continuum capture.
+- Test whether force-stopping competing media apps changes Chrome/PWA headset-button behaviour.
 - Keep the product as one app: if the shell wins, it becomes the recommended Android surface while
   still loading the web UI.
 

@@ -14,6 +14,8 @@ integration that Chrome/PWA did not expose reliably.
 - Android Chrome in-app recording works.
 - Android Chrome Media Session headset-button experiment did not show state changes when pressing
   the AeroFit 2 controls.
+- AeroFit 2 controls can still play/pause VLC on Android after VLC has been "stopped", which
+  suggests another app may retain Android media-button focus ahead of Chrome.
 - Desktop Bluetooth is out of scope for this spike.
 
 ## Web Bridge
@@ -40,6 +42,14 @@ window.ContinuumNativeBridge.mediaButton("manual-test")
 
 Run it from DevTools while logged in. The debug panel should increment `native bridge` action count
 and recording state should toggle.
+
+Manual phone test:
+
+1. Open `/continuum?debug=1&headset=1`.
+2. Close or force-stop media apps such as VLC.
+3. Tap `Arm headset buttons`.
+4. Press the headset play/pause control.
+5. Check whether the headset action count increments or another app still reacts.
 
 ## Minimal Android Shell Shape
 
