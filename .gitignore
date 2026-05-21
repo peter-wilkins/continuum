@@ -2,6 +2,10 @@ node_modules/
 dist/
 *.tsbuildinfo
 tmp/
+android-shell/build/
+android-shell/*.apk
+android-shell/*.idsig
+android-shell/debug.keystore
 .env
 .env.*
 !.env.example

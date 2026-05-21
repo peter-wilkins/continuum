@@ -16,6 +16,10 @@ integration that Chrome/PWA did not expose reliably.
   the AeroFit 2 controls.
 - AeroFit 2 controls can still play/pause VLC on Android after VLC has been "stopped", which
   suggests another app may retain Android media-button focus ahead of Chrome.
+- A minimal native Java shell now builds without Gradle, installs on the Samsung SM-G980F, launches
+  a locked-down WebView, and creates an active `ContinuumCapture` Android `MediaSession`.
+- `dumpsys media_session` confirms the native shell session is active and `PLAYING`; the remaining
+  test is whether physical AeroFit 2 button presses dispatch to that session.
 - Desktop Bluetooth is out of scope for this spike.
 
 ## Web Bridge
@@ -50,6 +54,14 @@ Manual phone test:
 3. Tap `Arm headset buttons`.
 4. Press the headset play/pause control.
 5. Check whether the headset action count increments or another app still reacts.
+
+Native shell test:
+
+1. Open `Continuum Shell` on the phone.
+2. Confirm the top native strip says it is waiting for a headset button.
+3. Press the AeroFit 2 play/pause control.
+4. Check whether the native strip changes and whether the web debug panel `native bridge` count
+   increments.
 
 ## Minimal Android Shell Shape
 

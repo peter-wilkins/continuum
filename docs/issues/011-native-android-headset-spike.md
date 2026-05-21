@@ -12,6 +12,8 @@ than a PWA.
   experiment.
 - VLC can still receive AeroFit 2 play/pause taps on Android after a normal in-app stop, suggesting
   media-button focus can remain owned by another app instead of Chrome.
+- A minimal native shell has been built and installed on the Samsung SM-G980F. Android reports its
+  `ContinuumCapture` media session as active and playing.
 - Desktop Bluetooth behaviour is no longer part of this decision; desktop can use the system mic or
   a custom local setup.
 - Next experiment: a minimal Android shell owns headset media-button events natively, then calls the
@@ -46,7 +48,9 @@ Build the smallest Android shell that:
 - [ ] Native-only requirements listed.
 - [ ] PWA limitations observed in real tests are linked to this issue.
 - [ ] Spike scope proposed if native path is justified.
-- [ ] Web app exposes and displays a native-shell bridge event counter.
+- [x] Web app exposes and displays a native-shell bridge event counter.
+- [x] Native shell APK builds and installs on the test phone.
+- [x] Native shell creates an active Android `MediaSession`.
 - [ ] Android shell test result recorded: headset taps received / not received / unreliable.
 - [ ] Decision recorded: no native spike yet / native shell now / revisit later.
 
