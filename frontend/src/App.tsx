@@ -5,6 +5,7 @@ import { createEvent, fetchEvents, transcribeAudio } from './api.js';
 import { type AudioCaptureChunk, useManualAudioCapture } from './audioCapture.js';
 import { getInitialSession, onAuthChange, signInWithGoogle } from './auth.js';
 import { useHeadsetMediaControls } from './headsetMediaControls.js';
+import { useNativeShellBridge } from './nativeShellBridge.js';
 import {
   deletePendingAudio,
   enqueuePendingAudio,
@@ -83,6 +84,7 @@ function ContinuumApp() {
     recordingActive,
     toggleRecording,
   );
+  const nativeShellBridge = useNativeShellBridge(toggleRecording);
 
   const armHeadsetControls = useCallback(() => {
     if (!headsetExperiment || loadState.status !== 'logged_in') return;
@@ -315,6 +317,7 @@ function ContinuumApp() {
           audioCapture={audioCapture}
           headsetControls={headsetControls}
           headsetExperiment={headsetExperiment}
+          nativeShellBridge={nativeShellBridge}
           queueSummary={queueSummary}
           transcriptionDebug={transcriptionDebug}
         />
@@ -367,6 +370,7 @@ type DebugPanelProps = {
   audioCapture: ReturnType<typeof useManualAudioCapture>;
   headsetControls: ReturnType<typeof useHeadsetMediaControls>;
   headsetExperiment: boolean;
+  nativeShellBridge: ReturnType<typeof useNativeShellBridge>;
   queueSummary: PendingAudioSummary;
   transcriptionDebug: TranscriptionDebug;
 };
@@ -375,6 +379,7 @@ function DebugPanel({
   audioCapture,
   headsetControls,
   headsetExperiment,
+  nativeShellBridge,
   queueSummary,
   transcriptionDebug,
 }: DebugPanelProps) {
@@ -435,6 +440,13 @@ function DebugPanel({
             <p>headset handlers {headsetControls.supportedActions.join(', ') || 'none'}</p>
           </>
         ) : null}
+        <p>
+          native bridge {nativeShellBridge.installed ? 'installed' : 'missing'} · actions{' '}
+          {nativeShellBridge.eventCount} · last {nativeShellBridge.lastEvent?.action ?? 'none'}
+          {nativeShellBridge.lastEvent
+            ? ` at ${new Date(nativeShellBridge.lastEvent.receivedAt).toLocaleTimeString()}`
+            : ''}
+        </p>
         {transcriptionDebug.error ? <p className="error">{transcriptionDebug.error}</p> : null}
         {headsetControls.error ? <p className="error">{headsetControls.error}</p> : null}
       </div>
