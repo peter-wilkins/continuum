@@ -20,6 +20,8 @@ integration that Chrome/PWA did not expose reliably.
   a locked-down WebView, and creates an active `ContinuumCapture` Android `MediaSession`.
 - `dumpsys media_session` confirms the native shell session is active and `PLAYING`; the remaining
   test is whether physical AeroFit 2 button presses dispatch to that session.
+- Native shell auth works: Google login opens in Chrome, Supabase redirects to
+  `continuum://auth-callback`, and the shell feeds the callback into the WebView.
 - Desktop Bluetooth is out of scope for this spike.
 
 ## Web Bridge

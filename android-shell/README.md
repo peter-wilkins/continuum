@@ -48,3 +48,22 @@ ContinuumCapture com.continuum.shell/ContinuumCapture
 active=true
 state=PLAYING
 ```
+
+## Native Auth Flow
+
+The WebView adds `ContinuumShell` to its user agent. The frontend uses that to request:
+
+```text
+continuum://auth-callback
+```
+
+The shell receives that deep link, converts it back to the trusted Continuum URL, and loads the
+callback into the WebView.
+
+Supabase Auth must allow this redirect URL:
+
+```text
+continuum://auth-callback
+```
+
+Google login itself opens in Chrome, not inside WebView.

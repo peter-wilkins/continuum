@@ -18,6 +18,8 @@ import android.view.Gravity;
 import android.view.KeyEvent;
 import android.view.ViewGroup;
 import android.webkit.PermissionRequest;
+import android.webkit.CookieManager;
+import android.webkit.ConsoleMessage;
 import android.webkit.WebChromeClient;
 import android.webkit.WebResourceRequest;
 import android.webkit.WebView;
@@ -31,6 +33,7 @@ import org.json.JSONObject;
 public final class MainActivity extends Activity {
     private static final String TAG = "ContinuumShell";
     private static final String TRUSTED_HOST = "peter.tail33843e.ts.net";
+    private static final String SUPABASE_AUTH_HOST = "dtwuflwgcwxygjgkvzfl.supabase.co";
     private static final String START_URL = "https://" + TRUSTED_HOST + "/continuum?debug=1";
 
     private WebView webView;
@@ -44,7 +47,7 @@ public final class MainActivity extends Activity {
         requestRecordAudioPermission();
         setupLayout();
         setupMediaSession();
-        webView.loadUrl(START_URL);
+        handleIntent(getIntent());
     }
 
     @Override
@@ -53,6 +56,13 @@ public final class MainActivity extends Activity {
         if (mediaSession != null) {
             mediaSession.setActive(true);
         }
+    }
+
+    @Override
+    protected void onNewIntent(Intent intent) {
+        super.onNewIntent(intent);
+        setIntent(intent);
+        handleIntent(intent);
     }
 
     @Override
@@ -102,6 +112,11 @@ public final class MainActivity extends Activity {
         webView.getSettings().setJavaScriptEnabled(true);
         webView.getSettings().setDomStorageEnabled(true);
         webView.getSettings().setMediaPlaybackRequiresUserGesture(false);
+        webView.getSettings().setUserAgentString(
+            webView.getSettings().getUserAgentString() + " ContinuumShell"
+        );
+        CookieManager.getInstance().setAcceptCookie(true);
+        CookieManager.getInstance().setAcceptThirdPartyCookies(webView, true);
         webView.setWebViewClient(new TrustedWebViewClient());
         webView.setWebChromeClient(new TrustedWebChromeClient());
         root.addView(webView, new LinearLayout.LayoutParams(
@@ -111,6 +126,27 @@ public final class MainActivity extends Activity {
         ));
 
         setContentView(root);
+    }
+
+    private void handleIntent(Intent intent) {
+        Uri uri = intent == null ? null : intent.getData();
+        if (uri != null && "continuum".equals(uri.getScheme()) && "auth-callback".equals(uri.getHost())) {
+            String callbackUrl = "https://" + TRUSTED_HOST + "/continuum";
+            String query = uri.getEncodedQuery();
+            String fragment = uri.getEncodedFragment();
+            if (query != null && !query.isEmpty()) {
+                callbackUrl += "?" + query;
+            }
+            if (fragment != null && !fragment.isEmpty()) {
+                callbackUrl += "#" + fragment;
+            }
+            Log.d(TAG, "auth callback received");
+            statusView.setText("native shell: auth callback");
+            webView.loadUrl(callbackUrl);
+            return;
+        }
+
+        webView.loadUrl(START_URL);
     }
 
     private void setupMediaSession() {
@@ -183,13 +219,67 @@ public final class MainActivity extends Activity {
 
     private final class TrustedWebViewClient extends WebViewClient {
         @Override
+        public void onPageStarted(WebView view, String url, android.graphics.Bitmap favicon) {
+            Uri uri = Uri.parse(url);
+            String host = uri.getHost();
+            Log.d(TAG, "page started: " + safeUrlLabel(uri));
+            statusView.setText("native shell: page " + (host == null ? "unknown" : host));
+            super.onPageStarted(view, url, favicon);
+        }
+
+        @Override
         public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
             Uri uri = request.getUrl();
-            return !"https".equals(uri.getScheme()) || !TRUSTED_HOST.equals(uri.getHost());
+            if (!"https".equals(uri.getScheme())) {
+                Log.w(TAG, "blocked non-https navigation: " + safeUrlLabel(uri));
+                return true;
+            }
+
+            String host = uri.getHost();
+            if (isExternalOAuthHost(host)) {
+                Log.d(TAG, "opening external OAuth host: " + host);
+                statusView.setText("native shell: login in browser");
+                startActivity(new Intent(Intent.ACTION_VIEW, uri));
+                return true;
+            }
+
+            if (isAllowedNavigationHost(host)) {
+                statusView.setText("native shell: loading " + host);
+                return false;
+            }
+
+            Log.w(TAG, "blocked untrusted navigation: " + safeUrlLabel(uri));
+            statusView.setText("native shell: blocked " + host);
+            return true;
         }
     }
 
+    private String safeUrlLabel(Uri uri) {
+        if (uri == null) return "unknown";
+        String host = uri.getHost();
+        String path = uri.getPath();
+        return uri.getScheme() + "://" + (host == null ? "unknown" : host) + (path == null ? "" : path);
+    }
+
+    private boolean isAllowedNavigationHost(String host) {
+        if (host == null) return false;
+        return TRUSTED_HOST.equals(host) ||
+            SUPABASE_AUTH_HOST.equals(host);
+    }
+
+    private boolean isExternalOAuthHost(String host) {
+        if (host == null) return false;
+        return "accounts.google.com".equals(host) ||
+            host.endsWith(".accounts.google.com");
+    }
+
     private final class TrustedWebChromeClient extends WebChromeClient {
+        @Override
+        public boolean onConsoleMessage(ConsoleMessage consoleMessage) {
+            Log.d(TAG, "web console: " + consoleMessage.message());
+            return super.onConsoleMessage(consoleMessage);
+        }
+
         @Override
         public void onPermissionRequest(PermissionRequest request) {
             Uri origin = request.getOrigin();

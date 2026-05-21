@@ -14,6 +14,7 @@ than a PWA.
   media-button focus can remain owned by another app instead of Chrome.
 - A minimal native shell has been built and installed on the Samsung SM-G980F. Android reports its
   `ContinuumCapture` media session as active and playing.
+- Native shell Google auth works after adding `continuum://auth-callback` to Supabase redirect URLs.
 - Desktop Bluetooth behaviour is no longer part of this decision; desktop can use the system mic or
   a custom local setup.
 - Next experiment: a minimal Android shell owns headset media-button events natively, then calls the
@@ -51,6 +52,7 @@ Build the smallest Android shell that:
 - [x] Web app exposes and displays a native-shell bridge event counter.
 - [x] Native shell APK builds and installs on the test phone.
 - [x] Native shell creates an active Android `MediaSession`.
+- [x] Native shell can complete Google login and show the authenticated Continuum timeline.
 - [ ] Android shell test result recorded: headset taps received / not received / unreliable.
 - [ ] Decision recorded: no native spike yet / native shell now / revisit later.
 

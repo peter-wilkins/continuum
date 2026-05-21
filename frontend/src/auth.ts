@@ -8,10 +8,11 @@ export async function getInitialSession(): Promise<Session | null> {
 }
 
 export async function signInWithGoogle() {
+  const nativeShell = navigator.userAgent.includes('ContinuumShell');
   const { error } = await supabase.auth.signInWithOAuth({
     provider: 'google',
     options: {
-      redirectTo: `${window.location.origin}/continuum`,
+      redirectTo: nativeShell ? 'continuum://auth-callback' : `${window.location.origin}/continuum`,
     },
   });
 
