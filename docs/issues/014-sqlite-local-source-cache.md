@@ -28,17 +28,17 @@ AFK.
 
 ## Acceptance Criteria
 
-- [ ] SQLite database file is created under gitignored `data/local-source-cache.sqlite`.
-- [ ] Cache rows are produced with `canonicalEventToLocalSourceCacheEventRow(event, ingestedAt)` from `@continuum/core`.
-- [ ] Schema includes `local_source_events`, `local_import_batches`, `local_import_batch_events`, and `local_import_quarantine`.
-- [ ] `local_source_events` includes flat serving columns plus full `event_json`.
-- [ ] Indexes exist for `created_at`, `source_platform`, and `local_import_batch_events.event_id`.
-- [ ] Canonical Event JSONL can be loaded into the cache and associated with an import batch.
-- [ ] Invalid or unparseable rows are captured in `local_import_quarantine` without stopping the whole import.
-- [ ] Backend can serve timeline rows in reverse chronological order.
-- [ ] Backend can serve a detail view by cached event ID.
-- [ ] Backend can filter timeline reads by source platform.
-- [ ] No SQLite FTS is added in this first slice.
+- [x] SQLite database file is created under gitignored `data/local-source-cache.sqlite`.
+- [x] Cache rows are produced with `canonicalEventToLocalSourceCacheEventRow(event, ingestedAt)` from `@continuum/core`.
+- [x] Schema includes `local_source_events`, `local_import_batches`, `local_import_batch_events`, and `local_import_quarantine`.
+- [x] `local_source_events` includes flat serving columns plus full `event_json`.
+- [x] Indexes exist for `created_at`, `source_platform`, and `local_import_batch_events.event_id`.
+- [x] Canonical Event JSONL can be loaded into the cache and associated with an import batch.
+- [x] Invalid or unparseable rows are captured in `local_import_quarantine` without stopping the whole import.
+- [x] Backend can serve timeline rows in reverse chronological order.
+- [x] Backend can serve a detail view by cached event ID.
+- [x] Backend can filter timeline reads by source platform.
+- [x] No SQLite FTS is added in this first slice.
 
 ## Blocked By
 

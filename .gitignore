@@ -2,6 +2,7 @@ node_modules/
 dist/
 *.tsbuildinfo
 tmp/
+data/
 android-shell/build/
 android-shell/*.apk
 android-shell/*.idsig

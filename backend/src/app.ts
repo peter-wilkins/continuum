@@ -3,6 +3,7 @@ import cors from '@fastify/cors';
 import multipart from '@fastify/multipart';
 import { env } from './env.js';
 import { registerEventRoutes } from './events.js';
+import { registerLocalSourceCacheRoutes } from './localSourceCache.js';
 import { registerTranscriptionRoutes } from './transcription.js';
 
 export async function buildApp() {
@@ -17,6 +18,7 @@ export async function buildApp() {
   app.get('/health', async () => ({ ok: true }));
 
   await registerEventRoutes(app);
+  await registerLocalSourceCacheRoutes(app);
   await registerTranscriptionRoutes(app);
 
   return app;
