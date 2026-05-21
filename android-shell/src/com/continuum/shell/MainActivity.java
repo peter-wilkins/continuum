@@ -7,6 +7,8 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.media.AudioAttributes;
+import android.media.AudioDeviceCallback;
+import android.media.AudioDeviceInfo;
 import android.media.AudioFocusRequest;
 import android.media.AudioManager;
 import android.media.session.MediaSession;
@@ -38,15 +40,30 @@ public final class MainActivity extends Activity {
 
     private WebView webView;
     private TextView statusView;
+    private AudioManager audioManager;
     private MediaSession mediaSession;
     private int mediaButtonCount = 0;
+    private final AudioDeviceCallback audioDeviceCallback = new AudioDeviceCallback() {
+        @Override
+        public void onAudioDevicesAdded(AudioDeviceInfo[] addedDevices) {
+            preferBluetoothCommunicationDevice("device added");
+        }
+
+        @Override
+        public void onAudioDevicesRemoved(AudioDeviceInfo[] removedDevices) {
+            updateAudioRouteStatus("device removed");
+        }
+    };
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        requestRecordAudioPermission();
+        audioManager = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
+        requestRuntimePermissions();
         setupLayout();
         setupMediaSession();
+        registerAudioDeviceCallback();
+        preferBluetoothCommunicationDevice("startup");
         handleIntent(getIntent());
     }
 
@@ -56,6 +73,7 @@ public final class MainActivity extends Activity {
         if (mediaSession != null) {
             mediaSession.setActive(true);
         }
+        preferBluetoothCommunicationDevice("resume");
     }
 
     @Override
@@ -71,6 +89,8 @@ public final class MainActivity extends Activity {
             mediaSession.setActive(false);
             mediaSession.release();
         }
+        unregisterAudioDeviceCallback();
+        clearBluetoothCommunicationDevice();
         if (webView != null) {
             webView.destroy();
         }
@@ -86,10 +106,19 @@ public final class MainActivity extends Activity {
         return super.dispatchKeyEvent(event);
     }
 
-    private void requestRecordAudioPermission() {
+    private void requestRuntimePermissions() {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) return;
-        if (checkSelfPermission(Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED) return;
-        requestPermissions(new String[] { Manifest.permission.RECORD_AUDIO }, 10);
+
+        String[] permissions = Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
+            ? new String[] { Manifest.permission.RECORD_AUDIO, Manifest.permission.BLUETOOTH_CONNECT }
+            : new String[] { Manifest.permission.RECORD_AUDIO };
+
+        for (String permission : permissions) {
+            if (checkSelfPermission(permission) != PackageManager.PERMISSION_GRANTED) {
+                requestPermissions(permissions, 10);
+                return;
+            }
+        }
     }
 
     private void setupLayout() {
@@ -206,6 +235,108 @@ public final class MainActivity extends Activity {
         statusView.setText(message);
         String javascript = "window.ContinuumNativeBridge?.mediaButton(" + JSONObject.quote(action) + ")";
         webView.post(() -> webView.evaluateJavascript(javascript, null));
+    }
+
+    private void registerAudioDeviceCallback() {
+        if (audioManager == null) return;
+        audioManager.registerAudioDeviceCallback(audioDeviceCallback, null);
+    }
+
+    private void unregisterAudioDeviceCallback() {
+        if (audioManager == null) return;
+        audioManager.unregisterAudioDeviceCallback(audioDeviceCallback);
+    }
+
+    private void preferBluetoothCommunicationDevice(String reason) {
+        if (audioManager == null) return;
+
+        try {
+            audioManager.setMode(AudioManager.MODE_IN_COMMUNICATION);
+
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                for (AudioDeviceInfo device : audioManager.getAvailableCommunicationDevices()) {
+                    if (device.getType() == AudioDeviceInfo.TYPE_BLUETOOTH_SCO) {
+                        boolean accepted = audioManager.setCommunicationDevice(device);
+                        updateAudioRouteStatus(reason + ": bt sco " + (accepted ? "accepted" : "rejected"));
+                        return;
+                    }
+                }
+
+                updateAudioRouteStatus(reason + ": no bt sco communication device");
+                return;
+            }
+
+            audioManager.startBluetoothSco();
+            audioManager.setBluetoothScoOn(true);
+            updateAudioRouteStatus(reason + ": started bt sco");
+        } catch (SecurityException err) {
+            updateAudioRouteStatus(reason + ": missing bluetooth permission");
+            Log.w(TAG, "bluetooth route permission denied", err);
+        } catch (RuntimeException err) {
+            updateAudioRouteStatus(reason + ": route error");
+            Log.w(TAG, "bluetooth route failed", err);
+        }
+    }
+
+    private void clearBluetoothCommunicationDevice() {
+        if (audioManager == null) return;
+
+        try {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                audioManager.clearCommunicationDevice();
+            } else {
+                audioManager.setBluetoothScoOn(false);
+                audioManager.stopBluetoothSco();
+            }
+            audioManager.setMode(AudioManager.MODE_NORMAL);
+        } catch (RuntimeException err) {
+            Log.w(TAG, "failed to clear bluetooth route", err);
+        }
+    }
+
+    private void updateAudioRouteStatus(String prefix) {
+        if (audioManager == null) return;
+
+        String route = "unknown";
+        try {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                AudioDeviceInfo device = audioManager.getCommunicationDevice();
+                route = device == null ? "none" : audioDeviceLabel(device);
+            }
+        } catch (SecurityException err) {
+            route = "permission denied";
+        }
+
+        String message = "native shell: " + prefix + " · route " + route;
+        Log.d(TAG, message);
+        statusView.setText(message);
+    }
+
+    private String audioDeviceLabel(AudioDeviceInfo device) {
+        CharSequence name = device.getProductName();
+        String type;
+        switch (device.getType()) {
+            case AudioDeviceInfo.TYPE_BLUETOOTH_SCO:
+                type = "bt_sco";
+                break;
+            case AudioDeviceInfo.TYPE_BLUETOOTH_A2DP:
+                type = "bt_a2dp";
+                break;
+            case AudioDeviceInfo.TYPE_BUILTIN_EARPIECE:
+                type = "earpiece";
+                break;
+            case AudioDeviceInfo.TYPE_BUILTIN_MIC:
+                type = "built-in mic";
+                break;
+            case AudioDeviceInfo.TYPE_BUILTIN_SPEAKER:
+                type = "speaker";
+                break;
+            default:
+                type = "type-" + device.getType();
+                break;
+        }
+
+        return type + " " + (name == null ? "" : name.toString()).trim();
     }
 
     private boolean isMediaKey(int keyCode) {

@@ -67,3 +67,15 @@ continuum://auth-callback
 ```
 
 Google login itself opens in Chrome, not inside WebView.
+
+## Bluetooth Route Probe
+
+On startup/resume the shell requests Android's Bluetooth SCO communication route. The top native
+strip shows the result, for example:
+
+```text
+native shell: resume: bt sco accepted · route bt_sco soundcore AeroFit 2
+```
+
+That means Android has accepted the headset as the active communication route. It does not prove
+that headset button events are delivered; media buttons are a separate Android media-session path.

@@ -22,6 +22,10 @@ integration that Chrome/PWA did not expose reliably.
   test is whether physical AeroFit 2 button presses dispatch to that session.
 - Native shell auth works: Google login opens in Chrome, Supabase redirects to
   `continuum://auth-callback`, and the shell feeds the callback into the WebView.
+- Physical test result: recording in the native shell initially used the phone microphone, and
+  AeroFit 2 button presses did not reach the native media session.
+- A Bluetooth communication-route probe now requests `bt_sco` on startup/resume. Android reports
+  `bt sco accepted`, active route `bt_sco soundcore AeroFit 2`, and `mScoAudioState` active.
 - Desktop Bluetooth is out of scope for this spike.
 
 ## Web Bridge
@@ -60,10 +64,12 @@ Manual phone test:
 Native shell test:
 
 1. Open `Continuum Shell` on the phone.
-2. Confirm the top native strip says it is waiting for a headset button.
+2. Confirm the top native strip says `route bt_sco soundcore AeroFit 2`.
 3. Press the AeroFit 2 play/pause control.
 4. Check whether the native strip changes and whether the web debug panel `native bridge` count
    increments.
+5. Record a short phrase while the phone is away from your mouth and the headset is near your mouth.
+6. Confirm whether the transcript matches headset speech rather than phone speech.
 
 ## Minimal Android Shell Shape
 

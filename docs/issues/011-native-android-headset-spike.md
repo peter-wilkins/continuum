@@ -15,6 +15,10 @@ than a PWA.
 - A minimal native shell has been built and installed on the Samsung SM-G980F. Android reports its
   `ContinuumCapture` media session as active and playing.
 - Native shell Google auth works after adding `continuum://auth-callback` to Supabase redirect URLs.
+- Physical test result: the first native-shell build still recorded from the phone microphone and
+  did not receive AeroFit 2 button presses.
+- A route probe now requests Android's Bluetooth SCO communication route. Android reports
+  `bt_sco soundcore AeroFit 2` as active; this needs a fresh speech recording test.
 - Desktop Bluetooth behaviour is no longer part of this decision; desktop can use the system mic or
   a custom local setup.
 - Next experiment: a minimal Android shell owns headset media-button events natively, then calls the
@@ -53,7 +57,9 @@ Build the smallest Android shell that:
 - [x] Native shell APK builds and installs on the test phone.
 - [x] Native shell creates an active Android `MediaSession`.
 - [x] Native shell can complete Google login and show the authenticated Continuum timeline.
+- [x] Native shell can request and display Android Bluetooth SCO communication route.
 - [ ] Android shell test result recorded: headset taps received / not received / unreliable.
+- [ ] Android shell test result recorded: headset mic used / phone mic used / unreliable.
 - [ ] Decision recorded: no native spike yet / native shell now / revisit later.
 
 ## Out Of Scope

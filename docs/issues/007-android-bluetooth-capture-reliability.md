@@ -16,12 +16,14 @@ This is a learning issue, not a feature-build issue.
 - Test reconnect behaviour.
 - Test offline queue behaviour after recording.
 - Capture observed transcript quality, latency, and failure modes.
+- Test native-shell Bluetooth SCO routing separately from browser/PWA routing.
 
 ## Acceptance Criteria
 
 - [ ] Test run recorded with phone model, Android version, Chrome version, and headset model.
 - [ ] Debug panel output captured for connected and disconnected headset states.
 - [ ] At least three short recordings tested through headset-connected state.
+- [ ] Native shell `bt_sco soundcore AeroFit 2` route tested with phone-away/headset-near speech.
 - [ ] At least one offline/reconnect scenario tested.
 - [ ] Decision recorded: PWA capture reliability is acceptable / unacceptable / uncertain.
 
