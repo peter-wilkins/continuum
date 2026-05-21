@@ -26,6 +26,8 @@ integration that Chrome/PWA did not expose reliably.
   AeroFit 2 button presses did not reach the native media session.
 - A Bluetooth communication-route probe now requests `bt_sco` on startup/resume. Android reports
   `bt sco accepted`, active route `bt_sco soundcore AeroFit 2`, and `mScoAudioState` active.
+- A foreground media service and explicit media-button receiver are now registered. Synthetic ADB
+  media keys reach the app, but the physical AeroFit 2 button still did not appear in app logs.
 - Desktop Bluetooth is out of scope for this spike.
 
 ## Web Bridge

@@ -19,6 +19,8 @@ than a PWA.
   did not receive AeroFit 2 button presses.
 - A route probe now requests Android's Bluetooth SCO communication route. Android reports
   `bt_sco soundcore AeroFit 2` as active; this needs a fresh speech recording test.
+- Foreground media service plus media-button receiver has been added. Synthetic media keys reach
+  the app; physical AeroFit 2 button presses still do not.
 - Desktop Bluetooth behaviour is no longer part of this decision; desktop can use the system mic or
   a custom local setup.
 - Next experiment: a minimal Android shell owns headset media-button events natively, then calls the
@@ -58,6 +60,7 @@ Build the smallest Android shell that:
 - [x] Native shell creates an active Android `MediaSession`.
 - [x] Native shell can complete Google login and show the authenticated Continuum timeline.
 - [x] Native shell can request and display Android Bluetooth SCO communication route.
+- [x] Native shell foreground media service and media-button receiver registered.
 - [ ] Android shell test result recorded: headset taps received / not received / unreliable.
 - [ ] Android shell test result recorded: headset mic used / phone mic used / unreliable.
 - [ ] Decision recorded: no native spike yet / native shell now / revisit later.

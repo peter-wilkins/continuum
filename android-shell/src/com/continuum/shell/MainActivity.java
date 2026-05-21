@@ -180,6 +180,7 @@ public final class MainActivity extends Activity {
 
     private void setupMediaSession() {
         mediaSession = new MediaSession(this, "ContinuumCapture");
+        mediaSession.setMediaButtonReceiver(MediaButtonReceiver.pendingIntent(this));
         mediaSession.setFlags(
             MediaSession.FLAG_HANDLES_MEDIA_BUTTONS |
             MediaSession.FLAG_HANDLES_TRANSPORT_CONTROLS
@@ -226,6 +227,7 @@ public final class MainActivity extends Activity {
             .setState(PlaybackState.STATE_PLAYING, 0, 1)
             .build());
         mediaSession.setActive(true);
+        startService(new Intent(this, ContinuumMediaService.class));
     }
 
     private void handleMediaButton(String action) {

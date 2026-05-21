@@ -79,3 +79,16 @@ native shell: resume: bt sco accepted · route bt_sco soundcore AeroFit 2
 
 That means Android has accepted the headset as the active communication route. It does not prove
 that headset button events are delivered; media buttons are a separate Android media-session path.
+
+## Media Button Probe
+
+The shell now starts a foreground media service and registers an explicit media-button receiver.
+Android reports the receiver in `dumpsys media_session`.
+
+Synthetic ADB media keys reach the app:
+
+```bash
+adb shell input keyevent KEYCODE_MEDIA_PLAY_PAUSE
+```
+
+The AeroFit 2 physical button still did not appear in the app logs in the latest test.
