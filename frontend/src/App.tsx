@@ -60,6 +60,9 @@ function ContinuumApp() {
     emptyCount: 0,
     error: null,
   });
+  const [preferredMicId, setPreferredMicId] = useState('');
+  const [micPromptOpen, setMicPromptOpen] = useState(false);
+  const [micPromptStatus, setMicPromptStatus] = useState<string | null>(null);
   const processedChunkIds = useRef(new Set<string>());
   const transcribingRef = useRef(false);
   const sessionRef = useRef<Session | null>(null);
@@ -76,9 +79,9 @@ function ContinuumApp() {
     }
 
     if (audioCapture.status === 'idle' || audioCapture.status === 'error') {
-      void audioCapture.startRecording();
+      void audioCapture.startRecording(preferredMicId || undefined);
     }
-  }, [audioCapture]);
+  }, [audioCapture, preferredMicId]);
   const headsetControls = useHeadsetMediaControls(
     headsetExperiment && loadState.status === 'logged_in',
     recordingActive,
@@ -93,8 +96,21 @@ function ContinuumApp() {
 
   const startFromButton = useCallback(() => {
     armHeadsetControls();
-    void audioCapture.startRecording();
-  }, [armHeadsetControls, audioCapture]);
+    void audioCapture.startRecording(preferredMicId || undefined);
+  }, [armHeadsetControls, audioCapture, preferredMicId]);
+
+  const askForMicAccess = useCallback(async () => {
+    setMicPromptStatus('asking');
+
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      stream.getTracks().forEach((track) => track.stop());
+      await audioCapture.refreshDevices();
+      setMicPromptStatus('ready');
+    } catch (err: unknown) {
+      setMicPromptStatus(err instanceof Error ? err.message : 'Microphone access failed');
+    }
+  }, [audioCapture]);
 
   useEffect(() => {
     let mounted = true;
@@ -315,11 +331,22 @@ function ContinuumApp() {
       {debug ? (
         <DebugPanel
           audioCapture={audioCapture}
+          onOpenMicPrompt={() => setMicPromptOpen(true)}
           headsetControls={headsetControls}
           headsetExperiment={headsetExperiment}
           nativeShellBridge={nativeShellBridge}
           queueSummary={queueSummary}
           transcriptionDebug={transcriptionDebug}
+        />
+      ) : null}
+      {micPromptOpen ? (
+        <MicPromptDialog
+          audioCapture={audioCapture}
+          micPromptStatus={micPromptStatus}
+          onAskForMicAccess={() => void askForMicAccess()}
+          onClose={() => setMicPromptOpen(false)}
+          onSelectMic={setPreferredMicId}
+          preferredMicId={preferredMicId}
         />
       ) : null}
       {events.length === 0 ? (
@@ -373,10 +400,12 @@ type DebugPanelProps = {
   nativeShellBridge: ReturnType<typeof useNativeShellBridge>;
   queueSummary: PendingAudioSummary;
   transcriptionDebug: TranscriptionDebug;
+  onOpenMicPrompt(): void;
 };
 
 function DebugPanel({
   audioCapture,
+  onOpenMicPrompt,
   headsetControls,
   headsetExperiment,
   nativeShellBridge,
@@ -397,6 +426,9 @@ function DebugPanel({
         <div>
           <p className="debug-label">active mic</p>
           <p className="debug-value">{audioCapture.activeTrack?.label ?? 'unknown'}</p>
+          <button className="debug-action" type="button" onClick={onOpenMicPrompt}>
+            Mic prompt
+          </button>
           {audioCapture.activeTrack ? (
             <pre>{JSON.stringify(audioCapture.activeTrack, null, 2)}</pre>
           ) : null}
@@ -463,6 +495,78 @@ function DebugPanel({
         </div>
       ) : null}
     </section>
+  );
+}
+
+type MicPromptDialogProps = {
+  audioCapture: ReturnType<typeof useManualAudioCapture>;
+  micPromptStatus: string | null;
+  preferredMicId: string;
+  onAskForMicAccess(): void;
+  onClose(): void;
+  onSelectMic(deviceId: string): void;
+};
+
+function MicPromptDialog({
+  audioCapture,
+  micPromptStatus,
+  preferredMicId,
+  onAskForMicAccess,
+  onClose,
+  onSelectMic,
+}: MicPromptDialogProps) {
+  return (
+    <div className="modal-backdrop" role="presentation" onClick={onClose}>
+      <section
+        aria-label="Microphone prompt"
+        aria-modal="true"
+        className="mic-dialog"
+        role="dialog"
+        onClick={(event) => event.stopPropagation()}
+      >
+        <header className="mic-dialog-header">
+          <div>
+            <p className="debug-label">browser mic prompt</p>
+            <h2>Pick headset mic</h2>
+          </div>
+          <button aria-label="Close" className="icon-button" type="button" onClick={onClose}>
+            x
+          </button>
+        </header>
+
+        <button className="primary-action" type="button" onClick={onAskForMicAccess}>
+          Ask browser for mic access
+        </button>
+
+        <label className="field">
+          <span>Audio input</span>
+          <select
+            value={preferredMicId}
+            onChange={(event) => onSelectMic(event.target.value)}
+          >
+            <option value="">Browser default</option>
+            {audioCapture.inputDevices.map((device) => (
+              <option key={device.deviceId || device.label} value={device.deviceId}>
+                {device.label}
+              </option>
+            ))}
+          </select>
+        </label>
+
+        <div className="mic-status">
+          <p>
+            status <strong>{micPromptStatus ?? 'not asked yet'}</strong>
+          </p>
+          <p>
+            selected{' '}
+            <strong>{findDeviceLabel(audioCapture.inputDevices, preferredMicId) ?? 'Browser default'}</strong>
+          </p>
+          <p>
+            active <strong>{audioCapture.activeTrack?.label ?? 'none'}</strong>
+          </p>
+        </div>
+      </section>
+    </div>
   );
 }
 
@@ -627,4 +731,9 @@ function formatQueueNotice(summary: PendingAudioSummary) {
 function shortId(id: string) {
   if (id.length <= 8) return id;
   return id.slice(0, 4);
+}
+
+function findDeviceLabel(devices: { deviceId: string; label: string }[], deviceId: string) {
+  if (!deviceId) return null;
+  return devices.find((device) => device.deviceId === deviceId)?.label ?? 'Unknown input';
 }

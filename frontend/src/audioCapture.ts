@@ -36,7 +36,7 @@ export type AudioCaptureState = {
   activeTrack: ActiveAudioTrack | null;
   recordingStartedAt: string | null;
   elapsedMs: number;
-  startRecording(): Promise<void>;
+  startRecording(deviceId?: string): Promise<void>;
   stopRecording(): void;
   refreshDevices(): Promise<void>;
 };
@@ -89,7 +89,7 @@ export function useManualAudioCapture(enabled: boolean): AudioCaptureState {
       })));
   }, []);
 
-  const startRecording = useCallback(async () => {
+  const startRecording = useCallback(async (deviceId?: string) => {
     if (!enabled || status === 'starting' || status === 'recording' || status === 'stopping') return;
 
     if (!navigator.mediaDevices?.getUserMedia) {
@@ -110,6 +110,7 @@ export function useManualAudioCapture(enabled: boolean): AudioCaptureState {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({
         audio: {
+          ...(deviceId ? { deviceId: { exact: deviceId } } : {}),
           echoCancellation: true,
           noiseSuppression: true,
           autoGainControl: true,

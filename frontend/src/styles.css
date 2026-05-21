@@ -371,10 +371,112 @@ button {
     monospace;
 }
 
+.debug-action {
+  min-height: 34px;
+  margin: 2px 0 8px;
+  border: 1px solid #c7beb0;
+  border-radius: 6px;
+  background: #fffdf8;
+  color: #1c1c1a;
+  font: inherit;
+  font-weight: 750;
+  padding: 6px 10px;
+}
+
 .debug-subsection {
   margin-top: 12px;
   border-top: 1px solid #ddd8cc;
   padding-top: 10px;
+}
+
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 30;
+  display: grid;
+  place-items: center;
+  background: rgb(28 28 26 / 42%);
+  padding: 18px;
+}
+
+.mic-dialog {
+  width: min(28rem, 100%);
+  border: 1px solid #d6d0c2;
+  border-radius: 8px;
+  background: #fffdf8;
+  box-shadow: 0 18px 50px rgb(28 28 26 / 24%);
+  color: #1c1c1a;
+  padding: 16px;
+}
+
+.mic-dialog-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.mic-dialog h2 {
+  margin: 2px 0 0;
+  font-size: 1.2rem;
+}
+
+.icon-button {
+  width: 34px;
+  height: 34px;
+  border: 1px solid #c7beb0;
+  border-radius: 6px;
+  background: #fffaf0;
+  color: #1c1c1a;
+  font: inherit;
+  font-weight: 850;
+}
+
+.primary-action {
+  width: 100%;
+  min-height: 44px;
+  border: 0;
+  border-radius: 6px;
+  background: #1c1c1a;
+  color: #fffdf8;
+  font: inherit;
+  font-weight: 850;
+  padding: 10px 12px;
+}
+
+.field {
+  display: grid;
+  gap: 6px;
+  margin-top: 14px;
+  color: #4f4c45;
+  font-size: 0.82rem;
+  font-weight: 750;
+}
+
+.field select {
+  width: 100%;
+  min-height: 42px;
+  border: 1px solid #c7beb0;
+  border-radius: 6px;
+  background: #ffffff;
+  color: #1c1c1a;
+  font: inherit;
+  padding: 8px 10px;
+}
+
+.mic-status {
+  display: grid;
+  gap: 6px;
+  margin-top: 14px;
+  border-top: 1px solid #ddd8cc;
+  padding-top: 12px;
+  color: #5f5d56;
+  font-size: 0.82rem;
+}
+
+.mic-status p {
+  margin: 0;
 }
 
 @media (min-width: 760px) {
