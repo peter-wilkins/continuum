@@ -177,12 +177,17 @@ function usePwaInstallPrompt() {
   };
 }
 
-function getAnonymousLensLabel(index: number) {
-  if (index < 26) {
-    return `Lens ${String.fromCharCode(65 + index)}`;
+function shuffleItems<T>(items: readonly T[]) {
+  const shuffled = [...items];
+
+  for (let index = shuffled.length - 1; index > 0; index -= 1) {
+    const swapIndex = Math.floor(Math.random() * (index + 1));
+    const current = shuffled[index]!;
+    shuffled[index] = shuffled[swapIndex]!;
+    shuffled[swapIndex] = current;
   }
 
-  return `Lens ${index + 1}`;
+  return shuffled;
 }
 
 function AuthCallback() {
@@ -269,6 +274,11 @@ function PublicAdaContinuum() {
   const pwaInstall = usePwaInstallPrompt();
   const submittedPendingFeedbackRef = useRef<string | null>(null);
   const nextPreferencePulseIdRef = useRef(0);
+  const displayedOutputs = useMemo(() => {
+    if (state.status !== 'ready') return [];
+
+    return shuffleItems(state.continuum.outputs);
+  }, [state]);
 
   useEffect(() => {
     let mounted = true;
@@ -428,52 +438,22 @@ function PublicAdaContinuum() {
     >
       <header className="public-app-chrome">
         <div className="public-app-title">
-          <p>Public Continuum</p>
           <h1>{continuum.scope.title}</h1>
           <span>{continuum.query.text}</span>
         </div>
-        <div className="public-app-actions">
-          <a className="chrome-link" href="/public/lenses">
-            Guide
-          </a>
-          {pwaInstall.canInstall ? (
-            <button
-              className="chrome-button"
-              type="button"
-              disabled={pwaInstall.installing}
-              onClick={() => void pwaInstall.install()}
-            >
-              {pwaInstall.installing ? 'Installing' : 'Install'}
-            </button>
-          ) : null}
-          {authState.status === 'logged_in' ? (
-            <button className="chrome-button" type="button" onClick={() => void handleSignOut()}>
-              Sign out
-            </button>
-          ) : null}
-          <span className="chrome-hash">Git {gitHash}</span>
-        </div>
       </header>
 
-      <section className="public-lens-strip" aria-label="Lens candidates">
-        {continuum.outputs.map((output, outputIndex) => {
+      <section className="public-lens-strip" aria-label="Lens candidates and guide">
+        {displayedOutputs.map((output) => {
           const submitting =
             feedbackState.status === 'submitting' && feedbackState.lensOutputId === output.id;
           const recorded =
             feedbackState.status === 'recorded' && feedbackState.lensOutputId === output.id;
           const pulses = preferencePulses.filter((pulse) => pulse.lensOutputId === output.id);
-          const preferenceCount =
-            feedbackSummary?.byLensOutput.find((item) => item.lensOutputId === output.id)?.count ??
-            0;
 
           return (
-            <article
-              className="public-lens"
-              key={output.id}
-              aria-label={`${getAnonymousLensLabel(outputIndex)} candidate`}
-            >
-              <header className="public-lens-header">
-                <h2>{getAnonymousLensLabel(outputIndex)}</h2>
+            <article className="public-lens" key={output.id} aria-label="Lens candidate">
+              <div className="lens-vote-dock">
                 <button
                   className={`lens-vote-button${recorded ? ' selected' : ''}`}
                   type="button"
@@ -493,14 +473,8 @@ function PublicAdaContinuum() {
                     </span>
                   ))}
                 </button>
-              </header>
-              {recorded ? <p className="lens-feedback-status">Preference recorded</p> : null}
-              {feedbackSummary ? (
-                <p className="lens-feedback-count">
-                  {preferenceCount} {preferenceCount === 1 ? 'preference' : 'preferences'}
-                </p>
-              ) : null}
-              <div className="public-lens-sections">
+              </div>
+              <div className="public-lens-body public-lens-sections">
                 {output.sections.map((section) => (
                   <section key={section.id} className="public-lens-section">
                     <h3>{section.title}</h3>
@@ -533,6 +507,78 @@ function PublicAdaContinuum() {
             </article>
           );
         })}
+        <article className="public-lens public-guide-page" aria-label="Guide and settings">
+          <div className="public-lens-body public-guide-body">
+            <section className="public-guide-section">
+              <p className="index-kicker">Guide</p>
+              <h2>Lens guide</h2>
+              <p>
+                Each Lens is a different projection over the same query and the same immutable
+                source events. Candidate order is shuffled each page load.
+              </p>
+            </section>
+
+            <div className="public-guide-actions">
+              <a className="chrome-link" href="/public/lenses">
+                Open guide page
+              </a>
+              {pwaInstall.canInstall ? (
+                <button
+                  className="chrome-button"
+                  type="button"
+                  disabled={pwaInstall.installing}
+                  onClick={() => void pwaInstall.install()}
+                >
+                  {pwaInstall.installing ? 'Installing' : 'Install'}
+                </button>
+              ) : null}
+              {pwaInstall.installed ? <span className="chrome-muted">Installed</span> : null}
+              {authState.status === 'logged_in' ? (
+                <button className="chrome-button" type="button" onClick={() => void handleSignOut()}>
+                  Sign out
+                </button>
+              ) : null}
+              <span className="chrome-hash">Git {gitHash}</span>
+            </div>
+
+            <section className="public-guide-section">
+              <h3>Lens approaches</h3>
+              <div className="public-guide-list">
+                {continuum.lenses.map((lens) => (
+                  <article className="public-guide-card" key={lens.id}>
+                    <p>{lens.version}</p>
+                    <h4>{lens.name}</h4>
+                    <p>{lens.userBlurb}</p>
+                    <p>{lens.technicalBlurb}</p>
+                  </article>
+                ))}
+              </div>
+            </section>
+
+            {feedbackSummary ? (
+              <section className="public-guide-section">
+                <h3>Feedback so far</h3>
+                <ul className="public-feedback-list">
+                  {continuum.outputs.map((output) => {
+                    const lens = continuum.lenses.find(
+                      (candidate) => candidate.id === output.lensId,
+                    );
+                    const preferenceCount =
+                      feedbackSummary.byLensOutput.find((item) => item.lensOutputId === output.id)
+                        ?.count ?? 0;
+
+                    return (
+                      <li key={output.id}>
+                        <span>{lens?.name ?? output.lensId}</span>
+                        <strong>{preferenceCount}</strong>
+                      </li>
+                    );
+                  })}
+                </ul>
+              </section>
+            ) : null}
+          </div>
+        </article>
       </section>
       {feedbackState.status === 'error' ? (
         <p className="public-feedback-error">{feedbackState.error}</p>

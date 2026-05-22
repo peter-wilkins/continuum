@@ -39,6 +39,8 @@ checks less trustworthy.
 - Changed the public Ada Continuum page to a full-screen, one-Lens-per-page snap carousel.
 - Kept Lens names/descriptions off the judgement surface; the guide page remains the place for model
   detail.
+- Randomized candidate order per page load.
+- Moved Guide, install, sign-out, git hash, and feedback counts onto the furthest-right snap page.
 
 ## Out Of Scope
 
