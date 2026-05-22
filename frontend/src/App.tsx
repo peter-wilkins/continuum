@@ -935,23 +935,46 @@ function PrototypeIndex() {
   return (
     <main className="index-screen">
       <header className="index-header">
-        <p className="index-kicker">Peter's MVP bench</p>
-        <h1>Small prototypes, live enough to try.</h1>
+        <p className="index-kicker">Continuum MVP bench</p>
+        <h1>Public Continuums, live enough to try.</h1>
         <p>
-          A lightweight lab page for sharing rough but working experiments with friends and family.
-          These are personal MVPs: useful, incomplete, and changing quickly.
+          A lightweight lab page for exploring public extended thought. These prototypes are useful,
+          incomplete, and changing quickly.
         </p>
       </header>
 
       <section className="prototype-section" aria-labelledby="prototype-heading">
         <div className="section-heading">
-          <p className="index-kicker">Prototype</p>
+          <p className="index-kicker">Public prototype</p>
           <h2 id="prototype-heading">Available now</h2>
         </div>
         <article className="prototype-card">
           <div>
-            <p className="status-pill">Testing today</p>
-            <h3>Continuum</h3>
+            <p className="status-pill">Public MVP</p>
+            <h3>Ada Lovelace through computing</h3>
+            <p>
+              A read-only public Continuum seeded from public source records, with Atlas, Loom, and
+              Beacon Lens candidates over the same query.
+            </p>
+          </div>
+          <dl className="prototype-details">
+            <div>
+              <dt>Try</dt>
+              <dd>Swipe across the Lens candidates and compare how the same sources are arranged.</dd>
+            </div>
+            <div>
+              <dt>Status</dt>
+              <dd>Public data, source links, provenance, and reference-only Lens outputs.</dd>
+            </div>
+          </dl>
+          <a className="prototype-link" href="/public/ada-lovelace">
+            Open Ada Continuum
+          </a>
+        </article>
+        <article className="prototype-card">
+          <div>
+            <p className="status-pill">Side experiment</p>
+            <h3>Personal capture</h3>
             <p>
               A speech-first log for thinking out loud when you are alone in a quiet place. Press
               record, speak naturally, and save a transcript into an immutable timeline.
@@ -968,30 +991,7 @@ function PrototypeIndex() {
             </div>
           </dl>
           <a className="prototype-link" href={continuumUrl}>
-            Open Continuum
-          </a>
-        </article>
-        <article className="prototype-card">
-          <div>
-            <p className="status-pill">Public MVP</p>
-            <h3>Ada Lovelace</h3>
-            <p>
-              A read-only public Continuum seeded from public source records, with Atlas, Loom, and
-              Beacon Lens candidates over the same query.
-            </p>
-          </div>
-          <dl className="prototype-details">
-            <div>
-              <dt>Try</dt>
-              <dd>Swipe across the Lens candidates and compare how the same sources are arranged.</dd>
-            </div>
-            <div>
-              <dt>Status</dt>
-              <dd>Public data, source ids, provenance, and reference-only Lens outputs.</dd>
-            </div>
-          </dl>
-          <a className="prototype-link" href="/public/ada-lovelace">
-            Open Ada Continuum
+            Open capture prototype
           </a>
         </article>
         <article className="prototype-card">
@@ -1025,6 +1025,15 @@ function PrototypeIndex() {
           <p className="index-kicker">Notebook</p>
           <h2 id="blog-heading">Build notes</h2>
         </div>
+        <article className="blog-entry">
+          <time dateTime="2026-05-22">22 May 2026</time>
+          <h3>Public extended thought first</h3>
+          <p>
+            The MVP path now starts with public identity and topic Continuums. Ada Lovelace through
+            computing is the first slice: public sources, several Lens candidates, and lightweight
+            feedback.
+          </p>
+        </article>
         <article className="blog-entry">
           <time dateTime="2026-05-20">20 May 2026</time>
           <h3>Day one: capture the thought first</h3>
