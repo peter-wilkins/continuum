@@ -41,12 +41,17 @@ The public Ada page should show `Git <hash>` near the bottom. If the hash is sta
 
 ## Supabase Google OAuth
 
-Configure Supabase Auth with redirect URLs for each origin you use:
+Configure Supabase Auth with one callback URL for each origin you use:
 
 ```text
-http://localhost:5173
-https://<your-funnel-host>
+http://localhost:5173/auth/callback
+https://<your-funnel-host>/auth/callback
+continuum://auth-callback
 ```
+
+The frontend sends all web sign-ins through `/auth/callback`, so adding a new lab page or
+prototype route does not require another Supabase redirect URL. The interrupted route is stored
+locally before redirect; the app rejects cross-origin return URLs.
 
 The logged-out app should show only `Continue with Google`.
 

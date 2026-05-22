@@ -20,7 +20,15 @@ import {
   transcribeAudio,
 } from './api.js';
 import { type AudioCaptureChunk, useManualAudioCapture } from './audioCapture.js';
-import { getInitialSession, onAuthChange, signInWithGoogle, signOutCurrentDevice } from './auth.js';
+import {
+  clearStoredAuthRedirectNext,
+  getAuthRedirectError,
+  getInitialSession,
+  getStoredAuthRedirectNext,
+  onAuthChange,
+  signInWithGoogle,
+  signOutCurrentDevice,
+} from './auth.js';
 import { useHeadsetMediaControls } from './headsetMediaControls.js';
 import { useNativeShellBridge } from './nativeShellBridge.js';
 import {
@@ -66,6 +74,10 @@ export function App() {
     return <PrototypeIndex />;
   }
 
+  if (path === '/auth/callback') {
+    return <AuthCallback />;
+  }
+
   if (path === '/public/ada-lovelace') {
     return <PublicAdaContinuum />;
   }
@@ -93,6 +105,66 @@ const gitHash = import.meta.env.VITE_COMMIT_HASH ?? 'unknown';
 
 function BuildHash() {
   return <p className="build-hash">Git {gitHash}</p>;
+}
+
+function AuthCallback() {
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let mounted = true;
+    let unsubscribe: (() => void) | null = null;
+    const timeoutId = window.setTimeout(() => {
+      if (!mounted) return;
+      setError('Sign-in did not finish. Please try again.');
+    }, 8000);
+
+    const redirectAfterSession = () => {
+      const next = getStoredAuthRedirectNext(window.location);
+      window.clearTimeout(timeoutId);
+      clearStoredAuthRedirectNext();
+      window.location.replace(next);
+    };
+
+    const redirectError = getAuthRedirectError(window.location);
+    if (redirectError) {
+      window.clearTimeout(timeoutId);
+      setError(redirectError);
+      return () => {
+        mounted = false;
+      };
+    }
+
+    getInitialSession()
+      .then((session) => {
+        if (!mounted) return;
+        if (session) {
+          redirectAfterSession();
+          return;
+        }
+
+        unsubscribe = onAuthChange((nextSession) => {
+          if (!mounted || !nextSession) return;
+          redirectAfterSession();
+        });
+      })
+      .catch((err: unknown) => {
+        if (!mounted) return;
+        window.clearTimeout(timeoutId);
+        setError(err instanceof Error ? err.message : 'Failed to finish sign-in');
+      });
+
+    return () => {
+      mounted = false;
+      window.clearTimeout(timeoutId);
+      if (unsubscribe) unsubscribe();
+    };
+  }, []);
+
+  return (
+    <main className="login-screen">
+      {error ? <p className="error">{error}</p> : <p className="empty">Finishing sign-in...</p>}
+    </main>
+  );
 }
 
 function PublicAdaContinuum() {
