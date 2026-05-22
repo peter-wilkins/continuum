@@ -19,6 +19,11 @@ export async function signInWithGoogle(redirectTo = `${window.location.origin}/c
   if (error) throw error;
 }
 
+export async function signOutCurrentDevice() {
+  const { error } = await supabase.auth.signOut({ scope: 'local' });
+  if (error) throw error;
+}
+
 export function onAuthChange(callback: (session: Session | null) => void) {
   const { data } = supabase.auth.onAuthStateChange((_event, session) => {
     callback(session);

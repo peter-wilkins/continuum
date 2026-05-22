@@ -142,14 +142,26 @@ button {
 }
 
 .public-header-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  align-items: center;
   margin-top: 18px;
 }
 
-.text-link {
+.text-link,
+.text-button {
   color: #242424;
   font-weight: 700;
   text-decoration: underline;
   text-underline-offset: 3px;
+}
+
+.text-button {
+  border: 0;
+  background: transparent;
+  padding: 0;
+  cursor: pointer;
 }
 
 .public-lens-strip {

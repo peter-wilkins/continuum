@@ -20,7 +20,7 @@ import {
   transcribeAudio,
 } from './api.js';
 import { type AudioCaptureChunk, useManualAudioCapture } from './audioCapture.js';
-import { getInitialSession, onAuthChange, signInWithGoogle } from './auth.js';
+import { getInitialSession, onAuthChange, signInWithGoogle, signOutCurrentDevice } from './auth.js';
 import { useHeadsetMediaControls } from './headsetMediaControls.js';
 import { useNativeShellBridge } from './nativeShellBridge.js';
 import {
@@ -100,6 +100,7 @@ function PublicAdaContinuum() {
   const [authState, setAuthState] = useState<LoadState>({ status: 'loading' });
   const [feedbackState, setFeedbackState] = useState<PublicFeedbackState>({ status: 'idle' });
   const [feedbackSummary, setFeedbackSummary] = useState<PublicLensFeedbackSummary | null>(null);
+  const [authError, setAuthError] = useState<string | null>(null);
 
   useEffect(() => {
     let mounted = true;
@@ -214,6 +215,17 @@ function PublicAdaContinuum() {
     await submitPreference(continuum, lensOutputId, authState.session);
   }
 
+  async function handleSignOut() {
+    try {
+      setAuthError(null);
+      window.sessionStorage.removeItem(publicFeedbackIntentKey);
+      await signOutCurrentDevice();
+      setFeedbackState({ status: 'idle' });
+    } catch (err: unknown) {
+      setAuthError(err instanceof Error ? err.message : 'Failed to sign out');
+    }
+  }
+
   if (state.status === 'loading') {
     return <main className="public-screen" />;
   }
@@ -239,6 +251,11 @@ function PublicAdaContinuum() {
           <a className="text-link" href="/public/lenses">
             Lens guide
           </a>
+          {authState.status === 'logged_in' ? (
+            <button className="text-button" type="button" onClick={() => void handleSignOut()}>
+              Sign out
+            </button>
+          ) : null}
         </div>
       </header>
 
@@ -319,6 +336,7 @@ function PublicAdaContinuum() {
       {feedbackState.status === 'error' ? (
         <p className="public-feedback-error">{feedbackState.error}</p>
       ) : null}
+      {authError ? <p className="public-feedback-error">{authError}</p> : null}
       <BuildHash />
     </main>
   );
