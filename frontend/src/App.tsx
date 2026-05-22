@@ -22,6 +22,7 @@ import {
 import { type AudioCaptureChunk, useManualAudioCapture } from './audioCapture.js';
 import {
   clearStoredAuthRedirectNext,
+  completeImplicitAuthRedirect,
   getAuthRedirectError,
   getInitialSession,
   getStoredAuthRedirectNext,
@@ -134,7 +135,7 @@ function AuthCallback() {
       };
     }
 
-    getInitialSession()
+    completeImplicitAuthRedirect(window.location)
       .then((session) => {
         if (!mounted) return;
         if (session) {
@@ -142,10 +143,24 @@ function AuthCallback() {
           return;
         }
 
-        unsubscribe = onAuthChange((nextSession) => {
-          if (!mounted || !nextSession) return;
-          redirectAfterSession();
-        });
+        getInitialSession()
+          .then((nextSession) => {
+            if (!mounted) return;
+            if (nextSession) {
+              redirectAfterSession();
+              return;
+            }
+
+            unsubscribe = onAuthChange((changedSession) => {
+              if (!mounted || !changedSession) return;
+              redirectAfterSession();
+            });
+          })
+          .catch((err: unknown) => {
+            if (!mounted) return;
+            window.clearTimeout(timeoutId);
+            setError(err instanceof Error ? err.message : 'Failed to finish sign-in');
+          });
       })
       .catch((err: unknown) => {
         if (!mounted) return;
