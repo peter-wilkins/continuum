@@ -5,20 +5,39 @@
 Run these in separate terminals:
 
 ```bash
-npm run start --workspace backend
+npm run dev:backend
 ```
 
 ```bash
-npm run dev --workspace frontend
+npm run dev:frontend
 ```
 
 Open:
 
 ```text
-http://localhost:5173/?debug=1
+http://localhost:5173/public/ada-lovelace
 ```
 
 The frontend uses same-origin `/api` calls. In local dev, Vite proxies `/api` to the backend on `127.0.0.1:3000`, so the same setup works through Tailscale Funnel.
+
+## Public MVP Checks
+
+Open:
+
+```text
+http://localhost:5173/
+http://localhost:5173/public/ada-lovelace
+http://localhost:5173/public/lenses
+```
+
+Run:
+
+```bash
+npm run build --workspace shared
+npm run smoke:public-continuum --workspace backend
+```
+
+The public Ada page should show `Git <hash>` near the bottom. If the hash is stale in local dev, restart the frontend server.
 
 ## Supabase Google OAuth
 
@@ -40,10 +59,10 @@ tailscale funnel --bg --https=443 localhost:5173
 tailscale funnel status
 ```
 
-Use the HTTPS Funnel URL with `?debug=1`:
+Use the HTTPS Funnel URL:
 
 ```text
-https://<your-funnel-host>/?debug=1
+https://<your-funnel-host>/public/ada-lovelace
 ```
 
 If Funnel is already configured, `tailscale funnel status` should show the current public URL and target.
