@@ -120,6 +120,107 @@ button {
   background: #f7f5ef;
 }
 
+.public-continuum-screen {
+  height: 100dvh;
+  min-height: 100dvh;
+  overflow: hidden;
+  padding: 0;
+  background: #fffdf8;
+}
+
+.public-app-chrome {
+  position: fixed;
+  top: 0;
+  right: 0;
+  left: 0;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: calc(env(safe-area-inset-top) + 10px) max(12px, env(safe-area-inset-right))
+    9px max(12px, env(safe-area-inset-left));
+  border-bottom: 1px solid rgb(36 36 36 / 10%);
+  background: rgb(255 253 248 / 88%);
+  backdrop-filter: blur(14px);
+}
+
+.public-app-title {
+  min-width: 0;
+}
+
+.public-app-title p,
+.public-app-title h1,
+.public-app-title span {
+  overflow: hidden;
+  margin: 0;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.public-app-title p {
+  color: #7a4838;
+  font-size: 0.64rem;
+  font-weight: 850;
+  letter-spacing: 0;
+  text-transform: uppercase;
+}
+
+.public-app-title h1 {
+  max-width: min(45vw, 22rem);
+  font-size: 0.96rem;
+  line-height: 1.18;
+}
+
+.public-app-title span {
+  display: block;
+  max-width: min(48vw, 26rem);
+  color: #5f5d56;
+  font-size: 0.72rem;
+}
+
+.public-app-actions {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 8px;
+}
+
+.chrome-link,
+.chrome-button {
+  min-height: 32px;
+  border: 1px solid #c7beb0;
+  border-radius: 999px;
+  background: #fffdf8;
+  color: #242424;
+  padding: 6px 10px;
+  font-size: 0.78rem;
+  font-weight: 800;
+  line-height: 1;
+  text-decoration: none;
+}
+
+.chrome-button {
+  cursor: pointer;
+}
+
+.chrome-button:disabled {
+  cursor: progress;
+  opacity: 0.68;
+}
+
+.chrome-hash {
+  color: #8a8579;
+  font-size: 0.66rem;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.public-continuum-screen.is-installed .public-app-title p,
+.public-continuum-screen.is-installed .public-app-title span {
+  display: none;
+}
+
 .public-header {
   width: min(100% - 36px, 980px);
   margin: 0 auto 28px;
@@ -166,13 +267,21 @@ button {
 
 .public-lens-strip {
   display: grid;
-  grid-auto-columns: minmax(min(86vw, 760px), 760px);
+  height: 100dvh;
+  grid-auto-columns: 100vw;
   grid-auto-flow: column;
-  gap: 18px;
+  gap: 0;
   overflow-x: auto;
+  overflow-y: hidden;
   overscroll-behavior-x: contain;
   scroll-snap-type: x mandatory;
-  padding: 0 max(18px, calc((100vw - 980px) / 2)) 18px;
+  scroll-behavior: smooth;
+  scrollbar-width: none;
+  padding: 0;
+}
+
+.public-lens-strip::-webkit-scrollbar {
+  display: none;
 }
 
 .public-lens {
@@ -181,6 +290,23 @@ button {
   border-radius: 8px;
   background: #fffdf8;
   padding: 18px;
+}
+
+.public-continuum-screen .public-lens {
+  width: 100vw;
+  height: 100dvh;
+  overflow-y: auto;
+  overscroll-behavior-y: contain;
+  scroll-snap-align: center;
+  scroll-snap-stop: always;
+  border: 0;
+  border-radius: 0;
+  padding: calc(env(safe-area-inset-top) + 78px) max(18px, calc((100vw - 760px) / 2))
+    calc(env(safe-area-inset-bottom) + 28px);
+}
+
+.public-continuum-screen.is-installed .public-lens {
+  padding-top: calc(env(safe-area-inset-top) + 54px);
 }
 
 .lens-guide-list {
@@ -235,6 +361,24 @@ button {
 .public-lens-header h2 {
   margin: 0;
   font-size: 1.6rem;
+}
+
+.public-continuum-screen .public-lens-header {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  align-items: center;
+  margin: 0 0 14px;
+  padding: 0 0 10px;
+  background: #fffdf8;
+}
+
+.public-continuum-screen .public-lens-header h2 {
+  color: #747169;
+  font-size: 0.82rem;
+  font-weight: 850;
+  letter-spacing: 0;
+  text-transform: uppercase;
 }
 
 .lens-vote-button {
@@ -320,6 +464,21 @@ button {
   color: #8b2f24;
 }
 
+.public-continuum-screen .public-feedback-error {
+  position: fixed;
+  right: 14px;
+  bottom: calc(env(safe-area-inset-bottom) + 14px);
+  left: 14px;
+  z-index: 22;
+  width: auto;
+  margin: 0;
+  border: 1px solid #d5b0a8;
+  border-radius: 8px;
+  background: #fffdf8;
+  padding: 8px 10px;
+  box-shadow: 0 10px 24px rgb(28 28 26 / 12%);
+}
+
 .build-hash {
   width: min(100% - 36px, 980px);
   margin: 22px auto 0;
@@ -341,7 +500,7 @@ button {
 
 .public-lens-sections {
   display: grid;
-  gap: 18px;
+  gap: 20px;
 }
 
 .public-lens-section {
@@ -354,9 +513,13 @@ button {
   font-size: 1rem;
 }
 
+.public-continuum-screen .public-lens-section h3 {
+  font-size: 1.12rem;
+}
+
 .public-event-list {
   display: grid;
-  gap: 14px;
+  gap: 18px;
   list-style: none;
   margin: 0;
   padding: 0;
@@ -384,10 +547,51 @@ button {
   font-size: 1rem;
 }
 
+.public-continuum-screen .public-event-list h4 {
+  font-size: 1.04rem;
+}
+
 .public-event-list p:last-child {
   margin: 0;
   color: #3f3d38;
   line-height: 1.5;
+}
+
+.public-continuum-screen .public-event-list p:last-child {
+  font-size: clamp(1rem, 0.98rem + 0.35vw, 1.2rem);
+  line-height: 1.58;
+}
+
+@media (max-width: 640px) {
+  .public-app-title span {
+    display: none;
+  }
+
+  .public-app-title h1 {
+    max-width: 34vw;
+    font-size: 0.86rem;
+  }
+
+  .public-app-actions {
+    gap: 6px;
+  }
+
+  .chrome-link,
+  .chrome-button {
+    min-height: 30px;
+    padding: 5px 8px;
+    font-size: 0.72rem;
+  }
+
+  .chrome-hash {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .public-lens-strip {
+    scroll-behavior: auto;
+  }
 }
 
 .index-header,

@@ -1,0 +1,19 @@
+{
+  "id": "/public/ada-lovelace",
+  "name": "Continuum",
+  "short_name": "Continuum",
+  "description": "A public Continuum for comparing Lens outputs over extended thought.",
+  "start_url": "/public/ada-lovelace",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#fffdf8",
+  "theme_color": "#242424",
+  "icons": [
+    {
+      "src": "/icons/continuum.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

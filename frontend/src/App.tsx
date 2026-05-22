@@ -106,11 +106,83 @@ type PreferencePulse = {
   lensOutputId: string;
 };
 
+type BeforeInstallPromptEvent = Event & {
+  prompt: () => Promise<void>;
+  userChoice: Promise<{ outcome: 'accepted' | 'dismissed'; platform: string }>;
+};
+
 const publicFeedbackIntentKey = 'continuum.publicAda.pendingLensOutputId';
 const gitHash = import.meta.env.VITE_COMMIT_HASH ?? 'unknown';
 
 function BuildHash() {
   return <p className="build-hash">Git {gitHash}</p>;
+}
+
+function getIsInstalledPwa() {
+  const navigatorWithStandalone = navigator as Navigator & { standalone?: boolean };
+  return (
+    window.matchMedia('(display-mode: standalone)').matches ||
+    navigatorWithStandalone.standalone === true
+  );
+}
+
+function usePwaInstallPrompt() {
+  const [promptEvent, setPromptEvent] = useState<BeforeInstallPromptEvent | null>(null);
+  const [installed, setInstalled] = useState(getIsInstalledPwa);
+  const [installing, setInstalling] = useState(false);
+
+  useEffect(() => {
+    const displayMode = window.matchMedia('(display-mode: standalone)');
+    const syncInstalled = () => setInstalled(getIsInstalledPwa());
+    const handleBeforeInstallPrompt = (event: Event) => {
+      event.preventDefault();
+      setPromptEvent(event as BeforeInstallPromptEvent);
+    };
+    const handleInstalled = () => {
+      setInstalled(true);
+      setPromptEvent(null);
+    };
+
+    syncInstalled();
+    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+    window.addEventListener('appinstalled', handleInstalled);
+    displayMode.addEventListener('change', syncInstalled);
+
+    return () => {
+      window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+      window.removeEventListener('appinstalled', handleInstalled);
+      displayMode.removeEventListener('change', syncInstalled);
+    };
+  }, []);
+
+  const install = useCallback(async () => {
+    if (!promptEvent || installed) return;
+
+    setInstalling(true);
+    try {
+      await promptEvent.prompt();
+      await promptEvent.userChoice;
+      setPromptEvent(null);
+      setInstalled(getIsInstalledPwa());
+    } finally {
+      setInstalling(false);
+    }
+  }, [installed, promptEvent]);
+
+  return {
+    canInstall: Boolean(promptEvent && !installed),
+    install,
+    installing,
+    installed,
+  };
+}
+
+function getAnonymousLensLabel(index: number) {
+  if (index < 26) {
+    return `Lens ${String.fromCharCode(65 + index)}`;
+  }
+
+  return `Lens ${index + 1}`;
 }
 
 function AuthCallback() {
@@ -194,6 +266,7 @@ function PublicAdaContinuum() {
   const [feedbackSummary, setFeedbackSummary] = useState<PublicLensFeedbackSummary | null>(null);
   const [authError, setAuthError] = useState<string | null>(null);
   const [preferencePulses, setPreferencePulses] = useState<PreferencePulse[]>([]);
+  const pwaInstall = usePwaInstallPrompt();
   const submittedPendingFeedbackRef = useRef<string | null>(null);
   const nextPreferencePulseIdRef = useRef(0);
 
@@ -350,26 +423,40 @@ function PublicAdaContinuum() {
   const eventsById = new Map(continuum.events.map((event) => [event.id, event]));
 
   return (
-    <main className="public-screen">
-      <header className="public-header">
-        <p className="index-kicker">Public Continuum</p>
-        <h1>{continuum.scope.title}</h1>
-        <p>{continuum.query.text}</p>
-        <div className="public-header-actions">
-          <a className="text-link" href="/public/lenses">
-            Lens guide
+    <main
+      className={`public-screen public-continuum-screen${pwaInstall.installed ? ' is-installed' : ''}`}
+    >
+      <header className="public-app-chrome">
+        <div className="public-app-title">
+          <p>Public Continuum</p>
+          <h1>{continuum.scope.title}</h1>
+          <span>{continuum.query.text}</span>
+        </div>
+        <div className="public-app-actions">
+          <a className="chrome-link" href="/public/lenses">
+            Guide
           </a>
+          {pwaInstall.canInstall ? (
+            <button
+              className="chrome-button"
+              type="button"
+              disabled={pwaInstall.installing}
+              onClick={() => void pwaInstall.install()}
+            >
+              {pwaInstall.installing ? 'Installing' : 'Install'}
+            </button>
+          ) : null}
           {authState.status === 'logged_in' ? (
-            <button className="text-button" type="button" onClick={() => void handleSignOut()}>
+            <button className="chrome-button" type="button" onClick={() => void handleSignOut()}>
               Sign out
             </button>
           ) : null}
+          <span className="chrome-hash">Git {gitHash}</span>
         </div>
       </header>
 
       <section className="public-lens-strip" aria-label="Lens candidates">
-        {continuum.outputs.map((output) => {
-          const lens = continuum.lenses.find((candidate) => candidate.id === output.lensId);
+        {continuum.outputs.map((output, outputIndex) => {
           const submitting =
             feedbackState.status === 'submitting' && feedbackState.lensOutputId === output.id;
           const recorded =
@@ -380,12 +467,13 @@ function PublicAdaContinuum() {
             0;
 
           return (
-            <article className="public-lens" key={output.id}>
+            <article
+              className="public-lens"
+              key={output.id}
+              aria-label={`${getAnonymousLensLabel(outputIndex)} candidate`}
+            >
               <header className="public-lens-header">
-                <div>
-                  <p className="status-pill">{lens?.version ?? output.lensVersion}</p>
-                  <h2>{lens?.name ?? output.lensId}</h2>
-                </div>
+                <h2>{getAnonymousLensLabel(outputIndex)}</h2>
                 <button
                   className={`lens-vote-button${recorded ? ' selected' : ''}`}
                   type="button"
@@ -411,12 +499,6 @@ function PublicAdaContinuum() {
                 <p className="lens-feedback-count">
                   {preferenceCount} {preferenceCount === 1 ? 'preference' : 'preferences'}
                 </p>
-              ) : null}
-              {lens ? (
-                <div className="lens-blurb">
-                  <p>{lens.userBlurb}</p>
-                  <p>{lens.technicalBlurb}</p>
-                </div>
               ) : null}
               <div className="public-lens-sections">
                 {output.sections.map((section) => (
@@ -456,7 +538,6 @@ function PublicAdaContinuum() {
         <p className="public-feedback-error">{feedbackState.error}</p>
       ) : null}
       {authError ? <p className="public-feedback-error">{authError}</p> : null}
-      <BuildHash />
     </main>
   );
 }
