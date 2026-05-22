@@ -1,42 +1,15 @@
-import type { Session } from '@supabase/supabase-js';
-import type { PublicContinuumResponse, PublicLensFeedbackSummary } from '@continuum/shared';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import {
-  fetchPublicAdaContinuum,
-  fetchPublicLensFeedbackSummary,
-  submitPublicLensFeedback,
-} from './api.js';
-import {
-  getInitialSession,
-  onAuthChange,
-  signInWithGoogle,
-  signOutCurrentDevice,
-} from './auth.js';
+import type { PublicContinuumResponse } from '@continuum/shared';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { fetchPublicAdaContinuum } from './api.js';
+import { getInitialSession, onAuthChange } from './auth.js';
 import { BuildHash, gitHash } from './buildInfo.js';
+import { type PublicAuthState, usePublicLensPreference } from './usePublicLensPreference.js';
 import { usePwaInstallPrompt } from './usePwaInstallPrompt.js';
-
-type LoadState =
-  | { status: 'loading' }
-  | { status: 'logged_out' }
-  | { status: 'logged_in'; session: Session };
 
 type PublicContinuumState =
   | { status: 'loading' }
   | { status: 'ready'; continuum: PublicContinuumResponse }
   | { status: 'error'; error: string };
-
-type PublicFeedbackState =
-  | { status: 'idle' }
-  | { status: 'submitting'; lensOutputId: string }
-  | { status: 'recorded'; lensOutputId: string }
-  | { status: 'error'; error: string };
-
-type PreferencePulse = {
-  id: number;
-  lensOutputId: string;
-};
-
-const publicFeedbackIntentKey = 'continuum.publicAda.pendingLensOutputId';
 
 function shuffleItems<T>(items: readonly T[]) {
   const shuffled = [...items];
@@ -53,21 +26,25 @@ function shuffleItems<T>(items: readonly T[]) {
 
 export function PublicAdaContinuum() {
   const [state, setState] = useState<PublicContinuumState>({ status: 'loading' });
-  const [authState, setAuthState] = useState<LoadState>({ status: 'loading' });
-  const [feedbackState, setFeedbackState] = useState<PublicFeedbackState>({ status: 'idle' });
-  const [feedbackSummary, setFeedbackSummary] = useState<PublicLensFeedbackSummary | null>(null);
-  const [authError, setAuthError] = useState<string | null>(null);
-  const [preferencePulses, setPreferencePulses] = useState<PreferencePulse[]>([]);
+  const [authState, setAuthState] = useState<PublicAuthState>({ status: 'loading' });
   const [menuOpen, setMenuOpen] = useState(false);
   const pwaInstall = usePwaInstallPrompt();
-  const submittedPendingFeedbackRef = useRef<string | null>(null);
-  const nextPreferencePulseIdRef = useRef(0);
   const guidePageRef = useRef<HTMLElement | null>(null);
+  const readyContinuum = state.status === 'ready' ? state.continuum : null;
+  const {
+    authError,
+    clearPreferencePulse,
+    feedbackState,
+    feedbackSummary,
+    preferencePulses,
+    preferLens,
+    signOut,
+  } = usePublicLensPreference(readyContinuum, authState);
   const displayedOutputs = useMemo(() => {
-    if (state.status !== 'ready') return [];
+    if (!readyContinuum) return [];
 
-    return shuffleItems(state.continuum.outputs);
-  }, [state]);
+    return shuffleItems(readyContinuum.outputs);
+  }, [readyContinuum]);
 
   useEffect(() => {
     if (!menuOpen) return;
@@ -107,24 +84,6 @@ export function PublicAdaContinuum() {
   useEffect(() => {
     let mounted = true;
 
-    fetchPublicLensFeedbackSummary()
-      .then((summary) => {
-        if (!mounted) return;
-        setFeedbackSummary(summary);
-      })
-      .catch(() => {
-        if (!mounted) return;
-        setFeedbackSummary(null);
-      });
-
-    return () => {
-      mounted = false;
-    };
-  }, []);
-
-  useEffect(() => {
-    let mounted = true;
-
     getInitialSession()
       .then((session) => {
         if (!mounted) return;
@@ -144,81 +103,6 @@ export function PublicAdaContinuum() {
       unsubscribe();
     };
   }, []);
-
-  const submitPreference = useCallback(
-    async (continuum: PublicContinuumResponse, lensOutputId: string, session: Session) => {
-      setFeedbackState({ status: 'submitting', lensOutputId });
-
-      try {
-        await submitPublicLensFeedback(session, {
-          scopeId: continuum.scope.id,
-          queryId: continuum.query.id,
-          selectedLensOutputId: lensOutputId,
-          candidateLensOutputIds: continuum.outputs.map((output) => output.id),
-        });
-        window.sessionStorage.removeItem(publicFeedbackIntentKey);
-        setFeedbackState({ status: 'recorded', lensOutputId });
-        setPreferencePulses((current) => [
-          ...current,
-          {
-            id: nextPreferencePulseIdRef.current++,
-            lensOutputId,
-          },
-        ]);
-        void fetchPublicLensFeedbackSummary()
-          .then(setFeedbackSummary)
-          .catch(() => setFeedbackSummary(null));
-      } catch (err: unknown) {
-        setFeedbackState({
-          status: 'error',
-          error: err instanceof Error ? err.message : 'Failed to record Lens feedback',
-        });
-      }
-    },
-    [],
-  );
-
-  useEffect(() => {
-    if (state.status !== 'ready' || authState.status !== 'logged_in') return;
-
-    const pendingLensOutputId = window.sessionStorage.getItem(publicFeedbackIntentKey);
-    if (!pendingLensOutputId) return;
-
-    if (!state.continuum.outputs.some((output) => output.id === pendingLensOutputId)) {
-      window.sessionStorage.removeItem(publicFeedbackIntentKey);
-      return;
-    }
-
-    if (submittedPendingFeedbackRef.current === pendingLensOutputId) return;
-    submittedPendingFeedbackRef.current = pendingLensOutputId;
-    void submitPreference(state.continuum, pendingLensOutputId, authState.session);
-  }, [authState, state, submitPreference]);
-
-  async function handleLensPreference(continuum: PublicContinuumResponse, lensOutputId: string) {
-    if (authState.status !== 'logged_in') {
-      window.sessionStorage.setItem(publicFeedbackIntentKey, lensOutputId);
-      setFeedbackState({ status: 'submitting', lensOutputId });
-      await signInWithGoogle(window.location.href);
-      return;
-    }
-
-    await submitPreference(continuum, lensOutputId, authState.session);
-  }
-
-  async function handleSignOut() {
-    try {
-      setAuthError(null);
-      window.sessionStorage.removeItem(publicFeedbackIntentKey);
-      await signOutCurrentDevice();
-      setFeedbackState({ status: 'idle' });
-    } catch (err: unknown) {
-      setAuthError(err instanceof Error ? err.message : 'Failed to sign out');
-    }
-  }
-
-  function handlePreferencePulseDone(id: number) {
-    setPreferencePulses((current) => current.filter((pulse) => pulse.id !== id));
-  }
 
   function handleGuideJump() {
     guidePageRef.current?.scrollIntoView({
@@ -240,7 +124,7 @@ export function PublicAdaContinuum() {
 
   async function handleSignOutFromMenu() {
     setMenuOpen(false);
-    await handleSignOut();
+    await signOut();
   }
 
   if (state.status === 'loading') {
@@ -325,7 +209,7 @@ export function PublicAdaContinuum() {
                   className={`lens-vote-button${recorded ? ' selected' : ''}`}
                   type="button"
                   disabled={feedbackState.status === 'submitting'}
-                  onClick={() => void handleLensPreference(continuum, output.id)}
+                  onClick={() => void preferLens(output.id)}
                   title={authState.status === 'logged_in' ? 'Prefer this Lens' : 'Sign in to vote'}
                 >
                   {submitting ? '...' : recorded ? 'OK' : '+1'}
@@ -334,7 +218,7 @@ export function PublicAdaContinuum() {
                       aria-hidden="true"
                       className="lens-vote-pulse"
                       key={pulse.id}
-                      onAnimationEnd={() => handlePreferencePulseDone(pulse.id)}
+                      onAnimationEnd={() => clearPreferencePulse(pulse.id)}
                     >
                       +1
                     </span>
@@ -405,7 +289,7 @@ export function PublicAdaContinuum() {
               ) : null}
               {pwaInstall.installed ? <span className="chrome-muted">Installed</span> : null}
               {authState.status === 'logged_in' ? (
-                <button className="chrome-button" type="button" onClick={() => void handleSignOut()}>
+                <button className="chrome-button" type="button" onClick={() => void signOut()}>
                   Sign out
                 </button>
               ) : null}
