@@ -7,26 +7,42 @@ import {
 } from '@continuum/shared';
 import type { FastifyInstance } from 'fastify';
 import { requireAuth } from './auth.js';
-import { createAdaPublicContinuum } from './publicAdaContinuum.js';
 import {
   appendPublicLensFeedback,
   feedbackMatchesContinuum,
   summarizePublicLensFeedback,
 } from './publicLensFeedbackLog.js';
+import { getPublicContinuumTarget, type PublicContinuumTarget } from './publicContinuumTargets.js';
 
 export async function registerPublicContinuumRoutes(app: FastifyInstance) {
-  app.get('/api/public-continuum/ada-lovelace', async () => {
-    return createAdaPublicContinuum();
+  app.get('/api/public-continuum/:targetId', async (request, reply) => {
+    const target = getTargetFromParams(request.params);
+    if (!target) {
+      return reply.status(404).send({ error: 'Unknown public Continuum target' });
+    }
+
+    return target.createContinuum();
   });
 
-  app.get('/api/public-continuum/ada-lovelace/feedback-summary', async () => {
-    const continuum = createAdaPublicContinuum();
+  app.get('/api/public-continuum/:targetId/feedback-summary', async (request, reply) => {
+    const target = getTargetFromParams(request.params);
+    if (!target) {
+      return reply.status(404).send({ error: 'Unknown public Continuum target' });
+    }
+
+    const continuum = target.createContinuum();
     return summarizePublicLensFeedback(continuum);
   });
 
-  app.post('/api/public-continuum/ada-lovelace/feedback', async (request, reply) => {
+  app.post('/api/public-continuum/:targetId/feedback', async (request, reply) => {
     const user = await requireAuth(request, reply);
     if (!user) return;
+
+    const target = getTargetFromParams(request.params);
+    if (!target) {
+      await reply.status(404).send({ error: 'Unknown public Continuum target' });
+      return;
+    }
 
     const parsed = PublicLensFeedbackRequestSchema.safeParse(request.body);
     if (!parsed.success) {
@@ -34,7 +50,7 @@ export async function registerPublicContinuumRoutes(app: FastifyInstance) {
       return;
     }
 
-    const continuum = createAdaPublicContinuum();
+    const continuum = target.createContinuum();
     if (!feedbackMatchesContinuum(parsed.data, continuum)) {
       await reply.status(400).send({ error: 'Feedback does not match the active Continuum' });
       return;
@@ -55,4 +71,10 @@ export async function registerPublicContinuumRoutes(app: FastifyInstance) {
 
     return reply.status(201).send(PublicLensFeedbackResponseSchema.parse({ feedback }));
   });
+}
+
+function getTargetFromParams(params: unknown): PublicContinuumTarget | null {
+  const { targetId } = params as { targetId: unknown };
+  if (typeof targetId !== 'string') return null;
+  return getPublicContinuumTarget(targetId);
 }
