@@ -156,6 +156,62 @@ const analyticalEngineDocument = {
   },
 } satisfies PublicDocumentNormalizationInput;
 
+const operationsNoteDocument = {
+  source: {
+    platform: 'public_archive',
+    sourceFamily: 'public_archive',
+    sourceName: 'project_gutenberg',
+    sourceId: '75107#note-a-operations',
+    sourceUrl: 'https://www.gutenberg.org/files/75107/75107-h/75107-h.htm#NOTE_A',
+    retrievedAt: '2026-05-22T11:55:00.000Z',
+    license: 'Public domain in the USA.',
+    upstreamSources: ['scientific_memoirs_volume_3_1843'],
+    derivedFrom: ['project_gutenberg:75107'],
+  },
+  document: {
+    title: 'Note A on operations and the Analytical Engine',
+    language: 'en',
+    publishedAt: '1843-01-01T00:00:00.000Z',
+    publishedAtConfidence: 'inferred',
+    creators: [
+      {
+        role: 'author',
+        name: 'Ada Lovelace',
+      },
+    ],
+    subjectTags: ['Analytical Engine', 'operations', 'computing', 'Ada Lovelace'],
+    text: 'The operating mechanism can act upon things besides number when their relations can be expressed by the abstract science of operations.',
+  },
+} satisfies PublicDocumentNormalizationInput;
+
+const jacquardNoteDocument = {
+  source: {
+    platform: 'public_archive',
+    sourceFamily: 'public_archive',
+    sourceName: 'project_gutenberg',
+    sourceId: '75107#note-a-jacquard',
+    sourceUrl: 'https://www.gutenberg.org/files/75107/75107-h/75107-h.htm#NOTE_A',
+    retrievedAt: '2026-05-22T11:55:00.000Z',
+    license: 'Public domain in the USA.',
+    upstreamSources: ['scientific_memoirs_volume_3_1843'],
+    derivedFrom: ['project_gutenberg:75107'],
+  },
+  document: {
+    title: 'Note A on Jacquard cards and algebraic patterns',
+    language: 'en',
+    publishedAt: '1843-01-01T00:00:00.000Z',
+    publishedAtConfidence: 'inferred',
+    creators: [
+      {
+        role: 'author',
+        name: 'Ada Lovelace',
+      },
+    ],
+    subjectTags: ['Analytical Engine', 'Jacquard loom', 'programming', 'Ada Lovelace'],
+    text: 'The Analytical Engine weaves algebraical patterns just as the Jacquard loom weaves flowers and leaves.',
+  },
+} satisfies PublicDocumentNormalizationInput;
+
 export async function registerPublicContinuumRoutes(app: FastifyInstance) {
   app.get('/api/public-continuum/ada-lovelace', async () => {
     return createAdaPublicContinuum();
@@ -217,6 +273,8 @@ function createAdaPublicContinuum() {
   const events = [
     normalizeWikidataEntity(wikidataAda),
     normalizePublicDocument(analyticalEngineDocument),
+    normalizePublicDocument(operationsNoteDocument),
+    normalizePublicDocument(jacquardNoteDocument),
   ];
   const outputs = createDefaultPublicLensOutputs(
     adaScope,
