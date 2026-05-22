@@ -101,6 +101,11 @@ type PublicFeedbackState =
   | { status: 'recorded'; lensOutputId: string }
   | { status: 'error'; error: string };
 
+type PreferencePulse = {
+  id: number;
+  lensOutputId: string;
+};
+
 const publicFeedbackIntentKey = 'continuum.publicAda.pendingLensOutputId';
 const gitHash = import.meta.env.VITE_COMMIT_HASH ?? 'unknown';
 
@@ -188,7 +193,9 @@ function PublicAdaContinuum() {
   const [feedbackState, setFeedbackState] = useState<PublicFeedbackState>({ status: 'idle' });
   const [feedbackSummary, setFeedbackSummary] = useState<PublicLensFeedbackSummary | null>(null);
   const [authError, setAuthError] = useState<string | null>(null);
+  const [preferencePulses, setPreferencePulses] = useState<PreferencePulse[]>([]);
   const submittedPendingFeedbackRef = useRef<string | null>(null);
+  const nextPreferencePulseIdRef = useRef(0);
 
   useEffect(() => {
     let mounted = true;
@@ -265,6 +272,13 @@ function PublicAdaContinuum() {
         });
         window.sessionStorage.removeItem(publicFeedbackIntentKey);
         setFeedbackState({ status: 'recorded', lensOutputId });
+        setPreferencePulses((current) => [
+          ...current,
+          {
+            id: nextPreferencePulseIdRef.current++,
+            lensOutputId,
+          },
+        ]);
         void fetchPublicLensFeedbackSummary()
           .then(setFeedbackSummary)
           .catch(() => setFeedbackSummary(null));
@@ -316,6 +330,10 @@ function PublicAdaContinuum() {
     }
   }
 
+  function handlePreferencePulseDone(id: number) {
+    setPreferencePulses((current) => current.filter((pulse) => pulse.id !== id));
+  }
+
   if (state.status === 'loading') {
     return <main className="public-screen" />;
   }
@@ -356,6 +374,7 @@ function PublicAdaContinuum() {
             feedbackState.status === 'submitting' && feedbackState.lensOutputId === output.id;
           const recorded =
             feedbackState.status === 'recorded' && feedbackState.lensOutputId === output.id;
+          const pulses = preferencePulses.filter((pulse) => pulse.lensOutputId === output.id);
           const preferenceCount =
             feedbackSummary?.byLensOutput.find((item) => item.lensOutputId === output.id)?.count ??
             0;
@@ -375,6 +394,16 @@ function PublicAdaContinuum() {
                   title={authState.status === 'logged_in' ? 'Prefer this Lens' : 'Sign in to vote'}
                 >
                   {submitting ? '...' : recorded ? 'OK' : '+1'}
+                  {pulses.map((pulse) => (
+                    <span
+                      aria-hidden="true"
+                      className="lens-vote-pulse"
+                      key={pulse.id}
+                      onAnimationEnd={() => handlePreferencePulseDone(pulse.id)}
+                    >
+                      +1
+                    </span>
+                  ))}
                 </button>
               </header>
               {recorded ? <p className="lens-feedback-status">Preference recorded</p> : null}
