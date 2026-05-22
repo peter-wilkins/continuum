@@ -8,6 +8,7 @@
     "build": "tsc -p tsconfig.json",
     "smoke:core": "tsx src/coreSmoke.ts",
     "smoke:local-source-cache": "tsx src/localSourceCacheSmoke.ts",
+    "smoke:public-continuum": "tsx src/publicContinuumSmoke.ts",
     "start": "node dist/index.js",
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
