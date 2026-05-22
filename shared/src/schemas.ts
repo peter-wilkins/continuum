@@ -161,6 +161,28 @@ export const PublicContinuumResponseSchema = z.object({
   outputs: z.array(PublicContinuumLensOutputSchema),
 });
 
+export const PublicLensFeedbackRequestSchema = z.object({
+  scopeId: z.string().min(1),
+  queryId: z.string().min(1),
+  selectedLensOutputId: z.string().min(1),
+  candidateLensOutputIds: z.array(z.string().min(1)).min(1),
+});
+
+export const PublicLensFeedbackSignalSchema = z.object({
+  id: z.string().min(1),
+  userId: z.string().min(1),
+  scopeId: z.string().min(1),
+  queryId: z.string().min(1),
+  selectedLensOutputId: z.string().min(1),
+  candidateLensOutputIds: z.array(z.string().min(1)).min(1),
+  signal: z.literal('preferred'),
+  createdAt: EventDateTimeSchema,
+});
+
+export const PublicLensFeedbackResponseSchema = z.object({
+  feedback: PublicLensFeedbackSignalSchema,
+});
+
 export const ErrorResponseSchema = z.object({
   error: z.string(),
 });
@@ -185,4 +207,7 @@ export type PublicContinuumEvent = z.infer<typeof PublicContinuumEventSchema>;
 export type PublicContinuumLensDefinition = z.infer<typeof PublicContinuumLensDefinitionSchema>;
 export type PublicContinuumLensOutput = z.infer<typeof PublicContinuumLensOutputSchema>;
 export type PublicContinuumResponse = z.infer<typeof PublicContinuumResponseSchema>;
+export type PublicLensFeedbackRequest = z.infer<typeof PublicLensFeedbackRequestSchema>;
+export type PublicLensFeedbackSignal = z.infer<typeof PublicLensFeedbackSignalSchema>;
+export type PublicLensFeedbackResponse = z.infer<typeof PublicLensFeedbackResponseSchema>;
 export type ErrorResponse = z.infer<typeof ErrorResponseSchema>;

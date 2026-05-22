@@ -14,6 +14,7 @@ import {
   fetchLocalSourceCacheEvents,
   fetchLocalSourceCacheSummary,
   fetchPublicAdaContinuum,
+  submitPublicLensFeedback,
   transcribeAudio,
 } from './api.js';
 import { type AudioCaptureChunk, useManualAudioCapture } from './audioCapture.js';
@@ -75,8 +76,18 @@ type PublicContinuumState =
   | { status: 'ready'; continuum: PublicContinuumResponse }
   | { status: 'error'; error: string };
 
+type PublicFeedbackState =
+  | { status: 'idle' }
+  | { status: 'submitting'; lensOutputId: string }
+  | { status: 'recorded'; lensOutputId: string }
+  | { status: 'error'; error: string };
+
+const publicFeedbackIntentKey = 'continuum.publicAda.pendingLensOutputId';
+
 function PublicAdaContinuum() {
   const [state, setState] = useState<PublicContinuumState>({ status: 'loading' });
+  const [authState, setAuthState] = useState<LoadState>({ status: 'loading' });
+  const [feedbackState, setFeedbackState] = useState<PublicFeedbackState>({ status: 'idle' });
 
   useEffect(() => {
     let mounted = true;
@@ -98,6 +109,77 @@ function PublicAdaContinuum() {
       mounted = false;
     };
   }, []);
+
+  useEffect(() => {
+    let mounted = true;
+
+    getInitialSession()
+      .then((session) => {
+        if (!mounted) return;
+        setAuthState(session ? { status: 'logged_in', session } : { status: 'logged_out' });
+      })
+      .catch(() => {
+        if (!mounted) return;
+        setAuthState({ status: 'logged_out' });
+      });
+
+    const unsubscribe = onAuthChange((session) => {
+      setAuthState(session ? { status: 'logged_in', session } : { status: 'logged_out' });
+    });
+
+    return () => {
+      mounted = false;
+      unsubscribe();
+    };
+  }, []);
+
+  const submitPreference = useCallback(
+    async (continuum: PublicContinuumResponse, lensOutputId: string, session: Session) => {
+      setFeedbackState({ status: 'submitting', lensOutputId });
+
+      try {
+        await submitPublicLensFeedback(session, {
+          scopeId: continuum.scope.id,
+          queryId: continuum.query.id,
+          selectedLensOutputId: lensOutputId,
+          candidateLensOutputIds: continuum.outputs.map((output) => output.id),
+        });
+        window.sessionStorage.removeItem(publicFeedbackIntentKey);
+        setFeedbackState({ status: 'recorded', lensOutputId });
+      } catch (err: unknown) {
+        setFeedbackState({
+          status: 'error',
+          error: err instanceof Error ? err.message : 'Failed to record Lens feedback',
+        });
+      }
+    },
+    [],
+  );
+
+  useEffect(() => {
+    if (state.status !== 'ready' || authState.status !== 'logged_in') return;
+
+    const pendingLensOutputId = window.sessionStorage.getItem(publicFeedbackIntentKey);
+    if (!pendingLensOutputId) return;
+
+    if (!state.continuum.outputs.some((output) => output.id === pendingLensOutputId)) {
+      window.sessionStorage.removeItem(publicFeedbackIntentKey);
+      return;
+    }
+
+    void submitPreference(state.continuum, pendingLensOutputId, authState.session);
+  }, [authState, state, submitPreference]);
+
+  async function handleLensPreference(continuum: PublicContinuumResponse, lensOutputId: string) {
+    if (authState.status !== 'logged_in') {
+      window.sessionStorage.setItem(publicFeedbackIntentKey, lensOutputId);
+      setFeedbackState({ status: 'submitting', lensOutputId });
+      await signInWithGoogle(window.location.href);
+      return;
+    }
+
+    await submitPreference(continuum, lensOutputId, authState.session);
+  }
 
   if (state.status === 'loading') {
     return <main className="public-screen" />;
@@ -125,6 +207,10 @@ function PublicAdaContinuum() {
       <section className="public-lens-strip" aria-label="Lens candidates">
         {continuum.outputs.map((output) => {
           const lens = continuum.lenses.find((candidate) => candidate.id === output.lensId);
+          const submitting =
+            feedbackState.status === 'submitting' && feedbackState.lensOutputId === output.id;
+          const recorded =
+            feedbackState.status === 'recorded' && feedbackState.lensOutputId === output.id;
 
           return (
             <article className="public-lens" key={output.id}>
@@ -133,10 +219,17 @@ function PublicAdaContinuum() {
                   <p className="status-pill">{lens?.version ?? output.lensVersion}</p>
                   <h2>{lens?.name ?? output.lensId}</h2>
                 </div>
-                <button className="lens-vote-button" type="button" title="Sign in to vote">
-                  +1
+                <button
+                  className={`lens-vote-button${recorded ? ' selected' : ''}`}
+                  type="button"
+                  disabled={feedbackState.status === 'submitting'}
+                  onClick={() => void handleLensPreference(continuum, output.id)}
+                  title={authState.status === 'logged_in' ? 'Prefer this Lens' : 'Sign in to vote'}
+                >
+                  {submitting ? '...' : recorded ? 'OK' : '+1'}
                 </button>
               </header>
+              {recorded ? <p className="lens-feedback-status">Preference recorded</p> : null}
               {lens ? (
                 <div className="lens-blurb">
                   <p>{lens.userBlurb}</p>
@@ -170,6 +263,9 @@ function PublicAdaContinuum() {
           );
         })}
       </section>
+      {feedbackState.status === 'error' ? (
+        <p className="public-feedback-error">{feedbackState.error}</p>
+      ) : null}
     </main>
   );
 }
