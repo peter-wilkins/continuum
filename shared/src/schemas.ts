@@ -117,6 +117,50 @@ export const LocalImportPreviewSummariesResponseSchema = z.object({
   previews: z.array(LocalImportPreviewSummarySchema),
 });
 
+export const PublicContinuumEventSchema = z.object({
+  id: z.string().min(1),
+  sourceName: z.string().min(1),
+  sourceFamily: z.string().min(1),
+  subject: z.string().nullable(),
+  text: z.string(),
+  license: z.string().nullable(),
+});
+
+export const PublicContinuumLensDefinitionSchema = z.object({
+  id: z.string().min(1),
+  name: z.string().min(1),
+  version: z.string().min(1),
+  userBlurb: z.string().min(1),
+  technicalBlurb: z.string().min(1),
+});
+
+export const PublicContinuumLensOutputSchema = z.object({
+  id: z.string().min(1),
+  lensId: z.string().min(1),
+  lensVersion: z.string().min(1),
+  sections: z.array(z.object({
+    id: z.string().min(1),
+    title: z.string().min(1),
+    eventIds: z.array(z.string().min(1)),
+  })),
+});
+
+export const PublicContinuumResponseSchema = z.object({
+  scope: z.object({
+    id: z.string().min(1),
+    title: z.string().min(1),
+    primaryLabel: z.string().min(1),
+    focusLabel: z.string().nullable(),
+  }),
+  query: z.object({
+    id: z.string().min(1),
+    text: z.string().min(1),
+  }),
+  events: z.array(PublicContinuumEventSchema),
+  lenses: z.array(PublicContinuumLensDefinitionSchema),
+  outputs: z.array(PublicContinuumLensOutputSchema),
+});
+
 export const ErrorResponseSchema = z.object({
   error: z.string(),
 });
@@ -137,4 +181,8 @@ export type LocalSourceCacheDetailResponse = z.infer<typeof LocalSourceCacheDeta
 export type LocalSourceCacheSummaryResponse = z.infer<typeof LocalSourceCacheSummaryResponseSchema>;
 export type LocalImportPreviewSummary = z.infer<typeof LocalImportPreviewSummarySchema>;
 export type LocalImportPreviewSummariesResponse = z.infer<typeof LocalImportPreviewSummariesResponseSchema>;
+export type PublicContinuumEvent = z.infer<typeof PublicContinuumEventSchema>;
+export type PublicContinuumLensDefinition = z.infer<typeof PublicContinuumLensDefinitionSchema>;
+export type PublicContinuumLensOutput = z.infer<typeof PublicContinuumLensOutputSchema>;
+export type PublicContinuumResponse = z.infer<typeof PublicContinuumResponseSchema>;
 export type ErrorResponse = z.infer<typeof ErrorResponseSchema>;

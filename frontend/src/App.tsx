@@ -4,6 +4,7 @@ import type {
   LocalImportPreviewSummary,
   LocalSourceCacheEvent,
   LocalSourceCacheSummaryResponse,
+  PublicContinuumResponse,
 } from '@continuum/shared';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
@@ -12,6 +13,7 @@ import {
   fetchLocalImportPreviewSummaries,
   fetchLocalSourceCacheEvents,
   fetchLocalSourceCacheSummary,
+  fetchPublicAdaContinuum,
   transcribeAudio,
 } from './api.js';
 import { type AudioCaptureChunk, useManualAudioCapture } from './audioCapture.js';
@@ -61,7 +63,115 @@ export function App() {
     return <PrototypeIndex />;
   }
 
+  if (path === '/public/ada-lovelace') {
+    return <PublicAdaContinuum />;
+  }
+
   return <ContinuumApp />;
+}
+
+type PublicContinuumState =
+  | { status: 'loading' }
+  | { status: 'ready'; continuum: PublicContinuumResponse }
+  | { status: 'error'; error: string };
+
+function PublicAdaContinuum() {
+  const [state, setState] = useState<PublicContinuumState>({ status: 'loading' });
+
+  useEffect(() => {
+    let mounted = true;
+
+    fetchPublicAdaContinuum()
+      .then((continuum) => {
+        if (!mounted) return;
+        setState({ status: 'ready', continuum });
+      })
+      .catch((err: unknown) => {
+        if (!mounted) return;
+        setState({
+          status: 'error',
+          error: err instanceof Error ? err.message : 'Failed to load public Continuum',
+        });
+      });
+
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
+  if (state.status === 'loading') {
+    return <main className="public-screen" />;
+  }
+
+  if (state.status === 'error') {
+    return (
+      <main className="public-screen">
+        <p className="error">{state.error}</p>
+      </main>
+    );
+  }
+
+  const { continuum } = state;
+  const eventsById = new Map(continuum.events.map((event) => [event.id, event]));
+
+  return (
+    <main className="public-screen">
+      <header className="public-header">
+        <p className="index-kicker">Public Continuum</p>
+        <h1>{continuum.scope.title}</h1>
+        <p>{continuum.query.text}</p>
+      </header>
+
+      <section className="public-lens-strip" aria-label="Lens candidates">
+        {continuum.outputs.map((output) => {
+          const lens = continuum.lenses.find((candidate) => candidate.id === output.lensId);
+
+          return (
+            <article className="public-lens" key={output.id}>
+              <header className="public-lens-header">
+                <div>
+                  <p className="status-pill">{lens?.version ?? output.lensVersion}</p>
+                  <h2>{lens?.name ?? output.lensId}</h2>
+                </div>
+                <button className="lens-vote-button" type="button" title="Sign in to vote">
+                  +1
+                </button>
+              </header>
+              {lens ? (
+                <div className="lens-blurb">
+                  <p>{lens.userBlurb}</p>
+                  <p>{lens.technicalBlurb}</p>
+                </div>
+              ) : null}
+              <div className="public-lens-sections">
+                {output.sections.map((section) => (
+                  <section key={section.id} className="public-lens-section">
+                    <h3>{section.title}</h3>
+                    <ol className="public-event-list">
+                      {section.eventIds.map((eventId) => {
+                        const event = eventsById.get(eventId);
+                        if (!event) return null;
+
+                        return (
+                          <li key={event.id}>
+                            <p className="public-event-source">
+                              {event.sourceName} / {event.license ?? 'license unknown'}
+                            </p>
+                            <h4>{event.subject ?? event.id}</h4>
+                            <p>{event.text}</p>
+                          </li>
+                        );
+                      })}
+                    </ol>
+                  </section>
+                ))}
+              </div>
+            </article>
+          );
+        })}
+      </section>
+    </main>
+  );
 }
 
 function ContinuumApp() {
@@ -756,6 +866,29 @@ function PrototypeIndex() {
           </dl>
           <a className="prototype-link" href={continuumUrl}>
             Open Continuum
+          </a>
+        </article>
+        <article className="prototype-card">
+          <div>
+            <p className="status-pill">Public MVP</p>
+            <h3>Ada Lovelace</h3>
+            <p>
+              A read-only public Continuum seeded from public source records, with Atlas, Loom, and
+              Beacon Lens candidates over the same query.
+            </p>
+          </div>
+          <dl className="prototype-details">
+            <div>
+              <dt>Try</dt>
+              <dd>Swipe across the Lens candidates and compare how the same sources are arranged.</dd>
+            </div>
+            <div>
+              <dt>Status</dt>
+              <dd>Public data, source ids, provenance, and reference-only Lens outputs.</dd>
+            </div>
+          </dl>
+          <a className="prototype-link" href="/public/ada-lovelace">
+            Open Ada Continuum
           </a>
         </article>
         <article className="prototype-card">

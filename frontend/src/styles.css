@@ -113,6 +113,134 @@ button {
   padding: 28px 18px 48px;
 }
 
+.public-screen {
+  min-height: 100vh;
+  overflow-x: hidden;
+  padding: 28px 0 48px;
+  background: #f7f5ef;
+}
+
+.public-header {
+  width: min(100% - 36px, 980px);
+  margin: 0 auto 28px;
+  padding-bottom: 22px;
+  border-bottom: 1px solid #ddd8cc;
+}
+
+.public-header h1 {
+  margin: 0;
+  font-size: clamp(2.2rem, 1.8rem + 1.6vw, 3.6rem);
+  line-height: 1;
+}
+
+.public-header p:last-child {
+  max-width: 42rem;
+  margin: 14px 0 0;
+  color: #5f5d56;
+  font-size: 1.05rem;
+  line-height: 1.5;
+}
+
+.public-lens-strip {
+  display: grid;
+  grid-auto-columns: minmax(min(86vw, 760px), 760px);
+  grid-auto-flow: column;
+  gap: 18px;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  scroll-snap-type: x mandatory;
+  padding: 0 max(18px, calc((100vw - 980px) / 2)) 18px;
+}
+
+.public-lens {
+  scroll-snap-align: start;
+  border: 1px solid #d7d0c1;
+  border-radius: 8px;
+  background: #fffdf8;
+  padding: 18px;
+}
+
+.public-lens-header {
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  gap: 16px;
+  border-bottom: 1px solid #e6e0d4;
+  padding-bottom: 14px;
+}
+
+.public-lens-header h2 {
+  margin: 0;
+  font-size: 1.6rem;
+}
+
+.lens-vote-button {
+  width: 44px;
+  height: 44px;
+  border: 1px solid #242424;
+  border-radius: 50%;
+  background: #242424;
+  color: #fff;
+  cursor: pointer;
+}
+
+.lens-blurb {
+  display: grid;
+  gap: 8px;
+  margin: 14px 0 18px;
+  color: #5f5d56;
+  line-height: 1.45;
+}
+
+.lens-blurb p {
+  margin: 0;
+}
+
+.public-lens-sections {
+  display: grid;
+  gap: 18px;
+}
+
+.public-lens-section {
+  border-top: 1px solid #e6e0d4;
+  padding-top: 14px;
+}
+
+.public-lens-section h3 {
+  margin: 0 0 12px;
+  font-size: 1rem;
+}
+
+.public-event-list {
+  display: grid;
+  gap: 14px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.public-event-list li {
+  border-left: 3px solid #8c6b4f;
+  padding-left: 12px;
+}
+
+.public-event-source {
+  margin: 0 0 5px;
+  color: #747169;
+  font-size: 0.8rem;
+}
+
+.public-event-list h4 {
+  margin: 0 0 6px;
+  font-size: 1rem;
+}
+
+.public-event-list p:last-child {
+  margin: 0;
+  color: #3f3d38;
+  line-height: 1.5;
+}
+
 .index-header,
 .prototype-section,
 .blog-section {

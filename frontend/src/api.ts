@@ -2,12 +2,14 @@ import {
   CreateEventResponseSchema,
   EventsListResponseSchema,
   LocalImportPreviewSummariesResponseSchema,
+  PublicContinuumResponseSchema,
   LocalSourceCacheSummaryResponseSchema,
   LocalSourceCacheTimelineResponseSchema,
   type CreateEventRequest,
   TranscriptionResponseSchema,
   type ContinuumEvent,
   type LocalImportPreviewSummary,
+  type PublicContinuumResponse,
   type LocalSourceCacheEvent,
   type LocalSourceCacheSummaryResponse,
   type TranscriptionResponse,
@@ -125,4 +127,14 @@ export async function fetchLocalImportPreviewSummaries(
 
   const parsed = LocalImportPreviewSummariesResponseSchema.parse(await response.json());
   return parsed.previews;
+}
+
+export async function fetchPublicAdaContinuum(): Promise<PublicContinuumResponse> {
+  const response = await fetch(`${API_URL}/api/public-continuum/ada-lovelace`);
+
+  if (!response.ok) {
+    throw new Error('Failed to load public Continuum');
+  }
+
+  return PublicContinuumResponseSchema.parse(await response.json());
 }

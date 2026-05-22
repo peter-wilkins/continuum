@@ -1,6 +1,6 @@
 # Issue 016: Public Extended Thought MVP
 
-Status: ready
+Status: in_progress
 
 ## Goal
 
@@ -28,12 +28,18 @@ AFK.
 
 ## Acceptance Criteria
 
-- [ ] The app can represent a public Continuum target with identity and optional topic.
-- [ ] The first target can be Ada Lovelace with topic `computing`.
-- [ ] The UI does not describe the MVP as Peter's private personal memory app.
-- [ ] The UI can show imported public events or a placeholder surface ready for them.
+- [x] The app can represent a public Continuum target with identity and optional topic.
+- [x] The first target can be Ada Lovelace with topic `computing`.
+- [x] The UI does not describe the MVP as Peter's private personal memory app.
+- [x] The UI can show imported public events or a placeholder surface ready for them.
 - [ ] Users can give at least one feedback signal on surfaced material.
-- [ ] Private import/capture flows are not deleted, but they are not required for the public MVP path.
+- [x] Private import/capture flows are not deleted, but they are not required for the public MVP path.
+
+## Progress
+
+- Added `/api/public-continuum/ada-lovelace`, backed by public Ada Lovelace seed records from Wikidata and Project Gutenberg normalization in `@continuum/core`.
+- Added `/public/ada-lovelace`, showing Atlas, Loom, and Beacon Lens candidates over the same public events.
+- Left feedback persistence for the next vertical slice.
 
 ## Blocked By
 
