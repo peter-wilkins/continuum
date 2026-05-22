@@ -5,6 +5,7 @@ import { getInitialSession, onAuthChange } from './auth.js';
 import { BuildHash, gitHash } from './buildInfo.js';
 import { type PublicAuthState, usePublicLensPreference } from './usePublicLensPreference.js';
 import { usePwaInstallPrompt } from './usePwaInstallPrompt.js';
+import './publicContinuum.css';
 
 type PublicContinuumState =
   | { status: 'loading' }
