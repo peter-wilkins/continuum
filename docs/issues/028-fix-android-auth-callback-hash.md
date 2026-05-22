@@ -19,6 +19,7 @@ hash into persisted session storage in that browser tab.
 - Store the validated session in the same browser storage slot Supabase uses.
 - Clear the token hash from the visible URL once stored.
 - Preserve the existing stored return path and pending feedback intent.
+- Submit the pending feedback intent once when returning from OAuth.
 - Disable Supabase's automatic URL-hash detection so the callback route is the single owner of
   implicit OAuth redirects.
 - Disable Supabase's browser Web Lock path for this MVP client because Android Chrome was hanging
@@ -32,3 +33,4 @@ hash into persisted session storage in that browser tab.
 - [x] Token hash is removed from the URL after session storage succeeds.
 - [x] Supabase client no longer auto-detects sessions from every app URL.
 - [x] Supabase session reads do not depend on browser Web Locks.
+- [x] React StrictMode does not double-submit the stored feedback intent.

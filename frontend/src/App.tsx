@@ -188,6 +188,7 @@ function PublicAdaContinuum() {
   const [feedbackState, setFeedbackState] = useState<PublicFeedbackState>({ status: 'idle' });
   const [feedbackSummary, setFeedbackSummary] = useState<PublicLensFeedbackSummary | null>(null);
   const [authError, setAuthError] = useState<string | null>(null);
+  const submittedPendingFeedbackRef = useRef<string | null>(null);
 
   useEffect(() => {
     let mounted = true;
@@ -288,6 +289,8 @@ function PublicAdaContinuum() {
       return;
     }
 
+    if (submittedPendingFeedbackRef.current === pendingLensOutputId) return;
+    submittedPendingFeedbackRef.current = pendingLensOutputId;
     void submitPreference(state.continuum, pendingLensOutputId, authState.session);
   }, [authState, state, submitPreference]);
 
