@@ -145,6 +145,34 @@ Never silently rewrite raw user input.
 
 ---
 
+## Avoid duplicate state
+
+Duplicate state creates drift. Treat state as the thing most likely to betray the product.
+
+Prefer:
+
+```text
+source truth
+→ Lens / projection
+→ rebuildable view
+```
+
+Avoid:
+
+- copying source payloads into generated views
+- storing the same fact in multiple mutable places
+- making generated text the durable record
+- adding caches without an invalidation story
+
+If duplicated state is unavoidable for performance, UX stability, or release repeatability, document:
+
+- what the source of truth is
+- why the duplicate exists
+- how it is rebuilt
+- when it is invalidated
+
+---
+
 ## Retrieval is more important than storage
 
 The success metric is not:
