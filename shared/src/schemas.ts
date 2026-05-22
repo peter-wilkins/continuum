@@ -184,6 +184,14 @@ export const PublicLensFeedbackResponseSchema = z.object({
   feedback: PublicLensFeedbackSignalSchema,
 });
 
+export const PublicLensFeedbackSummarySchema = z.object({
+  total: z.number().int().nonnegative(),
+  byLensOutput: z.array(z.object({
+    lensOutputId: z.string().min(1),
+    count: z.number().int().nonnegative(),
+  })),
+});
+
 export const ErrorResponseSchema = z.object({
   error: z.string(),
 });
@@ -211,4 +219,5 @@ export type PublicContinuumResponse = z.infer<typeof PublicContinuumResponseSche
 export type PublicLensFeedbackRequest = z.infer<typeof PublicLensFeedbackRequestSchema>;
 export type PublicLensFeedbackSignal = z.infer<typeof PublicLensFeedbackSignalSchema>;
 export type PublicLensFeedbackResponse = z.infer<typeof PublicLensFeedbackResponseSchema>;
+export type PublicLensFeedbackSummary = z.infer<typeof PublicLensFeedbackSummarySchema>;
 export type ErrorResponse = z.infer<typeof ErrorResponseSchema>;

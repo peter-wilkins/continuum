@@ -246,10 +246,15 @@ button {
 }
 
 .lens-feedback-status,
+.lens-feedback-count,
 .public-feedback-error {
   margin: 12px 0 0;
   color: #2f6f4e;
   font-size: 0.9rem;
+}
+
+.lens-feedback-count {
+  color: #747169;
 }
 
 .public-feedback-error {

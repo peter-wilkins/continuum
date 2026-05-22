@@ -4,6 +4,7 @@ import {
   LocalImportPreviewSummariesResponseSchema,
   PublicContinuumResponseSchema,
   PublicLensFeedbackResponseSchema,
+  PublicLensFeedbackSummarySchema,
   LocalSourceCacheSummaryResponseSchema,
   LocalSourceCacheTimelineResponseSchema,
   type CreateEventRequest,
@@ -13,6 +14,7 @@ import {
   type PublicContinuumResponse,
   type PublicLensFeedbackRequest,
   type PublicLensFeedbackResponse,
+  type PublicLensFeedbackSummary,
   type LocalSourceCacheEvent,
   type LocalSourceCacheSummaryResponse,
   type TranscriptionResponse,
@@ -140,6 +142,16 @@ export async function fetchPublicAdaContinuum(): Promise<PublicContinuumResponse
   }
 
   return PublicContinuumResponseSchema.parse(await response.json());
+}
+
+export async function fetchPublicLensFeedbackSummary(): Promise<PublicLensFeedbackSummary> {
+  const response = await fetch(`${API_URL}/api/public-continuum/ada-lovelace/feedback-summary`);
+
+  if (!response.ok) {
+    throw new Error('Failed to load Lens feedback summary');
+  }
+
+  return PublicLensFeedbackSummarySchema.parse(await response.json());
 }
 
 export async function submitPublicLensFeedback(

@@ -5,6 +5,7 @@ import type {
   LocalSourceCacheEvent,
   LocalSourceCacheSummaryResponse,
   PublicContinuumResponse,
+  PublicLensFeedbackSummary,
 } from '@continuum/shared';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
@@ -14,6 +15,7 @@ import {
   fetchLocalSourceCacheEvents,
   fetchLocalSourceCacheSummary,
   fetchPublicAdaContinuum,
+  fetchPublicLensFeedbackSummary,
   submitPublicLensFeedback,
   transcribeAudio,
 } from './api.js';
@@ -97,6 +99,7 @@ function PublicAdaContinuum() {
   const [state, setState] = useState<PublicContinuumState>({ status: 'loading' });
   const [authState, setAuthState] = useState<LoadState>({ status: 'loading' });
   const [feedbackState, setFeedbackState] = useState<PublicFeedbackState>({ status: 'idle' });
+  const [feedbackSummary, setFeedbackSummary] = useState<PublicLensFeedbackSummary | null>(null);
 
   useEffect(() => {
     let mounted = true;
@@ -112,6 +115,24 @@ function PublicAdaContinuum() {
           status: 'error',
           error: err instanceof Error ? err.message : 'Failed to load public Continuum',
         });
+      });
+
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    let mounted = true;
+
+    fetchPublicLensFeedbackSummary()
+      .then((summary) => {
+        if (!mounted) return;
+        setFeedbackSummary(summary);
+      })
+      .catch(() => {
+        if (!mounted) return;
+        setFeedbackSummary(null);
       });
 
     return () => {
@@ -155,6 +176,9 @@ function PublicAdaContinuum() {
         });
         window.sessionStorage.removeItem(publicFeedbackIntentKey);
         setFeedbackState({ status: 'recorded', lensOutputId });
+        void fetchPublicLensFeedbackSummary()
+          .then(setFeedbackSummary)
+          .catch(() => setFeedbackSummary(null));
       } catch (err: unknown) {
         setFeedbackState({
           status: 'error',
@@ -225,6 +249,9 @@ function PublicAdaContinuum() {
             feedbackState.status === 'submitting' && feedbackState.lensOutputId === output.id;
           const recorded =
             feedbackState.status === 'recorded' && feedbackState.lensOutputId === output.id;
+          const preferenceCount =
+            feedbackSummary?.byLensOutput.find((item) => item.lensOutputId === output.id)?.count ??
+            0;
 
           return (
             <article className="public-lens" key={output.id}>
@@ -244,6 +271,11 @@ function PublicAdaContinuum() {
                 </button>
               </header>
               {recorded ? <p className="lens-feedback-status">Preference recorded</p> : null}
+              {feedbackSummary ? (
+                <p className="lens-feedback-count">
+                  {preferenceCount} {preferenceCount === 1 ? 'preference' : 'preferences'}
+                </p>
+              ) : null}
               {lens ? (
                 <div className="lens-blurb">
                   <p>{lens.userBlurb}</p>

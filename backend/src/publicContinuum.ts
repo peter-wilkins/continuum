@@ -1,4 +1,4 @@
-import { mkdir, appendFile } from 'node:fs/promises';
+import { mkdir, appendFile, readFile } from 'node:fs/promises';
 import { dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { randomUUID } from 'node:crypto';
@@ -19,6 +19,8 @@ import {
   PublicContinuumResponseSchema,
   PublicLensFeedbackRequestSchema,
   PublicLensFeedbackResponseSchema,
+  PublicLensFeedbackSignalSchema,
+  PublicLensFeedbackSummarySchema,
   type PublicLensFeedbackRequest,
   type PublicLensFeedbackSignal,
 } from '@continuum/shared';
@@ -159,6 +161,25 @@ export async function registerPublicContinuumRoutes(app: FastifyInstance) {
     return createAdaPublicContinuum();
   });
 
+  app.get('/api/public-continuum/ada-lovelace/feedback-summary', async () => {
+    const continuum = createAdaPublicContinuum();
+    const feedback = await readFeedback();
+    const counts = new Map(continuum.outputs.map((output) => [output.id, 0]));
+
+    for (const signal of feedback) {
+      if (!feedbackMatchesContinuum(signal, continuum)) continue;
+      counts.set(signal.selectedLensOutputId, (counts.get(signal.selectedLensOutputId) ?? 0) + 1);
+    }
+
+    return PublicLensFeedbackSummarySchema.parse({
+      total: [...counts.values()].reduce((total, count) => total + count, 0),
+      byLensOutput: continuum.outputs.map((output) => ({
+        lensOutputId: output.id,
+        count: counts.get(output.id) ?? 0,
+      })),
+    });
+  });
+
   app.post('/api/public-continuum/ada-lovelace/feedback', async (request, reply) => {
     const user = await requireAuth(request, reply);
     if (!user) return;
@@ -256,6 +277,35 @@ function feedbackMatchesContinuum(
 async function appendFeedback(feedback: PublicLensFeedbackSignal): Promise<void> {
   await mkdir(dirname(feedbackLogPath), { recursive: true });
   await appendFile(feedbackLogPath, `${JSON.stringify(feedback)}\n`, 'utf8');
+}
+
+async function readFeedback(): Promise<PublicLensFeedbackSignal[]> {
+  let contents: string;
+
+  try {
+    contents = await readFile(feedbackLogPath, 'utf8');
+  } catch (err: unknown) {
+    if (err instanceof Error && 'code' in err && err.code === 'ENOENT') {
+      return [];
+    }
+
+    throw err;
+  }
+
+  const feedback: PublicLensFeedbackSignal[] = [];
+
+  for (const line of contents.split('\n')) {
+    if (line.trim().length === 0) continue;
+
+    try {
+      const parsed = PublicLensFeedbackSignalSchema.safeParse(JSON.parse(line));
+      if (parsed.success) feedback.push(parsed.data);
+    } catch {
+      continue;
+    }
+  }
+
+  return feedback;
 }
 
 function sourceUrlForEvent(artifactId: string | null): string | null {
