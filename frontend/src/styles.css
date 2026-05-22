@@ -253,6 +253,12 @@ button {
   font-size: 0.8rem;
 }
 
+.public-event-source a {
+  color: inherit;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
 .public-event-list h4 {
   margin: 0 0 6px;
   font-size: 1rem;

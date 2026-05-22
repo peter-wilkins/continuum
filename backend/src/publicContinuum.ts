@@ -215,13 +215,14 @@ function createAdaPublicContinuum() {
       id: adaQuery.id,
       text: adaQuery.text,
     },
-    events: events.map((event) => ({
-      id: event.id,
-      sourceName: event.provenance.sourceName,
-      sourceFamily: event.provenance.sourceFamily,
-      subject: event.content.subject,
-      text: event.content.text,
-      license: event.provenance.license,
+      events: events.map((event) => ({
+        id: event.id,
+        sourceName: event.provenance.sourceName,
+        sourceFamily: event.provenance.sourceFamily,
+        sourceUrl: sourceUrlForEvent(event.source.artifactId),
+        subject: event.content.subject,
+        text: event.content.text,
+        license: event.provenance.license,
     })),
     lenses: defaultPublicLensDefinitions,
     outputs: outputs.map((output) => ({
@@ -255,4 +256,18 @@ function feedbackMatchesContinuum(
 async function appendFeedback(feedback: PublicLensFeedbackSignal): Promise<void> {
   await mkdir(dirname(feedbackLogPath), { recursive: true });
   await appendFile(feedbackLogPath, `${JSON.stringify(feedback)}\n`, 'utf8');
+}
+
+function sourceUrlForEvent(artifactId: string | null): string | null {
+  if (artifactId === null) return null;
+
+  if (artifactId.startsWith('https://') || artifactId.startsWith('http://')) {
+    return artifactId;
+  }
+
+  if (artifactId.startsWith('wikidata:')) {
+    return `https://www.wikidata.org/wiki/${artifactId.slice('wikidata:'.length)}`;
+  }
+
+  return null;
 }

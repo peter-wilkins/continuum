@@ -121,6 +121,7 @@ export const PublicContinuumEventSchema = z.object({
   id: z.string().min(1),
   sourceName: z.string().min(1),
   sourceFamily: z.string().min(1),
+  sourceUrl: z.string().url().nullable(),
   subject: z.string().nullable(),
   text: z.string(),
   license: z.string().nullable(),

@@ -248,7 +248,14 @@ function PublicAdaContinuum() {
                         return (
                           <li key={event.id}>
                             <p className="public-event-source">
-                              {event.sourceName} / {event.license ?? 'license unknown'}
+                              {event.sourceUrl ? (
+                                <a href={event.sourceUrl} target="_blank" rel="noreferrer">
+                                  {event.sourceName}
+                                </a>
+                              ) : (
+                                event.sourceName
+                              )}{' '}
+                              / {event.license ?? 'license unknown'}
                             </p>
                             <h4>{event.subject ?? event.id}</h4>
                             <p>{event.text}</p>
