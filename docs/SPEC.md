@@ -2,13 +2,13 @@
 
 ## Vision
 
-Continuum is a multiple-device AI workspace that helps users continue where they left off.
+Continuum is a multiple-device AI workspace that helps users continue where thought left off.
 
 The product is designed around a simple idea:
 
 > People rarely need full history. They need the right context immediately before action.
 
-Continuum turns spoken thoughts into living project documents.
+Continuum turns captured or imported thought into living Continuation surfaces.
 
 Each document represents:
 
@@ -158,13 +158,19 @@ This should make the product feel stable, trustworthy, and difficult to corrupt.
 
 ## MVP goals
 
-1. Speech-first capture.
-2. Reliable sync across devices.
-3. One evolving document per project or mental thread.
-4. AI-maintained contextual summaries.
-5. Extremely fast context recovery.
-6. User-supplied AI API key support.
-7. Immutable append-only source history.
+The MVP is no longer primarily Peter's private personal Continuum.
+
+The MVP should be a public, bootstrapped Continuum about extended thought. Users should be able to explore a Continuum seeded from public data, such as Ada Lovelace and computing, then give feedback that teaches the product what is useful.
+
+Private personal capture and imports remain part of the long-term product, but public identity/topic Continuums are the safer and faster MVP learning loop.
+
+1. Public identity/topic import.
+2. Inspectable Continuation surfaces over imported public thought.
+3. Lightweight user feedback while people explore.
+4. Immutable append-only source history.
+5. Clear provenance and source links.
+6. Fast iteration without private-data compliance blocking every demo.
+7. Speech-first personal capture as a later reinforcing path, not the MVP blocker.
 
 ---
 
