@@ -401,6 +401,7 @@ button {
 
 .public-continuum-screen .public-lens-body {
   padding-top: calc(env(safe-area-inset-top) + 82px);
+  padding-bottom: calc(env(safe-area-inset-bottom) + 98px);
 }
 
 .public-continuum-screen.is-installed .public-lens-body {
