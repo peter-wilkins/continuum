@@ -87,6 +87,11 @@ type PublicFeedbackState =
   | { status: 'error'; error: string };
 
 const publicFeedbackIntentKey = 'continuum.publicAda.pendingLensOutputId';
+const gitHash = import.meta.env.VITE_COMMIT_HASH ?? 'unknown';
+
+function BuildHash() {
+  return <p className="build-hash">Git {gitHash}</p>;
+}
 
 function PublicAdaContinuum() {
   const [state, setState] = useState<PublicContinuumState>({ status: 'loading' });
@@ -282,6 +287,7 @@ function PublicAdaContinuum() {
       {feedbackState.status === 'error' ? (
         <p className="public-feedback-error">{feedbackState.error}</p>
       ) : null}
+      <BuildHash />
     </main>
   );
 }
@@ -363,6 +369,7 @@ function PublicLensGuide() {
           );
         })}
       </section>
+      <BuildHash />
     </main>
   );
 }
@@ -1151,6 +1158,7 @@ function PrototypeIndex() {
           </p>
         </article>
       </section>
+      <BuildHash />
     </main>
   );
 }

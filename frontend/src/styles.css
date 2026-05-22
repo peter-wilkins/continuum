@@ -258,6 +258,13 @@ button {
   color: #8b2f24;
 }
 
+.build-hash {
+  width: min(100% - 36px, 980px);
+  margin: 22px auto 0;
+  color: #8a8579;
+  font-size: 0.78rem;
+}
+
 .lens-blurb {
   display: grid;
   gap: 8px;
