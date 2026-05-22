@@ -216,6 +216,105 @@ button {
   display: none;
 }
 
+.public-menu {
+  position: fixed;
+  top: calc(env(safe-area-inset-top) + 12px);
+  right: max(12px, env(safe-area-inset-right));
+  z-index: 40;
+  display: grid;
+  justify-items: end;
+  gap: 8px;
+}
+
+.public-menu-button {
+  display: grid;
+  width: 44px;
+  height: 44px;
+  place-items: center;
+  border: 1px solid rgb(36 36 36 / 12%);
+  border-radius: 50%;
+  background: rgb(255 253 248 / 92%);
+  box-shadow: 0 8px 22px rgb(28 28 26 / 14%);
+  cursor: pointer;
+  backdrop-filter: blur(14px);
+}
+
+.public-menu-button span {
+  width: 18px;
+  height: 2px;
+  grid-area: 1 / 1;
+  border-radius: 999px;
+  background: #242424;
+  transition:
+    opacity 160ms ease,
+    transform 160ms ease;
+}
+
+.public-menu-button span:first-child {
+  transform: translateY(-6px);
+}
+
+.public-menu-button span:last-child {
+  transform: translateY(6px);
+}
+
+.public-menu-button.is-open span:first-child {
+  transform: rotate(45deg);
+}
+
+.public-menu-button.is-open span:nth-child(2) {
+  opacity: 0;
+}
+
+.public-menu-button.is-open span:last-child {
+  transform: rotate(-45deg);
+}
+
+.public-menu-panel {
+  display: grid;
+  min-width: 9rem;
+  gap: 4px;
+  border: 1px solid rgb(36 36 36 / 12%);
+  border-radius: 8px;
+  background: rgb(255 253 248 / 96%);
+  padding: 6px;
+  box-shadow: 0 14px 32px rgb(28 28 26 / 16%);
+  backdrop-filter: blur(14px);
+}
+
+.public-menu-panel button {
+  min-height: 36px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: #242424;
+  padding: 8px 10px;
+  text-align: left;
+  font: inherit;
+  font-size: 0.86rem;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.public-menu-panel button:hover,
+.public-menu-panel button:focus-visible {
+  background: #eee8dc;
+  outline: none;
+}
+
+.public-menu-panel button:disabled {
+  color: #8a8579;
+  cursor: progress;
+}
+
+.public-menu-note {
+  padding: 7px 10px 4px;
+  color: #8a8579;
+  font-size: 0.7rem;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
 .public-header {
   width: min(100% - 36px, 980px);
   margin: 0 auto 28px;
@@ -394,11 +493,12 @@ button {
 
 .lens-vote-dock {
   position: sticky;
-  top: calc(env(safe-area-inset-top) + 12px);
+  top: calc(100dvh - env(safe-area-inset-bottom) - 70px);
   z-index: 31;
   display: flex;
   height: 0;
   justify-content: flex-end;
+  padding-right: max(0px, env(safe-area-inset-right));
   pointer-events: none;
 }
 

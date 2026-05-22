@@ -271,14 +271,30 @@ function PublicAdaContinuum() {
   const [feedbackSummary, setFeedbackSummary] = useState<PublicLensFeedbackSummary | null>(null);
   const [authError, setAuthError] = useState<string | null>(null);
   const [preferencePulses, setPreferencePulses] = useState<PreferencePulse[]>([]);
+  const [menuOpen, setMenuOpen] = useState(false);
   const pwaInstall = usePwaInstallPrompt();
   const submittedPendingFeedbackRef = useRef<string | null>(null);
   const nextPreferencePulseIdRef = useRef(0);
+  const guidePageRef = useRef<HTMLElement | null>(null);
   const displayedOutputs = useMemo(() => {
     if (state.status !== 'ready') return [];
 
     return shuffleItems(state.continuum.outputs);
   }, [state]);
+
+  useEffect(() => {
+    if (!menuOpen) return;
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setMenuOpen(false);
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [menuOpen]);
 
   useEffect(() => {
     let mounted = true;
@@ -417,6 +433,29 @@ function PublicAdaContinuum() {
     setPreferencePulses((current) => current.filter((pulse) => pulse.id !== id));
   }
 
+  function handleGuideJump() {
+    guidePageRef.current?.scrollIntoView({
+      behavior: 'smooth',
+      block: 'nearest',
+      inline: 'start',
+    });
+    setMenuOpen(false);
+  }
+
+  function handleReload() {
+    window.location.reload();
+  }
+
+  async function handleInstallFromMenu() {
+    await pwaInstall.install();
+    setMenuOpen(false);
+  }
+
+  async function handleSignOutFromMenu() {
+    setMenuOpen(false);
+    await handleSignOut();
+  }
+
   if (state.status === 'loading') {
     return <main className="public-screen" />;
   }
@@ -442,6 +481,47 @@ function PublicAdaContinuum() {
           <span>{continuum.query.text}</span>
         </div>
       </header>
+      <div className="public-menu">
+        <button
+          className={`public-menu-button${menuOpen ? ' is-open' : ''}`}
+          type="button"
+          aria-label={menuOpen ? 'Close menu' : 'Open menu'}
+          aria-controls="public-continuum-menu"
+          aria-expanded={menuOpen}
+          onClick={() => setMenuOpen((current) => !current)}
+        >
+          <span />
+          <span />
+          <span />
+        </button>
+        {menuOpen ? (
+          <div className="public-menu-panel" id="public-continuum-menu" role="menu">
+            <button type="button" role="menuitem" onClick={handleReload}>
+              Reload
+            </button>
+            <button type="button" role="menuitem" onClick={handleGuideJump}>
+              Guide
+            </button>
+            {pwaInstall.canInstall ? (
+              <button
+                type="button"
+                role="menuitem"
+                disabled={pwaInstall.installing}
+                onClick={() => void handleInstallFromMenu()}
+              >
+                {pwaInstall.installing ? 'Installing' : 'Install'}
+              </button>
+            ) : null}
+            {pwaInstall.installed ? <span className="public-menu-note">Installed</span> : null}
+            {authState.status === 'logged_in' ? (
+              <button type="button" role="menuitem" onClick={() => void handleSignOutFromMenu()}>
+                Sign out
+              </button>
+            ) : null}
+            <span className="public-menu-note">Git {gitHash}</span>
+          </div>
+        ) : null}
+      </div>
 
       <section className="public-lens-strip" aria-label="Lens candidates and guide">
         {displayedOutputs.map((output) => {
@@ -507,7 +587,11 @@ function PublicAdaContinuum() {
             </article>
           );
         })}
-        <article className="public-lens public-guide-page" aria-label="Guide and settings">
+        <article
+          className="public-lens public-guide-page"
+          ref={guidePageRef}
+          aria-label="Guide and settings"
+        >
           <div className="public-lens-body public-guide-body">
             <section className="public-guide-section">
               <p className="index-kicker">Guide</p>

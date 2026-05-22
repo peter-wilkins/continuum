@@ -41,6 +41,8 @@ checks less trustworthy.
   detail.
 - Randomized candidate order per page load.
 - Moved Guide, install, sign-out, git hash, and feedback counts onto the furthest-right snap page.
+- Moved the preference action to the bottom-right thumb zone.
+- Added a top-right local menu for reload/reshuffle, guide, install, sign-out, and git hash.
 
 ## Out Of Scope
 
