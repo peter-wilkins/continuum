@@ -133,12 +133,23 @@ button {
   line-height: 1;
 }
 
-.public-header p:last-child {
+.public-header > p:not(.index-kicker) {
   max-width: 42rem;
   margin: 14px 0 0;
   color: #5f5d56;
   font-size: 1.05rem;
   line-height: 1.5;
+}
+
+.public-header-actions {
+  margin-top: 18px;
+}
+
+.text-link {
+  color: #242424;
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 3px;
 }
 
 .public-lens-strip {
@@ -158,6 +169,46 @@ button {
   border-radius: 8px;
   background: #fffdf8;
   padding: 18px;
+}
+
+.lens-guide-list {
+  display: grid;
+  gap: 18px;
+  width: min(100% - 36px, 980px);
+  margin: 0 auto;
+}
+
+.lens-guide-card {
+  display: grid;
+  gap: 12px;
+}
+
+.lens-guide-card h2,
+.lens-guide-card p {
+  margin: 0;
+}
+
+.lens-guide-meta {
+  display: grid;
+  gap: 12px;
+  margin: 0;
+}
+
+.lens-guide-meta div {
+  display: grid;
+  gap: 4px;
+}
+
+.lens-guide-meta dt {
+  color: #747169;
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.lens-guide-meta dd {
+  margin: 0;
+  line-height: 1.45;
 }
 
 .public-lens-header {

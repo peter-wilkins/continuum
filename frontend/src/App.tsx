@@ -68,6 +68,10 @@ export function App() {
     return <PublicAdaContinuum />;
   }
 
+  if (path === '/public/lenses') {
+    return <PublicLensGuide />;
+  }
+
   return <ContinuumApp />;
 }
 
@@ -202,6 +206,11 @@ function PublicAdaContinuum() {
         <p className="index-kicker">Public Continuum</p>
         <h1>{continuum.scope.title}</h1>
         <p>{continuum.query.text}</p>
+        <div className="public-header-actions">
+          <a className="text-link" href="/public/lenses">
+            Lens guide
+          </a>
+        </div>
       </header>
 
       <section className="public-lens-strip" aria-label="Lens candidates">
@@ -273,6 +282,87 @@ function PublicAdaContinuum() {
       {feedbackState.status === 'error' ? (
         <p className="public-feedback-error">{feedbackState.error}</p>
       ) : null}
+    </main>
+  );
+}
+
+function PublicLensGuide() {
+  const [state, setState] = useState<PublicContinuumState>({ status: 'loading' });
+
+  useEffect(() => {
+    let mounted = true;
+
+    fetchPublicAdaContinuum()
+      .then((continuum) => {
+        if (!mounted) return;
+        setState({ status: 'ready', continuum });
+      })
+      .catch((err: unknown) => {
+        if (!mounted) return;
+        setState({
+          status: 'error',
+          error: err instanceof Error ? err.message : 'Failed to load Lens guide',
+        });
+      });
+
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
+  if (state.status === 'loading') {
+    return <main className="public-screen" />;
+  }
+
+  if (state.status === 'error') {
+    return (
+      <main className="public-screen">
+        <p className="error">{state.error}</p>
+      </main>
+    );
+  }
+
+  const { continuum } = state;
+
+  return (
+    <main className="public-screen">
+      <header className="public-header">
+        <p className="index-kicker">Lens guide</p>
+        <h1>How the Lens candidates work</h1>
+        <p>
+          Each Lens is a different projection over the same query and the same immutable source
+          events.
+        </p>
+        <div className="public-header-actions">
+          <a className="text-link" href="/public/ada-lovelace">
+            Back to Ada Continuum
+          </a>
+        </div>
+      </header>
+
+      <section className="lens-guide-list" aria-label="Lens guide">
+        {continuum.lenses.map((lens) => {
+          const output = continuum.outputs.find((candidate) => candidate.lensId === lens.id);
+
+          return (
+            <article className="public-lens lens-guide-card" key={lens.id}>
+              <p className="status-pill">{lens.version}</p>
+              <h2>{lens.name}</h2>
+              <p>{lens.userBlurb}</p>
+              <dl className="lens-guide-meta">
+                <div>
+                  <dt>Implementation</dt>
+                  <dd>{lens.technicalBlurb}</dd>
+                </div>
+                <div>
+                  <dt>Sections</dt>
+                  <dd>{output ? output.sections.map((section) => section.title).join(', ') : 'None'}</dd>
+                </div>
+              </dl>
+            </article>
+          );
+        })}
+      </section>
     </main>
   );
 }
