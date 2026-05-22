@@ -103,6 +103,20 @@ export const LocalSourceCacheSummaryResponseSchema = z.object({
   })),
 });
 
+export const LocalImportPreviewSummarySchema = z.object({
+  filename: z.string().min(1),
+  sourcePlatform: z.string().min(1),
+  recordsSeen: z.number().int().nonnegative(),
+  eventsCreated: z.number().int().nonnegative(),
+  quarantined: z.number().int().nonnegative(),
+  warnings: z.number().int().nonnegative(),
+  filterSummary: ImportFilterSummarySchema,
+});
+
+export const LocalImportPreviewSummariesResponseSchema = z.object({
+  previews: z.array(LocalImportPreviewSummarySchema),
+});
+
 export const ErrorResponseSchema = z.object({
   error: z.string(),
 });
@@ -121,4 +135,6 @@ export type LocalSourceCacheImportResponse = z.infer<typeof LocalSourceCacheImpo
 export type LocalSourceCacheTimelineResponse = z.infer<typeof LocalSourceCacheTimelineResponseSchema>;
 export type LocalSourceCacheDetailResponse = z.infer<typeof LocalSourceCacheDetailResponseSchema>;
 export type LocalSourceCacheSummaryResponse = z.infer<typeof LocalSourceCacheSummaryResponseSchema>;
+export type LocalImportPreviewSummary = z.infer<typeof LocalImportPreviewSummarySchema>;
+export type LocalImportPreviewSummariesResponse = z.infer<typeof LocalImportPreviewSummariesResponseSchema>;
 export type ErrorResponse = z.infer<typeof ErrorResponseSchema>;

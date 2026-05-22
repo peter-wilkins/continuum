@@ -1,6 +1,7 @@
 import type { Session } from '@supabase/supabase-js';
 import type {
   ContinuumEvent,
+  LocalImportPreviewSummary,
   LocalSourceCacheEvent,
   LocalSourceCacheSummaryResponse,
 } from '@continuum/shared';
@@ -8,6 +9,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   createEvent,
   fetchEvents,
+  fetchLocalImportPreviewSummaries,
   fetchLocalSourceCacheEvents,
   fetchLocalSourceCacheSummary,
   transcribeAudio,
@@ -48,6 +50,7 @@ type LocalSourceCacheDebug =
       status: 'ready';
       summary: LocalSourceCacheSummaryResponse;
       events: LocalSourceCacheEvent[];
+      previews: LocalImportPreviewSummary[];
     }
   | { status: 'error'; error: string };
 
@@ -214,13 +217,15 @@ function ContinuumApp() {
     Promise.all([
       fetchLocalSourceCacheSummary(loadState.session),
       fetchLocalSourceCacheEvents(loadState.session, 12),
+      fetchLocalImportPreviewSummaries(loadState.session),
     ])
-      .then(([summary, cacheEvents]) => {
+      .then(([summary, cacheEvents, previews]) => {
         if (!mounted) return;
         setLocalSourceCacheDebug({
           status: 'ready',
           summary,
           events: cacheEvents,
+          previews,
         });
       })
       .catch((err: unknown) => {
@@ -589,7 +594,7 @@ function LocalSourceCacheDebugPanel({
     );
   }
 
-  const { summary, events: cacheEvents } = localSourceCache;
+  const { summary, events: cacheEvents, previews } = localSourceCache;
 
   return (
     <div className="debug-subsection">
@@ -606,6 +611,17 @@ function LocalSourceCacheDebugPanel({
             <li key={source.sourcePlatform}>
               {source.sourcePlatform}: {source.totalEvents} · in {source.included} · review{' '}
               {source.needsReview} · out {source.excluded}
+            </li>
+          ))}
+        </ol>
+      ) : null}
+      {previews.length > 0 ? (
+        <ol className="source-cache-platforms">
+          {previews.map((preview) => (
+            <li key={preview.filename}>
+              {preview.filename}: {preview.eventsCreated}/{preview.recordsSeen} events · in{' '}
+              {preview.filterSummary.included} · review {preview.filterSummary.needsReview} · q{' '}
+              {preview.quarantined} · skipped {preview.warnings}
             </li>
           ))}
         </ol>

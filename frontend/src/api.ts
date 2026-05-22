@@ -1,11 +1,13 @@
 import {
   CreateEventResponseSchema,
   EventsListResponseSchema,
+  LocalImportPreviewSummariesResponseSchema,
   LocalSourceCacheSummaryResponseSchema,
   LocalSourceCacheTimelineResponseSchema,
   type CreateEventRequest,
   TranscriptionResponseSchema,
   type ContinuumEvent,
+  type LocalImportPreviewSummary,
   type LocalSourceCacheEvent,
   type LocalSourceCacheSummaryResponse,
   type TranscriptionResponse,
@@ -106,4 +108,21 @@ export async function fetchLocalSourceCacheEvents(
 
   const parsed = LocalSourceCacheTimelineResponseSchema.parse(await response.json());
   return parsed.events;
+}
+
+export async function fetchLocalImportPreviewSummaries(
+  session: Session,
+): Promise<LocalImportPreviewSummary[]> {
+  const response = await fetch(`${API_URL}/api/local-source-cache/previews`, {
+    headers: {
+      Authorization: `Bearer ${session.access_token}`,
+    },
+  });
+
+  if (!response.ok) {
+    throw new Error('Failed to load local import previews');
+  }
+
+  const parsed = LocalImportPreviewSummariesResponseSchema.parse(await response.json());
+  return parsed.previews;
 }

@@ -2,6 +2,7 @@ import Database from 'better-sqlite3';
 import type { Database as DatabaseConnection } from 'better-sqlite3';
 import { randomUUID } from 'node:crypto';
 import { mkdirSync } from 'node:fs';
+import { readFile, readdir } from 'node:fs/promises';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import type { FastifyInstance } from 'fastify';
@@ -11,6 +12,7 @@ import {
   type LocalSourceCacheEvent,
   type LocalSourceCacheImportResponse,
   type LocalSourceCacheSummaryResponse,
+  type LocalImportPreviewSummary,
 } from '@continuum/shared';
 import {
   canonicalEventToLocalSourceCacheEventRow,
@@ -23,6 +25,7 @@ import { requireAuth } from './auth.js';
 const moduleDir = dirname(fileURLToPath(import.meta.url));
 const repoRoot = resolve(moduleDir, '../..');
 const defaultDatabasePath = resolve(repoRoot, 'data/local-source-cache.sqlite');
+const defaultPreviewDirectoryPath = resolve(repoRoot, 'data/import-samples/previews');
 
 type SqliteEventRow = {
   id: string;
@@ -61,6 +64,19 @@ type LocalSourceCacheCurationFields = {
   filterReason: string;
   filterConfidence: number;
   memoryActive: 0 | 1;
+};
+
+type LocalImportPreviewJson = {
+  batch: {
+    sourcePlatform: string;
+    stats: {
+      recordsSeen: number;
+      eventsCreated: number;
+      recordsQuarantined: number;
+      warnings: number;
+    };
+  };
+  filterSummary: LocalSourceCacheSummaryResponse['filterSummary'];
 };
 
 export class LocalSourceCache {
@@ -533,6 +549,13 @@ export async function registerLocalSourceCacheRoutes(app: FastifyInstance) {
     return cache.getSummary();
   });
 
+  app.get('/api/local-source-cache/previews', async (request, reply) => {
+    const user = await requireAuth(request, reply);
+    if (!user) return;
+
+    return { previews: await listLocalImportPreviewSummaries() };
+  });
+
   app.get('/api/local-source-cache/events/:id', async (request, reply) => {
     const user = await requireAuth(request, reply);
     if (!user) return;
@@ -634,4 +657,37 @@ function applyActionCount(
   } else {
     row.needsReview += count;
   }
+}
+
+async function listLocalImportPreviewSummaries(): Promise<LocalImportPreviewSummary[]> {
+  let filenames: string[];
+
+  try {
+    filenames = await readdir(defaultPreviewDirectoryPath);
+  } catch {
+    return [];
+  }
+
+  const summaries: LocalImportPreviewSummary[] = [];
+
+  for (const filename of filenames.sort()) {
+    if (!filename.endsWith('.preview.json')) {
+      continue;
+    }
+
+    const raw = await readFile(resolve(defaultPreviewDirectoryPath, filename), 'utf8');
+    const preview = JSON.parse(raw) as LocalImportPreviewJson;
+
+    summaries.push({
+      filename,
+      sourcePlatform: preview.batch.sourcePlatform,
+      recordsSeen: preview.batch.stats.recordsSeen,
+      eventsCreated: preview.batch.stats.eventsCreated,
+      quarantined: preview.batch.stats.recordsQuarantined,
+      warnings: preview.batch.stats.warnings,
+      filterSummary: preview.filterSummary,
+    });
+  }
+
+  return summaries;
 }
