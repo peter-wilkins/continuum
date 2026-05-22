@@ -54,6 +54,14 @@ const detail = cache.getEvent(firstEvent.id);
 if (!detail || JSON.parse(detail.eventJson).id !== firstEvent.id) {
   throw new Error('Detail lookup did not return the imported Canonical Event JSON');
 }
+if (detail.filterDecision.action !== 'needs_review' || detail.memoryActive) {
+  throw new Error(`Unexpected local source cache curation: ${JSON.stringify(detail.filterDecision)}`);
+}
+
+const summary = cache.getSummary();
+if (summary.totalEvents < 2 || summary.filterSummary.needsReview < 2) {
+  throw new Error(`Unexpected local source cache summary: ${JSON.stringify(summary)}`);
+}
 
 const schema = new Database(cache.databasePath, { readonly: true });
 const tables = new Set(
@@ -85,6 +93,7 @@ for (const table of [
 for (const index of [
   'local_source_events_created_at_idx',
   'local_source_events_source_platform_idx',
+  'local_source_events_filter_action_idx',
   'local_import_batch_events_event_id_idx',
 ]) {
   if (!indexes.has(index)) {
@@ -95,6 +104,7 @@ for (const index of [
 console.log(JSON.stringify({
   databasePath: cache.databasePath,
   batch,
+  filterSummary: summary.filterSummary,
   timelineTopId: timeline[0]?.id ?? null,
   filteredEmailIds: emailEvents.map((event) => event.id),
 }, null, 2));

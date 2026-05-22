@@ -1,9 +1,13 @@
 import {
   CreateEventResponseSchema,
   EventsListResponseSchema,
+  LocalSourceCacheSummaryResponseSchema,
+  LocalSourceCacheTimelineResponseSchema,
   type CreateEventRequest,
   TranscriptionResponseSchema,
   type ContinuumEvent,
+  type LocalSourceCacheEvent,
+  type LocalSourceCacheSummaryResponse,
   type TranscriptionResponse,
 } from '@continuum/shared';
 import type { Session } from '@supabase/supabase-js';
@@ -68,4 +72,38 @@ export async function transcribeAudio(
   }
 
   return TranscriptionResponseSchema.parse(await response.json());
+}
+
+export async function fetchLocalSourceCacheSummary(
+  session: Session,
+): Promise<LocalSourceCacheSummaryResponse> {
+  const response = await fetch(`${API_URL}/api/local-source-cache/summary`, {
+    headers: {
+      Authorization: `Bearer ${session.access_token}`,
+    },
+  });
+
+  if (!response.ok) {
+    throw new Error('Failed to load local source cache summary');
+  }
+
+  return LocalSourceCacheSummaryResponseSchema.parse(await response.json());
+}
+
+export async function fetchLocalSourceCacheEvents(
+  session: Session,
+  limit = 12,
+): Promise<LocalSourceCacheEvent[]> {
+  const response = await fetch(`${API_URL}/api/local-source-cache/events?limit=${limit}`, {
+    headers: {
+      Authorization: `Bearer ${session.access_token}`,
+    },
+  });
+
+  if (!response.ok) {
+    throw new Error('Failed to load local source cache events');
+  }
+
+  const parsed = LocalSourceCacheTimelineResponseSchema.parse(await response.json());
+  return parsed.events;
 }

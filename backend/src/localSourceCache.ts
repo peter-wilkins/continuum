@@ -10,10 +10,13 @@ import {
   LocalSourceCacheEventSchema,
   type LocalSourceCacheEvent,
   type LocalSourceCacheImportResponse,
+  type LocalSourceCacheSummaryResponse,
 } from '@continuum/shared';
 import {
   canonicalEventToLocalSourceCacheEventRow,
   type CanonicalEvent,
+  evaluateCanonicalEventImportProfile,
+  type ImportFilterDecision,
 } from '@continuum/core';
 import { requireAuth } from './auth.js';
 
@@ -34,6 +37,10 @@ type SqliteEventRow = {
   actorRole: string;
   subject: string | null;
   text: string;
+  filterAction: string;
+  filterReason: string;
+  filterConfidence: number;
+  memoryActive: number;
   eventJson: string;
 };
 
@@ -48,6 +55,13 @@ type ImportBatchRow = {
 };
 
 type ImportResult = LocalSourceCacheImportResponse['batch'];
+
+type LocalSourceCacheCurationFields = {
+  filterAction: ImportFilterDecision['action'];
+  filterReason: string;
+  filterConfidence: number;
+  memoryActive: 0 | 1;
+};
 
 export class LocalSourceCache {
   readonly databasePath: string;
@@ -119,6 +133,10 @@ export class LocalSourceCache {
         actorRole,
         subject,
         text,
+        filterAction,
+        filterReason,
+        filterConfidence,
+        memoryActive,
         eventJson
       ) values (
         @id,
@@ -133,6 +151,10 @@ export class LocalSourceCache {
         @actorRole,
         @subject,
         @text,
+        @filterAction,
+        @filterReason,
+        @filterConfidence,
+        @memoryActive,
         @eventJson
       )
       on conflict(id) do update set
@@ -147,6 +169,10 @@ export class LocalSourceCache {
         actorRole = excluded.actorRole,
         subject = excluded.subject,
         text = excluded.text,
+        filterAction = excluded.filterAction,
+        filterReason = excluded.filterReason,
+        filterConfidence = excluded.filterConfidence,
+        memoryActive = excluded.memoryActive,
         eventJson = excluded.eventJson
     `);
     const linkBatchEvent = this.db.prepare(`
@@ -184,7 +210,10 @@ export class LocalSourceCache {
         try {
           const event = JSON.parse(line.raw) as CanonicalEvent;
           const row = canonicalEventToLocalSourceCacheEventRow(event, ingestedAt);
-          insertEvent.run(row);
+          insertEvent.run({
+            ...row,
+            ...curationFieldsForEvent(event),
+          });
           linkBatchEvent.run({ batchId, eventId: row.id });
           importedRows += 1;
         } catch (error) {
@@ -250,6 +279,66 @@ export class LocalSourceCache {
     return row ? mapEventRow(row) : null;
   }
 
+  getSummary(): LocalSourceCacheSummaryResponse {
+    const total = this.db
+      .prepare('select count(*) as totalEvents from local_source_events')
+      .get() as { totalEvents: number };
+    const actionRows = this.db
+      .prepare(`
+        select filterAction, count(*) as count
+        from local_source_events
+        group by filterAction
+      `)
+      .all() as { filterAction: ImportFilterDecision['action']; count: number }[];
+    const reasonRows = this.db
+      .prepare(`
+        select filterReason, count(*) as count
+        from local_source_events
+        group by filterReason
+      `)
+      .all() as { filterReason: string; count: number }[];
+    const sourceRows = this.db
+      .prepare(`
+        select sourcePlatform, filterAction, count(*) as count
+        from local_source_events
+        group by sourcePlatform, filterAction
+        order by sourcePlatform
+      `)
+      .all() as { sourcePlatform: string; filterAction: ImportFilterDecision['action']; count: number }[];
+    const bySource = new Map<string, {
+      sourcePlatform: string;
+      totalEvents: number;
+      included: number;
+      excluded: number;
+      needsReview: number;
+    }>();
+
+    for (const row of sourceRows) {
+      const current = bySource.get(row.sourcePlatform) ?? {
+        sourcePlatform: row.sourcePlatform,
+        totalEvents: 0,
+        included: 0,
+        excluded: 0,
+        needsReview: 0,
+      };
+
+      current.totalEvents += row.count;
+      applyActionCount(current, row.filterAction, row.count);
+      bySource.set(row.sourcePlatform, current);
+    }
+
+    return {
+      totalEvents: total.totalEvents,
+      filterSummary: {
+        included: actionCount(actionRows, 'include'),
+        excluded: actionCount(actionRows, 'exclude'),
+        needsReview: actionCount(actionRows, 'needs_review'),
+        reasons: Object.fromEntries(reasonRows.map((row) => [row.filterReason, row.count])),
+      },
+      bySourcePlatform: [...bySource.values()],
+    };
+  }
+
   private migrate() {
     this.dropDisposableSnakeCaseSchema();
     this.db.exec(`
@@ -266,6 +355,10 @@ export class LocalSourceCache {
         actorRole text not null,
         subject text,
         text text not null,
+        filterAction text not null,
+        filterReason text not null,
+        filterConfidence real not null,
+        memoryActive integer not null,
         eventJson text not null
       );
 
@@ -303,6 +396,69 @@ export class LocalSourceCache {
       create index if not exists local_import_batch_events_event_id_idx
         on local_import_batch_events(eventId);
     `);
+    this.ensureCurationColumns();
+    this.backfillCurationColumns();
+  }
+
+  private ensureCurationColumns() {
+    const columns = new Set(
+      this.db
+        .prepare("select name from pragma_table_info('local_source_events')")
+        .all()
+        .map((row) => (row as { name: string }).name),
+    );
+
+    for (const [name, sqlType] of [
+      ['filterAction', 'text'],
+      ['filterReason', 'text'],
+      ['filterConfidence', 'real'],
+      ['memoryActive', 'integer'],
+    ] as const) {
+      if (!columns.has(name)) {
+        this.db.exec(`alter table local_source_events add column ${name} ${sqlType}`);
+      }
+    }
+
+    this.db.exec(`
+      create index if not exists local_source_events_filter_action_idx
+        on local_source_events(filterAction);
+    `);
+  }
+
+  private backfillCurationColumns() {
+    const rows = this.db
+      .prepare(`
+        select id, eventJson
+        from local_source_events
+        where filterAction is null
+           or filterReason is null
+           or filterConfidence is null
+           or memoryActive is null
+      `)
+      .all() as { id: string; eventJson: string }[];
+
+    if (rows.length === 0) {
+      return;
+    }
+
+    const update = this.db.prepare(`
+      update local_source_events
+      set filterAction = @filterAction,
+          filterReason = @filterReason,
+          filterConfidence = @filterConfidence,
+          memoryActive = @memoryActive
+      where id = @id
+    `);
+    const runBackfill = this.db.transaction(() => {
+      for (const row of rows) {
+        update.run({
+          id: row.id,
+          ...curationFieldsForEventJson(row.eventJson),
+        });
+      }
+    });
+
+    runBackfill();
   }
 
   private dropDisposableSnakeCaseSchema() {
@@ -370,6 +526,13 @@ export async function registerLocalSourceCacheRoutes(app: FastifyInstance) {
     return { events: cache.listEvents(listInput) };
   });
 
+  app.get('/api/local-source-cache/summary', async (request, reply) => {
+    const user = await requireAuth(request, reply);
+    if (!user) return;
+
+    return cache.getSummary();
+  });
+
   app.get('/api/local-source-cache/events/:id', async (request, reply) => {
     const user = await requireAuth(request, reply);
     if (!user) return;
@@ -399,6 +562,12 @@ function mapEventRow(row: SqliteEventRow): LocalSourceCacheEvent {
     actorRole: row.actorRole,
     subject: row.subject,
     text: row.text,
+    filterDecision: {
+      action: row.filterAction,
+      reason: row.filterReason,
+      confidence: row.filterConfidence,
+    },
+    memoryActive: row.memoryActive === 1,
     eventJson: row.eventJson,
   });
 }
@@ -413,4 +582,56 @@ function mapBatchRow(row: ImportBatchRow): ImportResult {
     importedRows: row.importedRows,
     quarantinedRows: row.quarantinedRows,
   };
+}
+
+function curationFieldsForEvent(event: CanonicalEvent): LocalSourceCacheCurationFields {
+  const decision = evaluateCanonicalEventImportProfile({
+    profile: 'intentional_context',
+    event,
+  });
+
+  return {
+    filterAction: decision.action,
+    filterReason: decision.reason,
+    filterConfidence: decision.confidence,
+    memoryActive: decision.action === 'include' ? 1 : 0,
+  };
+}
+
+function curationFieldsForEventJson(eventJson: string): LocalSourceCacheCurationFields {
+  try {
+    return curationFieldsForEvent(JSON.parse(eventJson) as CanonicalEvent);
+  } catch {
+    return {
+      filterAction: 'needs_review',
+      filterReason: 'uncertain_intent',
+      filterConfidence: 0.6,
+      memoryActive: 0,
+    };
+  }
+}
+
+function actionCount(
+  rows: { filterAction: ImportFilterDecision['action']; count: number }[],
+  action: ImportFilterDecision['action'],
+) {
+  return rows.find((row) => row.filterAction === action)?.count ?? 0;
+}
+
+function applyActionCount(
+  row: {
+    included: number;
+    excluded: number;
+    needsReview: number;
+  },
+  action: ImportFilterDecision['action'],
+  count: number,
+) {
+  if (action === 'include') {
+    row.included += count;
+  } else if (action === 'exclude') {
+    row.excluded += count;
+  } else {
+    row.needsReview += count;
+  }
 }

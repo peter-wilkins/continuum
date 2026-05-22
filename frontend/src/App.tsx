@@ -1,7 +1,17 @@
 import type { Session } from '@supabase/supabase-js';
-import type { ContinuumEvent } from '@continuum/shared';
+import type {
+  ContinuumEvent,
+  LocalSourceCacheEvent,
+  LocalSourceCacheSummaryResponse,
+} from '@continuum/shared';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { createEvent, fetchEvents, transcribeAudio } from './api.js';
+import {
+  createEvent,
+  fetchEvents,
+  fetchLocalSourceCacheEvents,
+  fetchLocalSourceCacheSummary,
+  transcribeAudio,
+} from './api.js';
 import { type AudioCaptureChunk, useManualAudioCapture } from './audioCapture.js';
 import { getInitialSession, onAuthChange, signInWithGoogle } from './auth.js';
 import { useHeadsetMediaControls } from './headsetMediaControls.js';
@@ -31,6 +41,16 @@ type TranscriptionDebug = {
   error: string | null;
 };
 
+type LocalSourceCacheDebug =
+  | { status: 'idle' }
+  | { status: 'loading' }
+  | {
+      status: 'ready';
+      summary: LocalSourceCacheSummaryResponse;
+      events: LocalSourceCacheEvent[];
+    }
+  | { status: 'error'; error: string };
+
 export function App() {
   const path = window.location.pathname;
 
@@ -59,6 +79,9 @@ function ContinuumApp() {
     completedCount: 0,
     emptyCount: 0,
     error: null,
+  });
+  const [localSourceCacheDebug, setLocalSourceCacheDebug] = useState<LocalSourceCacheDebug>({
+    status: 'idle',
   });
   const [preferredMicId, setPreferredMicId] = useState('');
   const [micPromptOpen, setMicPromptOpen] = useState(false);
@@ -178,6 +201,40 @@ function ContinuumApp() {
     if (loadState.status !== 'logged_in') return;
     void processPendingQueue();
   }, [loadState]);
+
+  useEffect(() => {
+    if (!debug || loadState.status !== 'logged_in') {
+      setLocalSourceCacheDebug({ status: 'idle' });
+      return;
+    }
+
+    let mounted = true;
+    setLocalSourceCacheDebug({ status: 'loading' });
+
+    Promise.all([
+      fetchLocalSourceCacheSummary(loadState.session),
+      fetchLocalSourceCacheEvents(loadState.session, 12),
+    ])
+      .then(([summary, cacheEvents]) => {
+        if (!mounted) return;
+        setLocalSourceCacheDebug({
+          status: 'ready',
+          summary,
+          events: cacheEvents,
+        });
+      })
+      .catch((err: unknown) => {
+        if (!mounted) return;
+        setLocalSourceCacheDebug({
+          status: 'error',
+          error: err instanceof Error ? err.message : 'Failed to load local source cache',
+        });
+      });
+
+    return () => {
+      mounted = false;
+    };
+  }, [debug, loadState]);
 
   async function queueChunk(chunk: AudioCaptureChunk) {
     try {
@@ -334,6 +391,7 @@ function ContinuumApp() {
           onOpenMicPrompt={() => setMicPromptOpen(true)}
           headsetControls={headsetControls}
           headsetExperiment={headsetExperiment}
+          localSourceCache={localSourceCacheDebug}
           nativeShellBridge={nativeShellBridge}
           queueSummary={queueSummary}
           transcriptionDebug={transcriptionDebug}
@@ -400,6 +458,7 @@ type DebugPanelProps = {
   audioCapture: ReturnType<typeof useManualAudioCapture>;
   headsetControls: ReturnType<typeof useHeadsetMediaControls>;
   headsetExperiment: boolean;
+  localSourceCache: LocalSourceCacheDebug;
   nativeShellBridge: ReturnType<typeof useNativeShellBridge>;
   queueSummary: PendingAudioSummary;
   transcriptionDebug: TranscriptionDebug;
@@ -411,6 +470,7 @@ function DebugPanel({
   onOpenMicPrompt,
   headsetControls,
   headsetExperiment,
+  localSourceCache,
   nativeShellBridge,
   queueSummary,
   transcriptionDebug,
@@ -485,6 +545,7 @@ function DebugPanel({
         {transcriptionDebug.error ? <p className="error">{transcriptionDebug.error}</p> : null}
         {headsetControls.error ? <p className="error">{headsetControls.error}</p> : null}
       </div>
+      <LocalSourceCacheDebugPanel localSourceCache={localSourceCache} />
       {audioCapture.chunks.length > 0 ? (
         <div className="debug-subsection">
           <p className="debug-label">recent chunks</p>
@@ -498,6 +559,72 @@ function DebugPanel({
         </div>
       ) : null}
     </section>
+  );
+}
+
+function LocalSourceCacheDebugPanel({
+  localSourceCache,
+}: {
+  localSourceCache: LocalSourceCacheDebug;
+}) {
+  if (localSourceCache.status === 'idle') {
+    return null;
+  }
+
+  if (localSourceCache.status === 'loading') {
+    return (
+      <div className="debug-subsection">
+        <p className="debug-label">local source cache</p>
+        <p>loading</p>
+      </div>
+    );
+  }
+
+  if (localSourceCache.status === 'error') {
+    return (
+      <div className="debug-subsection">
+        <p className="debug-label">local source cache</p>
+        <p className="error">{localSourceCache.error}</p>
+      </div>
+    );
+  }
+
+  const { summary, events: cacheEvents } = localSourceCache;
+
+  return (
+    <div className="debug-subsection">
+      <p className="debug-label">local source cache</p>
+      <div className="source-cache-summary">
+        <span>total {summary.totalEvents}</span>
+        <span>included {summary.filterSummary.included}</span>
+        <span>needs review {summary.filterSummary.needsReview}</span>
+        <span>excluded {summary.filterSummary.excluded}</span>
+      </div>
+      {summary.bySourcePlatform.length > 0 ? (
+        <ol className="source-cache-platforms">
+          {summary.bySourcePlatform.map((source) => (
+            <li key={source.sourcePlatform}>
+              {source.sourcePlatform}: {source.totalEvents} · in {source.included} · review{' '}
+              {source.needsReview} · out {source.excluded}
+            </li>
+          ))}
+        </ol>
+      ) : null}
+      {cacheEvents.length > 0 ? (
+        <ol className="source-cache-events">
+          {cacheEvents.map((event) => (
+            <li key={event.id}>
+              <span className={event.memoryActive ? 'cache-state is-active' : 'cache-state'}>
+                {event.memoryActive ? 'active' : 'review'}
+              </span>
+              <span>{event.sourcePlatform}</span>
+              <span>{event.filterDecision.reason}</span>
+              <span>{event.subject ?? event.text.slice(0, 42)}</span>
+            </li>
+          ))}
+        </ol>
+      ) : null}
+    </div>
   );
 }
 

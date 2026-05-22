@@ -402,6 +402,45 @@ button {
   padding-top: 10px;
 }
 
+.source-cache-summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 0 0 8px;
+}
+
+.source-cache-summary span,
+.cache-state {
+  border: 1px solid #d6d0c2;
+  border-radius: 6px;
+  background: #fffdf8;
+  color: #4f4c45;
+  padding: 3px 6px;
+  font-size: 0.74rem;
+  font-weight: 800;
+}
+
+.cache-state.is-active {
+  border-color: #8aa37a;
+  background: #eef5e8;
+  color: #345223;
+}
+
+.source-cache-platforms,
+.source-cache-events {
+  display: grid;
+  gap: 5px;
+  margin: 8px 0 0;
+  padding-left: 18px;
+}
+
+.source-cache-events li {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: baseline;
+}
+
 .modal-backdrop {
   position: fixed;
   inset: 0;

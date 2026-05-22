@@ -35,6 +35,19 @@ export const TranscriptionResponseSchema = z.object({
   metadata: z.record(z.unknown()).default({}),
 });
 
+export const ImportFilterDecisionSchema = z.object({
+  action: z.enum(['include', 'exclude', 'needs_review']),
+  reason: z.string().min(1),
+  confidence: z.number().min(0).max(1),
+});
+
+export const ImportFilterSummarySchema = z.object({
+  included: z.number().int().nonnegative(),
+  excluded: z.number().int().nonnegative(),
+  needsReview: z.number().int().nonnegative(),
+  reasons: z.record(z.number().int().nonnegative()),
+});
+
 export const LocalSourceCacheEventSchema = z.object({
   id: z.string().min(1),
   sourcePlatform: z.string().min(1),
@@ -48,6 +61,8 @@ export const LocalSourceCacheEventSchema = z.object({
   actorRole: z.string().min(1),
   subject: z.string().nullable(),
   text: z.string(),
+  filterDecision: ImportFilterDecisionSchema,
+  memoryActive: z.boolean(),
   eventJson: z.string().min(1),
 });
 
@@ -76,6 +91,18 @@ export const LocalSourceCacheDetailResponseSchema = z.object({
   event: LocalSourceCacheEventSchema,
 });
 
+export const LocalSourceCacheSummaryResponseSchema = z.object({
+  totalEvents: z.number().int().nonnegative(),
+  filterSummary: ImportFilterSummarySchema,
+  bySourcePlatform: z.array(z.object({
+    sourcePlatform: z.string().min(1),
+    totalEvents: z.number().int().nonnegative(),
+    included: z.number().int().nonnegative(),
+    excluded: z.number().int().nonnegative(),
+    needsReview: z.number().int().nonnegative(),
+  })),
+});
+
 export const ErrorResponseSchema = z.object({
   error: z.string(),
 });
@@ -86,9 +113,12 @@ export type CreateEventRequest = z.infer<typeof CreateEventRequestSchema>;
 export type EventsListResponse = z.infer<typeof EventsListResponseSchema>;
 export type CreateEventResponse = z.infer<typeof CreateEventResponseSchema>;
 export type TranscriptionResponse = z.infer<typeof TranscriptionResponseSchema>;
+export type ImportFilterDecision = z.infer<typeof ImportFilterDecisionSchema>;
+export type ImportFilterSummary = z.infer<typeof ImportFilterSummarySchema>;
 export type LocalSourceCacheEvent = z.infer<typeof LocalSourceCacheEventSchema>;
 export type LocalSourceCacheImportRequest = z.infer<typeof LocalSourceCacheImportRequestSchema>;
 export type LocalSourceCacheImportResponse = z.infer<typeof LocalSourceCacheImportResponseSchema>;
 export type LocalSourceCacheTimelineResponse = z.infer<typeof LocalSourceCacheTimelineResponseSchema>;
 export type LocalSourceCacheDetailResponse = z.infer<typeof LocalSourceCacheDetailResponseSchema>;
+export type LocalSourceCacheSummaryResponse = z.infer<typeof LocalSourceCacheSummaryResponseSchema>;
 export type ErrorResponse = z.infer<typeof ErrorResponseSchema>;
