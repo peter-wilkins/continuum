@@ -188,6 +188,8 @@ Prefer direct HTTP calls with built-in `fetch` plus Zod validation at the bounda
 
 If the user starts a side quest while a feature is in progress, challenge the scope shift briefly. Prefer capturing the side quest as a local Markdown issue, then return to the current feature unless the user explicitly reprioritises.
 
+When the conversation is a decision Thought Journey, grill, design thread, or other facilitated decision path, show a coarse progress bar. Use it for orientation only; do not invent precise percentages or hide uncertainty.
+
 App feedback from `/api/devops-feedback` lands in:
 
 ```text
