@@ -14,6 +14,7 @@ Current UI proves that Lens/Thought Card streams can render. That is useful evid
 Surprise me or spoken query
 -> synthesized answer
 -> optional Why this? / Sources drill-down
+-> visible Lens Compare for tester/model comparison
 -> one Line of Inquiry
 ```
 
@@ -23,7 +24,9 @@ Product decision: synthesize the answer over canonical Thought Cards before Lens
 
 Product decision: for the MVP, thumbs-up feedback scores the whole visible result: query, synthesized answer, and Line of Inquiry together. Later feedback can split answer quality, Lens/evidence quality, and question quality once the signal becomes useful enough to justify more UI.
 
-Product decision: user-facing explanation language is `Why this?` and `Sources`, not `provenance`, `citation`, or `rationale`. The first drill-down should show source support: 2-4 supporting Thought Cards with source links. Lens variants belong behind debug/compare affordance.
+Product decision: user-facing explanation language is `Why this?` and `Sources`, not `provenance`, `citation`, or `rationale`. The first drill-down should show source support: 2-4 supporting Thought Cards with source links. Lens variants belong in a visible `Lens Compare` affordance, not as the first explanation section.
+
+Product decision: keep Lens Compare visible in the MVP. The first users are us, and comparing Lenses is part of learning what works. This should not replace answer-first UX, but it should remain a clear, reachable surface rather than hidden diagnostics.
 
 ## Acceptance criteria
 
@@ -36,10 +39,12 @@ Product decision: user-facing explanation language is `Why this?` and `Sources`,
 - [ ] `Sources` shows 2-4 supporting Thought Cards with source links.
 - [ ] Normal user-facing copy avoids `provenance`, `citation`, and `rationale`.
 - [ ] The normal answer surface does not bias the user with Lens names before feedback.
+- [ ] A visible `Lens Compare` affordance remains available for MVP testers.
+- [ ] `Lens Compare` lets testers compare Lens outputs without making the primary answer card-first again.
 - [ ] The system asks one Line of Inquiry after the answer.
 - [ ] The Line of Inquiry is grounded in the same source support as the answer.
 - [ ] The thumbs-up action records feedback against the whole visible result: query, answer, and Line of Inquiry.
-- [ ] The old Lens carousel remains available as a debug/compare view until replaced.
+- [ ] Existing Lens carousel behaviour can be reused for `Lens Compare` if it keeps implementation small.
 - [ ] Mobile layout stays full-screen and readable.
 
 ## Open questions
