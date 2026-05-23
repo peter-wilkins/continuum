@@ -1,8 +1,8 @@
 # 039: Voice-First Public Query Entry
 
-Status: planning
+Status: ready
 
-Type: HITL
+Type: AFK
 
 ## What to build
 
@@ -32,12 +32,14 @@ Do not make this depend on user login. Asking a public query should remain part 
 - [ ] No raw audio is stored in this slice unless a later issue explicitly adds capture/provenance.
 - [ ] Mobile Chrome on Android is manually smoke-tested.
 
-## Open questions
+## Product decisions
 
-- Should the MVP use browser speech recognition first, or route audio through the Continuum transcription path?
-- Should failed recognition ask the user to try again, or fall straight back to text?
+- Use browser speech recognition first for the public phone MVP.
+- Do not route raw audio through Continuum in this slice.
+- Do not store raw audio in this slice.
+- If recognition fails or is unavailable, keep the spoken-query intent alive and fall back to text.
+- A future native/audio-core path can replace browser speech once the Concierge loop proves useful.
 
 ## Blocked by
 
-Needs one implementation choice before it is AFK-ready.
-
+None - can start immediately.
