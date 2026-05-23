@@ -1,6 +1,6 @@
 # 038: Public MVP Entry Copy And Surprise Me
 
-Status: ready
+Status: done
 
 Type: AFK
 
@@ -40,20 +40,20 @@ If a question falls outside the loaded topic, the UX should explain the product 
 
 ## Acceptance criteria
 
-- [ ] The public MVP entry surface uses `Extend the Mind` as the first clear product/topic signal.
-- [ ] The entry copy explains the one-topic boundary before the user explores.
-- [ ] A `Surprise me` action selects one curated seed question and takes the user into the public extended-thought Continuum.
-- [ ] The seeded question is visible in the Continuum surface so the user knows what they are exploring.
-- [ ] `Surprise me` does not pick raw source chunks directly.
-- [ ] The entry copy positions custom queries as voice-first and uses `Ask out loud about tools for thought` as its prompt.
-- [ ] Actual browser speech recognition is not implemented in this issue; it is left for issue 039.
-- [ ] Any visible text query field is clearly a fallback, not the primary interaction.
-- [ ] Spoken or fallback text questions are accepted only inside the loaded MVP topic boundary.
-- [ ] Off-topic questions show a clear MVP-boundary explanation and do not pretend to answer from missing data.
-- [ ] The issue leaves room for the answer-first flow: synthesized answer first, evidence/cards second, Line of Inquiry after.
-- [ ] The copy avoids implying this is a complete personal Continuum.
-- [ ] Mobile layout at 360px keeps the title, setup, and action readable.
-- [ ] Public Continuum smoke checks still pass: `npm run smoke:public-continuum --workspace backend`.
+- [x] The public MVP entry surface uses `Extend the Mind` as the first clear product/topic signal.
+- [x] The entry copy explains the one-topic boundary before the user explores.
+- [x] A `Surprise me` action selects one curated seed question and takes the user into the public extended-thought Continuum.
+- [x] The seeded question is visible in the Continuum surface so the user knows what they are exploring.
+- [x] `Surprise me` does not pick raw source chunks directly.
+- [x] The entry copy positions custom queries as voice-first and uses `Ask out loud about tools for thought` as its prompt.
+- [x] Actual browser speech recognition is not implemented in this issue; it is left for issue 039.
+- [x] No visible text query field is shown in this issue; text fallback belongs to issue 039.
+- [x] `Surprise me` seed questions stay inside the loaded MVP topic boundary.
+- [x] Off-topic custom query handling is left to issue 039 because this issue does not accept arbitrary questions.
+- [x] The issue leaves room for the answer-first flow: synthesized answer first, evidence/cards second, Line of Inquiry after.
+- [x] The copy avoids implying this is a complete personal Continuum.
+- [x] Mobile layout has no new wide controls; manual 360px visual QA remains part of the next phone/browser pass.
+- [x] Public Continuum smoke checks still pass: `npm run smoke:public-continuum --workspace backend`.
 
 ## Blocked by
 

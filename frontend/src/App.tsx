@@ -1,9 +1,10 @@
 import type { Session } from '@supabase/supabase-js';
-import type {
-  ContinuumEvent,
-  LocalImportPreviewSummary,
-  LocalSourceCacheEvent,
-  LocalSourceCacheSummaryResponse,
+import {
+  extendedThoughtSeedQuestions,
+  type ContinuumEvent,
+  type LocalImportPreviewSummary,
+  type LocalSourceCacheEvent,
+  type LocalSourceCacheSummaryResponse,
 } from '@continuum/shared';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
@@ -821,6 +822,14 @@ function MicPromptDialog({
 function PrototypeIndex() {
   const continuumUrl = `/continuum${window.location.search}`;
 
+  function openSurpriseMe() {
+    const question =
+      extendedThoughtSeedQuestions[Math.floor(Math.random() * extendedThoughtSeedQuestions.length)] ??
+      extendedThoughtSeedQuestions[0];
+    const search = new URLSearchParams({ question });
+    window.location.href = `/public/extended-thought?${search.toString()}`;
+  }
+
   return (
     <main className="index-screen">
       <header className="index-header">
@@ -840,25 +849,29 @@ function PrototypeIndex() {
         <article className="prototype-card">
           <div>
             <p className="status-pill">Public MVP</p>
-            <h3>Extended thought through brain augmentation</h3>
+            <h3>Extend the Mind</h3>
             <p>
-              A read-only public Continuum seeded from Wikipedia records, with paragraph-grounded
-              Thought Cards across Atlas, Loom, and Beacon Lens candidates.
+              This demo knows one topic: how people use tools, machines, and ideas to think beyond
+              the brain.
             </p>
           </div>
           <dl className="prototype-details">
             <div>
               <dt>Try</dt>
-              <dd>Swipe across the Lens candidates and compare how the same sources are arranged.</dd>
+              <dd>Use Surprise me to start with one curated question.</dd>
             </div>
             <div>
               <dt>Status</dt>
-              <dd>Public data, source links, provenance, and source-backed Thought Cards.</dd>
+              <dd>Source-backed answer first, with Sources and Lens Compare available.</dd>
+            </div>
+            <div>
+              <dt>Voice path</dt>
+              <dd>Ask out loud about tools for thought.</dd>
             </div>
           </dl>
-          <a className="prototype-link" href="/public/extended-thought">
-            Open public Continuum
-          </a>
+          <button className="prototype-link" type="button" onClick={openSurpriseMe}>
+            Surprise me
+          </button>
         </article>
         <article className="prototype-card">
           <div>

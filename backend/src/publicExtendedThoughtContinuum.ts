@@ -1,7 +1,13 @@
 import { readFileSync } from 'node:fs';
 
 import { defaultPublicLensDefinitions } from '@continuum/core';
-import { PublicContinuumResponseSchema } from '@continuum/shared';
+import {
+  isExtendedThoughtSeedQuestion,
+  publicQuestionId,
+  PublicContinuumResponseSchema,
+} from '@continuum/shared';
+
+import type { PublicContinuumTargetOptions } from './publicContinuumTargets.js';
 
 const materializedPreviewPath = new URL(
   '../../../continuum-core/data/bootstrap-public-sources/materialized-preview.json',
@@ -131,11 +137,15 @@ type MaterializedPreviewJson = {
   };
 };
 
-export function createExtendedThoughtPublicContinuum() {
+export function createExtendedThoughtPublicContinuum(options: PublicContinuumTargetOptions = {}) {
   const preview = JSON.parse(
     readFileSync(materializedPreviewPath, 'utf8'),
   ) as MaterializedPreviewJson;
   const { materialization } = preview;
+  const selectedQuestion =
+    options.question && isExtendedThoughtSeedQuestion(options.question) ? options.question : null;
+  const queryText = selectedQuestion ?? preview.query.text;
+  const selectedQueryId = selectedQuestion ? publicQuestionId(selectedQuestion) : preview.query.id;
 
   return PublicContinuumResponseSchema.parse({
     scope: {
@@ -145,8 +155,8 @@ export function createExtendedThoughtPublicContinuum() {
       focusLabel: preview.scope.focusEntity?.label ?? null,
     },
     query: {
-      id: preview.query.id,
-      text: preview.query.text,
+      id: selectedQueryId,
+      text: queryText,
     },
     events: materialization.events.map((event) => ({
       id: event.id,
@@ -173,8 +183,18 @@ export function createExtendedThoughtPublicContinuum() {
       body: card.body,
       sourceParagraphIds: card.sourceParagraphIds,
     })),
-    synthesizedAnswer: materialization.synthesizedAnswer,
-    linesOfInquiry: materialization.linesOfInquiry,
+    synthesizedAnswer: {
+      ...materialization.synthesizedAnswer,
+      queryId: selectedQueryId,
+    },
+    linesOfInquiry: {
+      ...materialization.linesOfInquiry,
+      queryId: selectedQueryId,
+      lines: materialization.linesOfInquiry.lines.map((line) => ({
+        ...line,
+        queryId: selectedQueryId,
+      })),
+    },
     lenses: defaultPublicLensDefinitions,
     outputs: materialization.lensOutputs.map((output) => ({
       id: output.id,

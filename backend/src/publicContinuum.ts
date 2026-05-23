@@ -21,7 +21,7 @@ export async function registerPublicContinuumRoutes(app: FastifyInstance) {
       return reply.status(404).send({ error: 'Unknown public Continuum target' });
     }
 
-    return target.createContinuum();
+    return target.createContinuum(getTargetOptions(request.query));
   });
 
   app.get('/api/public-continuum/:targetId/feedback-summary', async (request, reply) => {
@@ -77,4 +77,9 @@ function getTargetFromParams(params: unknown): PublicContinuumTarget | null {
   const { targetId } = params as { targetId: unknown };
   if (typeof targetId !== 'string') return null;
   return getPublicContinuumTarget(targetId);
+}
+
+function getTargetOptions(query: unknown) {
+  const { question } = query as { question?: unknown };
+  return typeof question === 'string' ? { question } : undefined;
 }

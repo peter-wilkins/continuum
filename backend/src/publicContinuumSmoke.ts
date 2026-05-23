@@ -41,6 +41,20 @@ try {
     throw new Error(`Expected multiple Lines of Inquiry, got ${continuum.linesOfInquiry.lines.length}.`);
   }
 
+  const seedQuestionResponse = await app.inject({
+    method: 'GET',
+    url: '/api/public-continuum/extended-thought?question=When%20does%20a%20tool%20become%20part%20of%20thinking%3F',
+  });
+
+  if (seedQuestionResponse.statusCode !== 200) {
+    throw new Error(`Expected seeded public Continuum 200, got ${seedQuestionResponse.statusCode}.`);
+  }
+
+  const seededContinuum = PublicContinuumResponseSchema.parse(JSON.parse(seedQuestionResponse.body));
+  if (seededContinuum.query.text !== 'When does a tool become part of thinking?') {
+    throw new Error(`Expected seeded query to be visible, got ${seededContinuum.query.text}.`);
+  }
+
   const summaryResponse = await app.inject({
     method: 'GET',
     url: '/api/public-continuum/extended-thought/feedback-summary',

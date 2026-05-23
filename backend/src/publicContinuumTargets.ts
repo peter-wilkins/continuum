@@ -4,7 +4,11 @@ import { createExtendedThoughtPublicContinuum } from './publicExtendedThoughtCon
 
 export type PublicContinuumTarget = {
   id: string;
-  createContinuum(): PublicContinuumResponse;
+  createContinuum(options?: PublicContinuumTargetOptions): PublicContinuumResponse;
+};
+
+export type PublicContinuumTargetOptions = {
+  question?: string;
 };
 
 const publicContinuumTargets = [

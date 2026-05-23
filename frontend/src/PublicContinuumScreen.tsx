@@ -47,6 +47,7 @@ export function PublicContinuum({ targetId }: { targetId: string }) {
   const pwaInstall = usePwaInstallPrompt();
   const lensStripRef = useRef<HTMLElement | null>(null);
   const guidePageRef = useRef<HTMLElement | null>(null);
+  const selectedQuestion = new URLSearchParams(window.location.search).get('question');
   const readyContinuum = state.status === 'ready' ? state.continuum : null;
   const {
     authError,
@@ -100,7 +101,7 @@ export function PublicContinuum({ targetId }: { targetId: string }) {
   useEffect(() => {
     let mounted = true;
 
-    fetchPublicContinuum(targetId)
+    fetchPublicContinuum(targetId, { question: selectedQuestion })
       .then((continuum) => {
         if (!mounted) return;
         setState({ status: 'ready', continuum });
@@ -116,7 +117,7 @@ export function PublicContinuum({ targetId }: { targetId: string }) {
     return () => {
       mounted = false;
     };
-  }, [targetId]);
+  }, [selectedQuestion, targetId]);
 
   useEffect(() => {
     let mounted = true;

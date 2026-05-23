@@ -137,8 +137,16 @@ export async function fetchLocalImportPreviewSummaries(
   return parsed.previews;
 }
 
-export async function fetchPublicContinuum(targetId: string): Promise<PublicContinuumResponse> {
-  const response = await fetch(`${API_URL}/api/public-continuum/${targetId}`);
+export async function fetchPublicContinuum(
+  targetId: string,
+  options: { question?: string | null } = {},
+): Promise<PublicContinuumResponse> {
+  const search = new URLSearchParams();
+  if (options.question) {
+    search.set('question', options.question);
+  }
+  const suffix = search.size > 0 ? `?${search.toString()}` : '';
+  const response = await fetch(`${API_URL}/api/public-continuum/${targetId}${suffix}`);
 
   if (!response.ok) {
     throw new Error('Failed to load public Continuum');

@@ -226,7 +226,10 @@ button {
   background: #242424;
   color: #fff;
   padding: 10px 12px;
+  font: inherit;
+  font-weight: 800;
   text-decoration: none;
+  cursor: pointer;
 }
 
 .blog-entry time {
