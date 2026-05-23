@@ -518,6 +518,14 @@
   gap: 18px;
 }
 
+.public-query-context {
+  margin: -10px 0 0;
+  color: #5f5d56;
+  font-size: 0.9rem;
+  font-weight: 750;
+  line-height: 1.35;
+}
+
 .public-answer-main h2 {
   margin: 0;
   color: #242424;

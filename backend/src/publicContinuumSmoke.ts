@@ -55,6 +55,23 @@ try {
     throw new Error(`Expected seeded query to be visible, got ${seededContinuum.query.text}.`);
   }
 
+  const customQuestion = 'How can notebooks extend thinking?';
+  const customQuestionResponse = await app.inject({
+    method: 'GET',
+    url: `/api/public-continuum/extended-thought?question=${encodeURIComponent(customQuestion)}`,
+  });
+
+  if (customQuestionResponse.statusCode !== 200) {
+    throw new Error(`Expected custom public Continuum 200, got ${customQuestionResponse.statusCode}.`);
+  }
+
+  const customQuestionContinuum = PublicContinuumResponseSchema.parse(
+    JSON.parse(customQuestionResponse.body),
+  );
+  if (customQuestionContinuum.query.text !== customQuestion) {
+    throw new Error(`Expected custom query to be visible, got ${customQuestionContinuum.query.text}.`);
+  }
+
   const summaryResponse = await app.inject({
     method: 'GET',
     url: '/api/public-continuum/extended-thought/feedback-summary',

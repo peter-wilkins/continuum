@@ -232,6 +232,101 @@ button {
   cursor: pointer;
 }
 
+.prototype-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+}
+
+.prototype-voice-entry {
+  display: grid;
+  gap: 10px;
+}
+
+.prototype-voice-button {
+  width: fit-content;
+  max-width: 100%;
+  border: 1px solid #285f46;
+  border-radius: 6px;
+  background: #285f46;
+  color: #fff;
+  padding: 10px 12px;
+  font: inherit;
+  font-weight: 800;
+  text-align: left;
+  cursor: pointer;
+}
+
+.prototype-voice-button.is-listening {
+  border-color: #7a4838;
+  background: #7a4838;
+  cursor: progress;
+}
+
+.prototype-voice-button:disabled {
+  opacity: 0.84;
+}
+
+.prototype-voice-note,
+.prototype-voice-status,
+.prototype-boundary-message,
+.prototype-query-fallback label {
+  margin: 0;
+  color: #5f5d56;
+  font-size: 0.88rem;
+  line-height: 1.45;
+}
+
+.prototype-voice-status {
+  color: #7a4838;
+  font-weight: 700;
+}
+
+.prototype-boundary-message {
+  border-left: 3px solid #7a4838;
+  padding-left: 10px;
+}
+
+.prototype-query-fallback {
+  display: grid;
+  gap: 8px;
+  max-width: 34rem;
+}
+
+.prototype-query-fallback div {
+  display: flex;
+  gap: 8px;
+}
+
+.prototype-query-fallback input {
+  min-width: 0;
+  flex: 1 1 auto;
+  border: 1px solid #b8aa8d;
+  border-radius: 6px;
+  background: #fffdf8;
+  color: #1c1c1a;
+  padding: 10px 11px;
+  font: inherit;
+}
+
+.prototype-query-fallback button {
+  flex: 0 0 auto;
+  border: 1px solid #242424;
+  border-radius: 6px;
+  background: #242424;
+  color: #fff;
+  padding: 10px 12px;
+  font: inherit;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.prototype-query-fallback button:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
 .blog-entry time {
   display: block;
   margin-bottom: 8px;

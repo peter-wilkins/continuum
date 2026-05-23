@@ -2,7 +2,7 @@ import { readFileSync } from 'node:fs';
 
 import { defaultPublicLensDefinitions } from '@continuum/core';
 import {
-  isExtendedThoughtSeedQuestion,
+  isExtendedThoughtQuestionInScope,
   publicQuestionId,
   PublicContinuumResponseSchema,
 } from '@continuum/shared';
@@ -143,7 +143,9 @@ export function createExtendedThoughtPublicContinuum(options: PublicContinuumTar
   ) as MaterializedPreviewJson;
   const { materialization } = preview;
   const selectedQuestion =
-    options.question && isExtendedThoughtSeedQuestion(options.question) ? options.question : null;
+    options.question && isExtendedThoughtQuestionInScope(options.question)
+      ? options.question.trim().replace(/\s+/g, ' ')
+      : null;
   const queryText = selectedQuestion ?? preview.query.text;
   const selectedQueryId = selectedQuestion ? publicQuestionId(selectedQuestion) : preview.query.id;
 

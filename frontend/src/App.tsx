@@ -1,12 +1,14 @@
 import type { Session } from '@supabase/supabase-js';
 import {
+  extendedThoughtBoundaryMessage,
   extendedThoughtSeedQuestions,
+  isExtendedThoughtQuestionInScope,
   type ContinuumEvent,
   type LocalImportPreviewSummary,
   type LocalSourceCacheEvent,
   type LocalSourceCacheSummaryResponse,
 } from '@continuum/shared';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent } from 'react';
 import {
   createEvent,
   fetchEvents,
@@ -41,6 +43,56 @@ import {
 import { PublicContinuum, PublicLensGuide } from './PublicContinuumScreen.js';
 
 const primaryPublicContinuumTargetId = 'extended-thought';
+const speechRecognitionUnavailableMessage =
+  'Speech is not available in this browser.';
+const browserSpeechRecognitionCaveat =
+  'Continuum does not store raw audio here. Browser speech recognition may use a vendor service.';
+
+type BrowserSpeechRecognitionAlternative = {
+  transcript: string;
+};
+
+type BrowserSpeechRecognitionResult = {
+  readonly isFinal: boolean;
+  readonly length: number;
+  readonly [index: number]: BrowserSpeechRecognitionAlternative | undefined;
+};
+
+type BrowserSpeechRecognitionResultList = {
+  readonly length: number;
+  readonly [index: number]: BrowserSpeechRecognitionResult | undefined;
+};
+
+type BrowserSpeechRecognitionEvent = Event & {
+  resultIndex: number;
+  results: BrowserSpeechRecognitionResultList;
+};
+
+type BrowserSpeechRecognitionErrorEvent = Event & {
+  error?: string;
+  message?: string;
+};
+
+type BrowserSpeechRecognition = {
+  continuous: boolean;
+  interimResults: boolean;
+  lang: string;
+  onend: (() => void) | null;
+  onerror: ((event: BrowserSpeechRecognitionErrorEvent) => void) | null;
+  onresult: ((event: BrowserSpeechRecognitionEvent) => void) | null;
+  onstart: (() => void) | null;
+  abort(): void;
+  start(): void;
+  stop(): void;
+};
+
+type BrowserSpeechRecognitionConstructor = new () => BrowserSpeechRecognition;
+
+type SpeechQueryStatus =
+  | { status: 'idle' }
+  | { status: 'listening' }
+  | { status: 'unsupported' }
+  | { status: 'error'; message: string };
 
 type LoadState =
   | { status: 'loading' }
@@ -821,13 +873,105 @@ function MicPromptDialog({
 
 function PrototypeIndex() {
   const continuumUrl = `/continuum${window.location.search}`;
+  const [fallbackQuery, setFallbackQuery] = useState('');
+  const [queryBoundaryMessage, setQueryBoundaryMessage] = useState<string | null>(null);
+  const [speechQueryStatus, setSpeechQueryStatus] = useState<SpeechQueryStatus>({ status: 'idle' });
+  const speechRecognitionRef = useRef<BrowserSpeechRecognition | null>(null);
+  const speechSupported = useMemo(() => getSpeechRecognitionConstructor() !== null, []);
+  const showTextFallback =
+    !speechSupported ||
+    speechQueryStatus.status === 'unsupported' ||
+    speechQueryStatus.status === 'error' ||
+    fallbackQuery.trim().length > 0 ||
+    queryBoundaryMessage !== null;
+
+  useEffect(() => {
+    return () => {
+      const recognition = speechRecognitionRef.current;
+      if (!recognition) return;
+      recognition.onend = null;
+      recognition.onerror = null;
+      recognition.onresult = null;
+      recognition.abort();
+    };
+  }, []);
 
   function openSurpriseMe() {
     const question =
       extendedThoughtSeedQuestions[Math.floor(Math.random() * extendedThoughtSeedQuestions.length)] ??
       extendedThoughtSeedQuestions[0];
-    const search = new URLSearchParams({ question });
+    openPublicQuestion(question);
+  }
+
+  function openPublicQuestion(question: string) {
+    const normalizedQuestion = normalizeTypedQuestion(question);
+    if (!normalizedQuestion) return;
+
+    if (!isExtendedThoughtQuestionInScope(normalizedQuestion)) {
+      setFallbackQuery(normalizedQuestion);
+      setQueryBoundaryMessage(extendedThoughtBoundaryMessage);
+      return;
+    }
+
+    const search = new URLSearchParams({ question: normalizedQuestion });
     window.location.href = `/public/extended-thought?${search.toString()}`;
+  }
+
+  function startSpeechQuery() {
+    const SpeechRecognition = getSpeechRecognitionConstructor();
+    if (!SpeechRecognition) {
+      setSpeechQueryStatus({ status: 'unsupported' });
+      return;
+    }
+
+    speechRecognitionRef.current?.abort();
+    setQueryBoundaryMessage(null);
+    setSpeechQueryStatus({ status: 'listening' });
+
+    const recognition = new SpeechRecognition();
+    let receivedTranscript = false;
+
+    recognition.continuous = false;
+    recognition.interimResults = false;
+    recognition.lang = window.navigator.language || 'en-GB';
+    recognition.onstart = () => setSpeechQueryStatus({ status: 'listening' });
+    recognition.onresult = (event) => {
+      const transcript = transcriptFromSpeechEvent(event);
+      if (!transcript) return;
+      receivedTranscript = true;
+      setFallbackQuery(transcript);
+      setSpeechQueryStatus({ status: 'idle' });
+      openPublicQuestion(transcript);
+    };
+    recognition.onerror = (event) => {
+      receivedTranscript = true;
+      const message =
+        event.error === 'not-allowed'
+          ? 'Speech permission was blocked. Type the question instead.'
+          : 'Speech did not work here. Type the question instead.';
+      setSpeechQueryStatus({ status: 'error', message });
+    };
+    recognition.onend = () => {
+      speechRecognitionRef.current = null;
+      if (!receivedTranscript) {
+        setSpeechQueryStatus({
+          status: 'error',
+          message: 'Speech ended before a question was recognized. Type it instead.',
+        });
+      }
+    };
+
+    speechRecognitionRef.current = recognition;
+
+    try {
+      recognition.start();
+    } catch {
+      speechRecognitionRef.current = null;
+      setSpeechQueryStatus({
+        status: 'error',
+        message: 'Speech could not start in this browser. Type the question instead.',
+      });
+    }
   }
 
   return (
@@ -855,6 +999,62 @@ function PrototypeIndex() {
               the brain.
             </p>
           </div>
+          <div className="prototype-actions">
+            <button
+              className={`prototype-voice-button${
+                speechQueryStatus.status === 'listening' ? ' is-listening' : ''
+              }`}
+              type="button"
+              disabled={speechQueryStatus.status === 'listening'}
+              onClick={startSpeechQuery}
+            >
+              {speechQueryStatus.status === 'listening'
+                ? 'Listening'
+                : 'Ask out loud about tools for thought'}
+            </button>
+            <button className="prototype-link" type="button" onClick={openSurpriseMe}>
+              Surprise me
+            </button>
+          </div>
+          <div className="prototype-voice-entry" aria-label="Custom public question">
+            <p className="prototype-voice-note">
+              {browserSpeechRecognitionCaveat}
+            </p>
+            {!speechSupported ? (
+              <p className="prototype-voice-status">{speechRecognitionUnavailableMessage}</p>
+            ) : null}
+            {speechQueryStatus.status === 'error' ? (
+              <p className="prototype-voice-status">{speechQueryStatus.message}</p>
+            ) : null}
+            {queryBoundaryMessage ? (
+              <p className="prototype-boundary-message">{queryBoundaryMessage}</p>
+            ) : null}
+            {showTextFallback ? (
+              <form
+                className="prototype-query-fallback"
+                onSubmit={(event) => {
+                  event.preventDefault();
+                  openPublicQuestion(fallbackQuery);
+                }}
+              >
+                <label htmlFor="public-query-fallback">Type the question instead</label>
+                <div>
+                  <input
+                    id="public-query-fallback"
+                    type="text"
+                    value={fallbackQuery}
+                    onChange={(event) => {
+                      setFallbackQuery(event.target.value);
+                      setQueryBoundaryMessage(null);
+                    }}
+                  />
+                  <button type="submit" disabled={!fallbackQuery.trim()}>
+                    Ask
+                  </button>
+                </div>
+              </form>
+            ) : null}
+          </div>
           <dl className="prototype-details">
             <div>
               <dt>Try</dt>
@@ -869,9 +1069,6 @@ function PrototypeIndex() {
               <dd>Ask out loud about tools for thought.</dd>
             </div>
           </dl>
-          <button className="prototype-link" type="button" onClick={openSurpriseMe}>
-            Surprise me
-          </button>
         </article>
         <article className="prototype-card">
           <div>
@@ -966,6 +1163,33 @@ function PrototypeIndex() {
       <BuildHash />
     </main>
   );
+}
+
+function getSpeechRecognitionConstructor(): BrowserSpeechRecognitionConstructor | null {
+  const browserWindow = window as Window & {
+    SpeechRecognition?: BrowserSpeechRecognitionConstructor;
+    webkitSpeechRecognition?: BrowserSpeechRecognitionConstructor;
+  };
+
+  return browserWindow.SpeechRecognition ?? browserWindow.webkitSpeechRecognition ?? null;
+}
+
+function transcriptFromSpeechEvent(event: BrowserSpeechRecognitionEvent): string {
+  const transcripts: string[] = [];
+
+  for (let index = event.resultIndex; index < event.results.length; index += 1) {
+    const result = event.results[index];
+    const transcript = result?.[0]?.transcript.trim();
+    if (transcript) {
+      transcripts.push(transcript);
+    }
+  }
+
+  return normalizeTypedQuestion(transcripts.join(' '));
+}
+
+function normalizeTypedQuestion(value: string) {
+  return value.trim().replace(/\s+/g, ' ');
 }
 
 type RecordButtonProps = {

@@ -1,6 +1,6 @@
 # 039: Voice-First Public Query Entry
 
-Status: blocked
+Status: done
 
 Type: AFK
 
@@ -24,17 +24,41 @@ Privacy/network caveat: browser speech recognition may be implemented by the bro
 
 ## Acceptance criteria
 
-- [ ] The public entry surface presents speaking as the primary custom-query path.
-- [ ] The voice prompt says `Ask out loud about tools for thought`.
-- [ ] A user can submit a recognized spoken query into the public Continuum flow.
-- [ ] A text fallback exists for unsupported browsers, denied microphone permission, or failed recognition.
-- [ ] Unsupported speech does not break `Surprise me`.
-- [ ] Off-topic spoken queries show the MVP-boundary explanation.
-- [ ] The recognized query is visible after navigation so the user knows what they asked.
-- [ ] No raw audio is stored in this slice unless a later issue explicitly adds capture/provenance.
-- [ ] UI copy does not claim browser speech recognition is local, private, or offline.
-- [ ] The implementation notes distinguish "Continuum does not store raw audio" from "the browser may use a vendor recognition service".
-- [ ] Mobile Chrome on Android is manually smoke-tested.
+- [x] The public entry surface presents speaking as the primary custom-query path.
+- [x] The voice prompt says `Ask out loud about tools for thought`.
+- [x] A user can submit a recognized spoken query into the public Continuum flow.
+- [x] A text fallback exists for unsupported browsers, denied microphone permission, or failed recognition.
+- [x] Unsupported speech does not break `Surprise me`.
+- [x] Off-topic spoken queries show the MVP-boundary explanation.
+- [x] The recognized query is visible after navigation so the user knows what they asked.
+- [x] No raw audio is stored in this slice unless a later issue explicitly adds capture/provenance.
+- [x] UI copy does not claim browser speech recognition is local, private, or offline.
+- [x] The implementation notes distinguish "Continuum does not store raw audio" from "the browser may use a vendor recognition service".
+- [x] Mobile Chrome on Android is manually smoke-tested.
+
+## Implementation
+
+Added a browser-speech query path to the public MVP entry page:
+
+- `Ask out loud about tools for thought` starts Web Speech recognition when supported.
+- Continuum only receives recognized text; it does not route or store raw audio.
+- Text fallback appears when speech is unavailable, blocked, failed, or when the user has typed text.
+- The fallback and spoken text use the same bounded extended-thought scope check.
+- In-scope custom questions are preserved in the public Continuum URL and rendered as `Asked: ...` on the answer page.
+- Out-of-scope custom questions show the MVP boundary explanation instead of pretending the loaded public data can answer everything.
+
+## QA
+
+- `npm run typecheck`
+- `npm run smoke:public-continuum --workspace backend`
+- `npm run build`
+- Headless Chrome mobile screenshot for entry and custom-query result.
+- Android Chrome visual smoke on `SM-G980F`, Android 13:
+  - entry page shows the voice-first button
+  - custom-query result page shows `Asked: How can notebooks extend thinking?`
+  - evidence: `PHONE-QA-EVIDENCE/20260523T200636-issue-039/`
+
+Note: Android QA did not include speaking into the phone. The verified phone path was visual navigation/loading; the speech-recognition event path was implemented against the browser Web Speech API.
 
 ## Product decisions
 
@@ -47,7 +71,7 @@ Privacy/network caveat: browser speech recognition may be implemented by the bro
 
 ## Blocked by
 
-- `038-public-mvp-entry-copy-and-surprise-me.md`
+None - completed after `038-public-mvp-entry-copy-and-surprise-me.md`.
 
 ## References
 

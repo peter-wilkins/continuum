@@ -3,6 +3,7 @@ dist/
 *.tsbuildinfo
 tmp/
 data/
+PHONE-QA-EVIDENCE/
 android-shell/build/
 android-shell/*.apk
 android-shell/*.idsig

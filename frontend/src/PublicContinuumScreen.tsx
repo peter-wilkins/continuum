@@ -328,6 +328,7 @@ export function PublicContinuum({ targetId }: { targetId: string }) {
           <div className="public-lens-body public-answer-body">
             <section className="public-answer-main">
               <p className="index-kicker">Answer</p>
+              <p className="public-query-context">Asked: {continuum.query.text}</p>
               <h2>{continuum.synthesizedAnswer.answer}</h2>
               {recommendedLine ? (
                 <div className="public-line-of-inquiry">
