@@ -19,10 +19,13 @@ Surprise me or spoken query
 
 The answer should be source-grounded and short enough to read on a phone. The cards remain important, but they become evidence rather than the main meal.
 
+Product decision: synthesize the answer over canonical Thought Cards before Lens ordering. Lens outputs remain useful for evidence, debug, comparison, and later feedback, but the primary answer should not depend on choosing one hidden Lens.
+
 ## Acceptance criteria
 
 - [ ] A public query renders a synthesized answer as the primary surface.
 - [ ] The answer is built from source-backed Thought Cards, not free-floating generated text.
+- [ ] The answer is synthesized over canonical Thought Cards before Lens ordering.
 - [ ] The answer keeps source Thought Card ids or source paragraph refs behind it.
 - [ ] The user can dig into the supporting Lens/Thought Cards from the answer.
 - [ ] The normal answer surface does not bias the user with Lens names before feedback.
@@ -33,11 +36,9 @@ The answer should be source-grounded and short enough to read on a phone. The ca
 
 ## Open questions
 
-- Is the synthesized answer produced by one selected Lens, across all Lenses, or by a separate synthesis step over Thought Cards?
 - Does user feedback choose the best answer, the best Lens behind the answer, or the best Line of Inquiry?
 - Should evidence drill-down show anonymized Lens variants first, or source/provenance first?
 
 ## Related
 
 - Core needs answer and Line generation over Thought Cards before this becomes AFK-ready.
-
