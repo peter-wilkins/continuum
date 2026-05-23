@@ -32,16 +32,17 @@
   min-width: 0;
 }
 
-.public-app-title h1,
-.public-app-title span {
+.public-app-title h1 {
+  display: -webkit-box;
+  max-width: 100%;
+  max-height: 2.4em;
   overflow: hidden;
   margin: 0;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
 }
 
 .public-app-title h1 {
-  max-width: 100%;
   font-size: 0.9rem;
   line-height: 1.18;
 }
@@ -49,8 +50,12 @@
 .public-app-title span {
   display: block;
   max-width: 100%;
+  overflow: hidden;
+  margin: 2px 0 0;
   color: #5f5d56;
   font-size: 0.72rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .public-app-actions {
