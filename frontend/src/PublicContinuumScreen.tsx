@@ -39,6 +39,7 @@ type DevopsFeedbackState =
 type ChairmanTalkState =
   | { status: 'idle' }
   | { status: 'listening' }
+  | { status: 'reviewing' }
   | { status: 'unsupported' }
   | { status: 'submitting' }
   | { status: 'answered' }
@@ -75,6 +76,7 @@ export function PublicContinuum({ targetId }: { targetId: string }) {
     status: 'idle',
   });
   const [chairmanText, setChairmanText] = useState('');
+  const [chairmanDraftInputMode, setChairmanDraftInputMode] = useState<'speech' | 'text'>('text');
   const [chairmanRun, setChairmanRun] = useState<PublicConciergeRun | null>(null);
   const pwaInstall = usePwaInstallPrompt();
   const lensStripRef = useRef<HTMLElement | null>(null);
@@ -156,6 +158,7 @@ export function PublicContinuum({ targetId }: { targetId: string }) {
     setChairmanRun(null);
     setChairmanTalkStatus({ status: 'idle' });
     setChairmanText('');
+    setChairmanDraftInputMode('text');
     setChairmanTalkOpen(false);
   }, [activeQueryId, activeRecommendedLine?.id]);
 
@@ -350,6 +353,7 @@ export function PublicContinuum({ targetId }: { targetId: string }) {
 
       setChairmanRun(response.run);
       setChairmanText('');
+      setChairmanDraftInputMode('text');
       setChairmanTalkStatus({ status: 'answered' });
     } catch (err: unknown) {
       setChairmanTalkStatus({
@@ -382,7 +386,11 @@ export function PublicContinuum({ targetId }: { targetId: string }) {
       const transcript = transcriptFromSpeechEvent(event);
       if (!transcript) return;
       receivedTranscript = true;
-      void submitChairmanResponse(transcript, 'speech');
+      setChairmanDraftInputMode('speech');
+      setChairmanText((current) =>
+        normalizeSpokenText([current, transcript].filter(Boolean).join(' ')),
+      );
+      setChairmanTalkStatus({ status: 'reviewing' });
     };
     recognition.onerror = (event) => {
       receivedTranscript = true;
@@ -417,7 +425,7 @@ export function PublicContinuum({ targetId }: { targetId: string }) {
 
   function handleChairmanTextSubmit(event: FormEvent) {
     event.preventDefault();
-    void submitChairmanResponse(chairmanText, 'text');
+    void submitChairmanResponse(chairmanText, chairmanDraftInputMode);
   }
 
   if (state.status === 'loading') {
@@ -778,6 +786,9 @@ export function PublicContinuum({ targetId }: { targetId: string }) {
               {chairmanTalkStatus.status === 'listening' ? (
                 <p className="chairman-talk-status">Listening...</p>
               ) : null}
+              {chairmanTalkStatus.status === 'reviewing' ? (
+                <p className="chairman-talk-status">Review the dictation, then Send.</p>
+              ) : null}
               {chairmanTalkStatus.status === 'unsupported' ? (
                 <p className="chairman-talk-status">{speechRecognitionUnavailableMessage}</p>
               ) : null}
@@ -798,10 +809,15 @@ export function PublicContinuum({ targetId }: { targetId: string }) {
               ) : null}
               <textarea
                 aria-label="Reply to Chairman"
-                placeholder="Type reply instead"
+                placeholder="Dictate or type reply"
                 rows={3}
                 value={chairmanText}
-                onChange={(event) => setChairmanText(event.target.value)}
+                onChange={(event) => {
+                  setChairmanText(event.target.value);
+                  if (chairmanTalkStatus.status !== 'reviewing') {
+                    setChairmanDraftInputMode('text');
+                  }
+                }}
               />
               <div className="chairman-talk-actions">
                 <button
@@ -820,7 +836,7 @@ export function PublicContinuum({ targetId }: { targetId: string }) {
                     disabled={chairmanTalkStatus.status === 'listening'}
                     onClick={startChairmanSpeech}
                   >
-                    Listen
+                    Dictate
                   </button>
                 ) : null}
               </div>

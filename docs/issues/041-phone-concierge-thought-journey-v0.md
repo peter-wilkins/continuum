@@ -75,7 +75,7 @@ Continuum can honour an interrupting thought, continue the current one, and show
 First slice:
 
 - Public answer page has a floating microphone button labelled `Talk to Chairman`.
-- Browser speech recognition captures one reply to the active Chairman Line.
+- Browser speech recognition fills the reply textbox for review; Send is the only write.
 - Text fallback is available when speech is unsupported, blocked, or awkward.
 - Backend stores each run in disposable local SQLite at `data/public-concierge-runs.sqlite`.
 - Backend smoke creates and reads one run.
