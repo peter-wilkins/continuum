@@ -164,13 +164,13 @@ The MVP should be a public, bootstrapped Continuum about extended thought. Users
 
 Private personal capture and imports remain part of the long-term product, but public identity/topic Continuums are the safer and faster MVP learning loop.
 
-The public MVP should keep Continuum's speech-first shape: the user can start with `Surprise me` or speak a bounded query. The first result should be a synthesized answer, with source-backed Lens/Thought Cards available as evidence. After the answer, the system should ask one Line of Inquiry so exploration keeps moving.
+The public MVP should keep Continuum's speech-first shape: the user can start with `Surprise me` or speak a bounded query. The first result should be a synthesized answer, with source-backed Lens/Thought Cards available through a `Why this?` / `Sources` drill-down. After the answer, the system should ask one Line of Inquiry so exploration keeps moving.
 
 1. Public identity/topic import.
 2. Inspectable Continuation surfaces over imported public thought.
 3. Lightweight private Feedback Threads while people explore, including agent clarification when a report needs one more answer.
 4. Immutable append-only source history.
-5. Clear provenance and source links.
+5. Clear sources and source links.
 6. Fast iteration without private-data compliance blocking every demo.
 7. Speech-first personal capture as a later reinforcing path, not the MVP blocker.
 
