@@ -17,13 +17,24 @@ Use this copy direction:
 - Primary action: `Surprise me`
 - Question placeholder: `Ask about tools for thought`
 
-`Surprise me` should take the user into a seeded query or the current public extended-thought Continuum without requiring them to invent a good question first.
+`Surprise me` should choose from a tiny curated list of seeded questions and open the current public extended-thought Continuum. It should not select random Wikipedia chunks.
+
+Initial seed questions:
+
+- `What tools have people used to extend thought?`
+- `When does a tool become part of thinking?`
+- `How have computers changed the shape of thought?`
+- `What is brain augmentation trying to solve?`
+
+For the MVP, the selected seed can render the same Lens carousel. Later, each surprise can generate a Line of Inquiry.
 
 ## Acceptance criteria
 
 - [ ] The public MVP entry surface uses `Extend the Mind` as the first clear product/topic signal.
 - [ ] The entry copy explains the one-topic boundary before the user explores.
-- [ ] A `Surprise me` action takes the user into the public extended-thought Continuum.
+- [ ] A `Surprise me` action selects one curated seed question and takes the user into the public extended-thought Continuum.
+- [ ] The seeded question is visible in the Continuum surface so the user knows what they are exploring.
+- [ ] `Surprise me` does not pick raw source chunks directly.
 - [ ] Any question input placeholder uses `Ask about tools for thought` if a question input exists in this slice.
 - [ ] The copy avoids implying this is a complete personal Continuum.
 - [ ] Mobile layout at 360px keeps the title, setup, and action readable.
