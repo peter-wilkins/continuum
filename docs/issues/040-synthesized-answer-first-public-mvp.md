@@ -21,6 +21,8 @@ The answer should be source-grounded and short enough to read on a phone. The ca
 
 Product decision: synthesize the answer over canonical Thought Cards before Lens ordering. Lens outputs remain useful for evidence, debug, comparison, and later feedback, but the primary answer should not depend on choosing one hidden Lens.
 
+Product decision: for the MVP, thumbs-up feedback scores the whole visible result: query, synthesized answer, and Line of Inquiry together. Later feedback can split answer quality, Lens/evidence quality, and question quality once the signal becomes useful enough to justify more UI.
+
 ## Acceptance criteria
 
 - [ ] A public query renders a synthesized answer as the primary surface.
@@ -31,12 +33,12 @@ Product decision: synthesize the answer over canonical Thought Cards before Lens
 - [ ] The normal answer surface does not bias the user with Lens names before feedback.
 - [ ] The system asks one Line of Inquiry after the answer.
 - [ ] The Line of Inquiry is grounded in the same evidence as the answer.
+- [ ] The thumbs-up action records feedback against the whole visible result: query, answer, and Line of Inquiry.
 - [ ] The old Lens carousel remains available as a debug/evidence view until replaced.
 - [ ] Mobile layout stays full-screen and readable.
 
 ## Open questions
 
-- Does user feedback choose the best answer, the best Lens behind the answer, or the best Line of Inquiry?
 - Should evidence drill-down show anonymized Lens variants first, or source/provenance first?
 
 ## Related
