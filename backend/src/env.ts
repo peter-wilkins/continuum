@@ -13,6 +13,8 @@ const EnvSchema = z.object({
   FRONTEND_ORIGIN: z.string().url().default('http://localhost:5173'),
   HOST: z.string().min(1).default('127.0.0.1'),
   PORT: z.coerce.number().int().positive().default(3000),
+  WORKFLOW_MANAGER_BRIDGE_URL: z.string().url().default('http://127.0.0.1:8787'),
+  WORKFLOW_MANAGER_BRIDGE_TIMEOUT_MS: z.coerce.number().int().positive().default(4000),
 });
 
 const parsed = EnvSchema.parse(process.env);

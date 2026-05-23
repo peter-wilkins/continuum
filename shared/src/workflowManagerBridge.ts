@@ -184,7 +184,7 @@ export const WorkflowManagerPhoneJourneyRecentEventSchema = z.object({
   label: z.string().min(1),
   body: z.string().min(1),
   pending: z.boolean(),
-  inReplyToEventId: z.string().min(1).optional(),
+  inReplyToEventId: z.string().optional(),
 });
 
 export const WorkflowManagerPhoneJourneyStateSchema = z.object({
@@ -195,12 +195,16 @@ export const WorkflowManagerPhoneJourneyStateSchema = z.object({
   status: WorkflowManagerPhoneJourneyStatusSchema,
   progress: z.number().min(0).max(1),
   progressLabel: z.string(),
-  latestOutboxEventId: z.string().min(1).optional(),
+  latestOutboxEventId: z.string().optional(),
   latestBody: z.string(),
   suggestedNextStep: z.string(),
-  pendingBody: z.string().min(1).optional(),
-  pendingEventId: z.string().min(1).optional(),
+  pendingBody: z.string().optional(),
+  pendingEventId: z.string().optional(),
   recentEvents: z.array(WorkflowManagerPhoneJourneyRecentEventSchema).optional(),
+});
+
+export const WorkflowManagerPhoneJourneyStateResponseSchema = z.object({
+  state: WorkflowManagerPhoneJourneyStateSchema,
 });
 
 export type WorkflowManagerBridgeSource = z.infer<typeof WorkflowManagerBridgeSourceSchema>;
@@ -222,3 +226,6 @@ export type WorkflowManagerPhoneOutboxEvent = z.infer<typeof WorkflowManagerPhon
 export type WorkflowManagerPhoneJourneyStatus = z.infer<typeof WorkflowManagerPhoneJourneyStatusSchema>;
 export type WorkflowManagerPhoneJourneyRecentEvent = z.infer<typeof WorkflowManagerPhoneJourneyRecentEventSchema>;
 export type WorkflowManagerPhoneJourneyState = z.infer<typeof WorkflowManagerPhoneJourneyStateSchema>;
+export type WorkflowManagerPhoneJourneyStateResponse = z.infer<
+  typeof WorkflowManagerPhoneJourneyStateResponseSchema
+>;

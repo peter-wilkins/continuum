@@ -10,6 +10,7 @@ import {
   PublicLensFeedbackSummarySchema,
   LocalSourceCacheSummaryResponseSchema,
   LocalSourceCacheTimelineResponseSchema,
+  WorkflowManagerPhoneJourneyStateResponseSchema,
   type CreateEventRequest,
   type DevopsFeedbackRequest,
   type DevopsFeedbackResponse,
@@ -27,6 +28,7 @@ import {
   type LocalSourceCacheEvent,
   type LocalSourceCacheSummaryResponse,
   type TranscriptionResponse,
+  type WorkflowManagerPhoneJourneyStateResponse,
 } from '@continuum/shared';
 import type { Session } from '@supabase/supabase-js';
 
@@ -210,6 +212,44 @@ export async function fetchLatestPublicConciergeRun(
   }
 
   return PublicConciergeLatestRunResponseSchema.parse(await response.json());
+}
+
+export async function submitPublicChairmanBridgeMessage(
+  targetId: string,
+  session: Session,
+  run: PublicConciergeRunRequest,
+): Promise<WorkflowManagerPhoneJourneyStateResponse> {
+  const response = await fetch(`${API_URL}/api/public-continuum/${targetId}/chairman-bridge/messages`, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${session.access_token}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(run),
+  });
+
+  if (!response.ok) {
+    throw new Error('Failed to reach Chairman Bridge');
+  }
+
+  return WorkflowManagerPhoneJourneyStateResponseSchema.parse(await response.json());
+}
+
+export async function fetchPublicChairmanBridgeState(
+  targetId: string,
+  session: Session,
+): Promise<WorkflowManagerPhoneJourneyStateResponse> {
+  const response = await fetch(`${API_URL}/api/public-continuum/${targetId}/chairman-bridge/state`, {
+    headers: {
+      Authorization: `Bearer ${session.access_token}`,
+    },
+  });
+
+  if (!response.ok) {
+    throw new Error('Failed to load Chairman Bridge state');
+  }
+
+  return WorkflowManagerPhoneJourneyStateResponseSchema.parse(await response.json());
 }
 
 export async function submitPublicLensFeedback(

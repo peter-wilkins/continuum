@@ -2,12 +2,15 @@ import type {
   DevopsFeedbackKind,
   PublicConciergeRun,
   PublicContinuumResponse,
+  WorkflowManagerPhoneJourneyState,
 } from '@continuum/shared';
 import { useEffect, useMemo, useRef, useState, type FormEvent, type UIEvent } from 'react';
 import {
   fetchLatestPublicConciergeRun,
+  fetchPublicChairmanBridgeState,
   fetchPublicContinuum,
   submitDevopsFeedback,
+  submitPublicChairmanBridgeMessage,
   submitPublicConciergeRun,
 } from './api.js';
 import { getInitialSession, onAuthChange } from './auth.js';
@@ -78,6 +81,8 @@ export function PublicContinuum({ targetId }: { targetId: string }) {
   const [chairmanText, setChairmanText] = useState('');
   const [chairmanDraftInputMode, setChairmanDraftInputMode] = useState<'speech' | 'text'>('text');
   const [chairmanRun, setChairmanRun] = useState<PublicConciergeRun | null>(null);
+  const [chairmanBridgeState, setChairmanBridgeState] =
+    useState<WorkflowManagerPhoneJourneyState | null>(null);
   const pwaInstall = usePwaInstallPrompt();
   const lensStripRef = useRef<HTMLElement | null>(null);
   const guidePageRef = useRef<HTMLElement | null>(null);
@@ -160,6 +165,7 @@ export function PublicContinuum({ targetId }: { targetId: string }) {
     setChairmanText('');
     setChairmanDraftInputMode('text');
     setChairmanTalkOpen(false);
+    setChairmanBridgeState(null);
   }, [activeQueryId, activeRecommendedLine?.id]);
 
   useEffect(() => {
@@ -188,6 +194,37 @@ export function PublicContinuum({ targetId }: { targetId: string }) {
       mounted = false;
     };
   }, [activeRecommendedLine, publicClientInstanceId, readyContinuum, targetId]);
+
+  useEffect(() => {
+    if (
+      !readyContinuum ||
+      !activeRecommendedLine ||
+      !chairmanBridgeState ||
+      authState.status !== 'logged_in'
+    ) return;
+
+    let mounted = true;
+
+    const loadBridgeState = () => {
+      fetchPublicChairmanBridgeState(targetId, authState.session)
+        .then((response) => {
+          if (!mounted) return;
+          setChairmanBridgeState(response.state);
+        })
+        .catch(() => {
+          if (!mounted) return;
+          setChairmanBridgeState(null);
+        });
+    };
+
+    loadBridgeState();
+    const intervalId = window.setInterval(loadBridgeState, 4000);
+
+    return () => {
+      mounted = false;
+      window.clearInterval(intervalId);
+    };
+  }, [activeRecommendedLine, authState, chairmanBridgeState, readyContinuum, targetId]);
 
   useEffect(() => {
     setActiveSnapIndex(0);
@@ -340,7 +377,7 @@ export function PublicContinuum({ targetId }: { targetId: string }) {
     setChairmanTalkStatus({ status: 'submitting' });
 
     try {
-      const response = await submitPublicConciergeRun(targetId, {
+      const bridgeRequest = {
         clientInstanceId: publicClientInstanceId,
         scopeId: readyContinuum.scope.id,
         queryId: readyContinuum.query.id,
@@ -349,6 +386,29 @@ export function PublicContinuum({ targetId }: { targetId: string }) {
         lineQuestion: activeRecommendedLine.question,
         userResponse: normalizedResponse,
         inputMode,
+      };
+
+      if (authState.status === 'logged_in') {
+        try {
+          const bridgeResponse = await submitPublicChairmanBridgeMessage(
+            targetId,
+            authState.session,
+            bridgeRequest,
+          );
+
+          setChairmanBridgeState(bridgeResponse.state);
+          setChairmanRun(null);
+          setChairmanText('');
+          setChairmanDraftInputMode('text');
+          setChairmanTalkStatus({ status: 'answered' });
+          return;
+        } catch {
+          setChairmanBridgeState(null);
+        }
+      }
+
+      const response = await submitPublicConciergeRun(targetId, {
+        ...bridgeRequest,
       });
 
       setChairmanRun(response.run);
@@ -457,9 +517,10 @@ export function PublicContinuum({ targetId }: { targetId: string }) {
     .filter((item) => item.card !== undefined);
   const recommendedLine =
     activeRecommendedLine;
-  const chairmanProgress = chairmanRun?.progress ?? 0.25;
+  const chairmanProgress = chairmanBridgeState?.progress ?? chairmanRun?.progress ?? 0.25;
   const chairmanProgressPercent = `${Math.round(chairmanProgress * 100)}%`;
-  const chairmanProgressLabel = chairmanRun?.progressLabel ?? 'Line opened';
+  const chairmanProgressLabel =
+    chairmanBridgeState?.progressLabel ?? chairmanRun?.progressLabel ?? 'Line opened';
 
   return (
     <main
@@ -552,7 +613,18 @@ export function PublicContinuum({ targetId }: { targetId: string }) {
                       <span style={{ width: chairmanProgressPercent }} />
                     </div>
                   </div>
-                  {chairmanRun ? (
+                  {chairmanBridgeState ? (
+                    <div className="public-chairman-reply">
+                      <p>Chairman</p>
+                      <h4>{chairmanBridgeState.latestBody}</h4>
+                      {chairmanBridgeState.pendingBody ? (
+                        <div className="public-chairman-heard">
+                          <span>Heard</span>
+                          <p>{chairmanBridgeState.pendingBody}</p>
+                        </div>
+                      ) : null}
+                    </div>
+                  ) : chairmanRun ? (
                     <div className="public-chairman-reply">
                       <p>Chairman</p>
                       <h4>{chairmanRun.chairmanReply}</h4>
@@ -795,7 +867,18 @@ export function PublicContinuum({ targetId }: { targetId: string }) {
               {chairmanTalkStatus.status === 'submitting' ? (
                 <p className="chairman-talk-status">Saving reply...</p>
               ) : null}
-              {chairmanTalkStatus.status === 'answered' && chairmanRun ? (
+              {chairmanTalkStatus.status === 'answered' && chairmanBridgeState ? (
+                <div className="chairman-talk-status">
+                  <p>{chairmanBridgeState.latestBody}</p>
+                  {chairmanBridgeState.pendingBody ? (
+                    <div className="chairman-talk-heard">
+                      <span>Heard</span>
+                      <p>{chairmanBridgeState.pendingBody}</p>
+                    </div>
+                  ) : null}
+                </div>
+              ) : null}
+              {chairmanTalkStatus.status === 'answered' && !chairmanBridgeState && chairmanRun ? (
                 <div className="chairman-talk-status">
                   <p>{chairmanRun.chairmanReply}</p>
                   <div className="chairman-talk-heard">

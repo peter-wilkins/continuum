@@ -63,11 +63,11 @@ New routing/interceptor docs to honour:
 ## Acceptance Criteria
 
 - [x] Continuum has a TypeScript representation of the Workflow Manager Bridge event/projection contract.
-- [ ] The public Chairman Send path can post a `user_message` to the Bridge instead of only writing Continuum-local SQLite.
-- [ ] The app can fetch and render `workflow-manager.phone-journey-state.v1` for the current browser/device.
-- [ ] The deterministic local `Captured...` path remains available as a fake/fallback for tests or Bridge downtime.
-- [ ] Continuum UI does not mention or depend on tmux, Codex sessions, resume hashes, or a specific live agent.
-- [ ] Dev docs name the Workflow Manager side as a dev-only Chairman adapter, not product architecture.
+- [x] The public Chairman Send path can post a `user_message` to the Bridge instead of only writing Continuum-local SQLite.
+- [x] The app can fetch and render `workflow-manager.phone-journey-state.v1` for the current browser/device.
+- [x] The deterministic local `Captured...` path remains available as a fake/fallback for tests or Bridge downtime.
+- [x] Continuum UI does not mention or depend on tmux, Codex sessions, resume hashes, or a specific live agent.
+- [x] Dev docs name the Workflow Manager side as a dev-only Chairman adapter, not product architecture.
 - [ ] Backend or frontend smoke coverage proves: send message -> receive waiting/projection state.
 - [ ] Phone QA verifies one message can go through the Bridge and show a phone-visible response/progress state.
 
@@ -83,6 +83,8 @@ New routing/interceptor docs to honour:
 
 - 2026-05-24: Added shared Zod/TypeScript schemas for Workflow Manager inbox, outbox, journey-state, route envelope, private delivery plan, and V0 Bridge Policy Chain in `shared/src/workflowManagerBridge.ts`.
 - The schemas deliberately model Workflow Manager as an external JSON boundary. Optional outbox/projection fields mirror the existing bridge log; Continuum should normalize before storing any internal state.
+- 2026-05-24: Added an authenticated Continuum backend proxy for Workflow Manager Bridge `POST /v1/messages` and `GET /v1/journey-state`. Logged-in public Chairman sends try the Bridge first; logged-out users and Bridge failures still use the deterministic local fake.
+- Local dev guard checked: unauthenticated Bridge proxy state request returns `401`, backend `/health` returns `200`, and Workflow Manager Bridge `/health` returns `{"ok": true}`.
 
 ## Follow-Up
 

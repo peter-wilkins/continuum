@@ -5,6 +5,7 @@ import {
   PublicConciergeRunRequestSchema,
   PublicLensFeedbackRequestSchema,
   PublicLensFeedbackResponseSchema,
+  WorkflowManagerPhoneJourneyStateResponseSchema,
   type PublicLensFeedbackSignal,
 } from '@continuum/shared';
 import type { FastifyInstance } from 'fastify';
@@ -20,6 +21,11 @@ import {
   publicConciergeRunResponse,
 } from './publicConciergeRuns.js';
 import { getPublicContinuumTarget, type PublicContinuumTarget } from './publicContinuumTargets.js';
+import {
+  WorkflowManagerBridgeError,
+  fetchWorkflowManagerBridgeState,
+  postWorkflowManagerBridgeMessage,
+} from './workflowManagerBridge.js';
 
 export async function registerPublicContinuumRoutes(app: FastifyInstance) {
   app.get('/api/public-continuum/:targetId', async (request, reply) => {
@@ -60,6 +66,61 @@ export async function registerPublicContinuumRoutes(app: FastifyInstance) {
     });
 
     await reply.status(201).send(publicConciergeRunResponse(run));
+  });
+
+  app.post('/api/public-continuum/:targetId/chairman-bridge/messages', async (request, reply) => {
+    const user = await requireAuth(request, reply);
+    if (!user) return;
+
+    const target = getTargetFromParams(request.params);
+    if (!target) {
+      await reply.status(404).send({ error: 'Unknown public Continuum target' });
+      return;
+    }
+
+    const parsed = PublicConciergeRunRequestSchema.safeParse(request.body);
+    if (!parsed.success) {
+      await reply.status(400).send({ error: 'Invalid Chairman Bridge payload' });
+      return;
+    }
+
+    const state = await postWorkflowManagerBridgeMessage({
+      accessToken: accessTokenFromRequest(request),
+      request: parsed.data,
+    }).catch(async (error: unknown) => {
+      if (error instanceof WorkflowManagerBridgeError) {
+        await reply.status(error.statusCode).send({ error: error.message });
+        return null;
+      }
+      throw error;
+    });
+    if (!state) return;
+
+    await reply.status(202).send(WorkflowManagerPhoneJourneyStateResponseSchema.parse({ state }));
+  });
+
+  app.get('/api/public-continuum/:targetId/chairman-bridge/state', async (request, reply) => {
+    const user = await requireAuth(request, reply);
+    if (!user) return;
+
+    const target = getTargetFromParams(request.params);
+    if (!target) {
+      await reply.status(404).send({ error: 'Unknown public Continuum target' });
+      return;
+    }
+
+    const state = await fetchWorkflowManagerBridgeState({
+      accessToken: accessTokenFromRequest(request),
+    }).catch(async (error: unknown) => {
+      if (error instanceof WorkflowManagerBridgeError) {
+        await reply.status(error.statusCode).send({ error: error.message });
+        return null;
+      }
+      throw error;
+    });
+    if (!state) return;
+
+    await reply.send(WorkflowManagerPhoneJourneyStateResponseSchema.parse({ state }));
   });
 
   app.get('/api/public-continuum/:targetId/concierge-runs/latest', async (request, reply) => {
@@ -155,4 +216,9 @@ function getTargetFromParams(params: unknown): PublicContinuumTarget | null {
 function getTargetOptions(query: unknown) {
   const { question } = query as { question?: unknown };
   return typeof question === 'string' ? { question } : undefined;
+}
+
+function accessTokenFromRequest(request: { headers: { authorization?: string | undefined } }) {
+  const header = request.headers.authorization;
+  return header?.startsWith('Bearer ') ? header.slice('Bearer '.length) : '';
 }
