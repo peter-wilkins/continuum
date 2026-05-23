@@ -6,6 +6,9 @@ import {
 } from '@continuum/shared';
 import { env } from './env.js';
 
+const CONTINUUM_BRIDGE_JOURNEY_ID = 'continuum-public-chairman-loop';
+const CONTINUUM_BRIDGE_TARGET = 'continuum-public';
+
 type BridgeCallInput = {
   accessToken: string;
 };
@@ -39,9 +42,9 @@ export async function postWorkflowManagerBridgeMessage(
       eventType: 'user_message',
       inputMode: 'text',
       intent: 'message',
-      journeyId: 'phone-conversation-loop',
+      journeyId: CONTINUUM_BRIDGE_JOURNEY_ID,
       membrane: 'personal',
-      target: 'workflow-manager',
+      target: CONTINUUM_BRIDGE_TARGET,
     },
   });
 
@@ -54,7 +57,7 @@ export async function fetchWorkflowManagerBridgeState(
   const response = await callBridge({
     accessToken: input.accessToken,
     method: 'GET',
-    path: '/v1/journey-state',
+    path: `/v1/journey-state?journeyId=${encodeURIComponent(CONTINUUM_BRIDGE_JOURNEY_ID)}`,
   });
 
   return WorkflowManagerPhoneJourneyStateSchema.parse(response);

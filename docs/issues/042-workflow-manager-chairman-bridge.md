@@ -86,7 +86,8 @@ New routing/interceptor docs to honour:
 - 2026-05-24: Added an authenticated Continuum backend proxy for Workflow Manager Bridge `POST /v1/messages` and `GET /v1/journey-state`. Logged-in public Chairman sends try the Bridge first; logged-out users and Bridge failures still use the deterministic local fake.
 - Local dev guard checked: unauthenticated Bridge proxy state request returns `401`, backend `/health` returns `200`, and Workflow Manager Bridge `/health` returns `{"ok": true}`.
 - Added `npm run smoke:workflow-manager-bridge --workspace backend`, which uses a fake Bridge server to prove message posting returns a waiting projection and state fetching parses the Bridge projection.
-- Continuum sends the domain route fields `membrane=personal`, `target=workflow-manager`, and `intent=message` with Bridge messages, while keeping private delivery plans out of the app.
+- Phone QA found a routing/projection issue: Continuum messages reached the shared Workflow Manager phone surface. Fix: Continuum now uses `journeyId=continuum-public-chairman-loop`, `target=continuum-public`, and fetches the scoped Journey State projection.
+- Retest still needed after the routing fix: the Continuum message should stay visible in Continuum and should no longer take over the Workflow Manager phone interface.
 
 ## Follow-Up
 

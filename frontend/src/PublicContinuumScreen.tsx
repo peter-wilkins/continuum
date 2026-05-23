@@ -83,6 +83,7 @@ export function PublicContinuum({ targetId }: { targetId: string }) {
   const [chairmanRun, setChairmanRun] = useState<PublicConciergeRun | null>(null);
   const [chairmanBridgeState, setChairmanBridgeState] =
     useState<WorkflowManagerPhoneJourneyState | null>(null);
+  const [chairmanBridgePollingEnabled, setChairmanBridgePollingEnabled] = useState(false);
   const pwaInstall = usePwaInstallPrompt();
   const lensStripRef = useRef<HTMLElement | null>(null);
   const guidePageRef = useRef<HTMLElement | null>(null);
@@ -166,6 +167,7 @@ export function PublicContinuum({ targetId }: { targetId: string }) {
     setChairmanDraftInputMode('text');
     setChairmanTalkOpen(false);
     setChairmanBridgeState(null);
+    setChairmanBridgePollingEnabled(false);
   }, [activeQueryId, activeRecommendedLine?.id]);
 
   useEffect(() => {
@@ -199,7 +201,7 @@ export function PublicContinuum({ targetId }: { targetId: string }) {
     if (
       !readyContinuum ||
       !activeRecommendedLine ||
-      !chairmanBridgeState ||
+      !chairmanBridgePollingEnabled ||
       authState.status !== 'logged_in'
     ) return;
 
@@ -224,7 +226,7 @@ export function PublicContinuum({ targetId }: { targetId: string }) {
       mounted = false;
       window.clearInterval(intervalId);
     };
-  }, [activeRecommendedLine, authState, chairmanBridgeState, readyContinuum, targetId]);
+  }, [activeRecommendedLine, authState, chairmanBridgePollingEnabled, readyContinuum, targetId]);
 
   useEffect(() => {
     setActiveSnapIndex(0);
@@ -397,6 +399,7 @@ export function PublicContinuum({ targetId }: { targetId: string }) {
           );
 
           setChairmanBridgeState(bridgeResponse.state);
+          setChairmanBridgePollingEnabled(true);
           setChairmanRun(null);
           setChairmanText('');
           setChairmanDraftInputMode('text');

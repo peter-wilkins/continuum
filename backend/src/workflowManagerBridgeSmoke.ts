@@ -27,7 +27,7 @@ const server = createServer(async (request, response) => {
     return;
   }
 
-  if (request.method === 'GET' && request.url === '/v1/journey-state') {
+  if (request.method === 'GET' && request.url?.startsWith('/v1/journey-state')) {
     sendJson(response, bridgeState({
       latestBody: 'Bridge replied.',
       pendingBody: '',
@@ -75,7 +75,7 @@ try {
   if (!receivedMessageBody.includes('What should the user inspect next?')) {
     throw new Error('Expected Bridge message body to include Chairman Line context.');
   }
-  if (receivedRouteTarget !== 'workflow-manager') {
+  if (receivedRouteTarget !== 'continuum-public') {
     throw new Error('Expected Bridge client to send route target.');
   }
   if (postedState.latestBody !== 'Received. Waiting for Chairman.') {
