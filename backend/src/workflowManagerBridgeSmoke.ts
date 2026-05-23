@@ -8,12 +8,17 @@ process.env.WORKFLOW_MANAGER_BRIDGE_TIMEOUT_MS ||= '1000';
 
 let receivedAuthorization = '';
 let receivedMessageBody = '';
+let receivedRouteTarget = '';
 
 const server = createServer(async (request, response) => {
   if (request.method === 'POST' && request.url === '/v1/messages') {
     receivedAuthorization = String(request.headers.authorization ?? '');
-    const payload = JSON.parse(await readRequestBody(request)) as { body?: unknown };
+    const payload = JSON.parse(await readRequestBody(request)) as {
+      body?: unknown;
+      target?: unknown;
+    };
     receivedMessageBody = String(payload.body ?? '');
+    receivedRouteTarget = String(payload.target ?? '');
     sendJson(response, bridgeState({
       latestBody: 'Received. Waiting for Chairman.',
       pendingBody: receivedMessageBody,
@@ -70,6 +75,9 @@ try {
   if (!receivedMessageBody.includes('What should the user inspect next?')) {
     throw new Error('Expected Bridge message body to include Chairman Line context.');
   }
+  if (receivedRouteTarget !== 'workflow-manager') {
+    throw new Error('Expected Bridge client to send route target.');
+  }
   if (postedState.latestBody !== 'Received. Waiting for Chairman.') {
     throw new Error(`Expected waiting projection, got ${postedState.latestBody}`);
   }
@@ -86,6 +94,7 @@ try {
     posted: postedState.progressLabel,
     fetched: fetchedState.progressLabel,
     bodyIncludesLineContext: receivedMessageBody.includes('What should the user inspect next?'),
+    routeTarget: receivedRouteTarget,
   }, null, 2));
 } finally {
   await new Promise<void>((resolve, reject) => {

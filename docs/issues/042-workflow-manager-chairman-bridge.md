@@ -77,7 +77,7 @@ New routing/interceptor docs to honour:
 - Do not move Workflow Manager bridge code into Continuum.
 - Do not make the app execute shell commands or expose privileged actions.
 - Do not treat Workflow Manager local files as durable user memory.
-- Do not activate runtime delivery until the Workflow Manager AFK router/interceptor work has a stable route to call.
+- Do not expose private delivery details even when runtime delivery is active.
 
 ## Implementation Notes
 
@@ -86,6 +86,7 @@ New routing/interceptor docs to honour:
 - 2026-05-24: Added an authenticated Continuum backend proxy for Workflow Manager Bridge `POST /v1/messages` and `GET /v1/journey-state`. Logged-in public Chairman sends try the Bridge first; logged-out users and Bridge failures still use the deterministic local fake.
 - Local dev guard checked: unauthenticated Bridge proxy state request returns `401`, backend `/health` returns `200`, and Workflow Manager Bridge `/health` returns `{"ok": true}`.
 - Added `npm run smoke:workflow-manager-bridge --workspace backend`, which uses a fake Bridge server to prove message posting returns a waiting projection and state fetching parses the Bridge projection.
+- Continuum sends the domain route fields `membrane=personal`, `target=workflow-manager`, and `intent=message` with Bridge messages, while keeping private delivery plans out of the app.
 
 ## Follow-Up
 

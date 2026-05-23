@@ -38,7 +38,10 @@ export async function postWorkflowManagerBridgeMessage(
       deviceId: input.request.clientInstanceId,
       eventType: 'user_message',
       inputMode: 'text',
+      intent: 'message',
       journeyId: 'phone-conversation-loop',
+      membrane: 'personal',
+      target: 'workflow-manager',
     },
   });
 
