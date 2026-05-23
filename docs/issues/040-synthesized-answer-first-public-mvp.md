@@ -1,8 +1,8 @@
 # 040: Synthesized Answer First Public MVP
 
-Status: planning
+Status: ready
 
-Type: HITL
+Type: AFK
 
 ## What to build
 
@@ -54,3 +54,14 @@ None.
 ## Related
 
 - Core needs answer and Line generation over Thought Cards before this becomes AFK-ready.
+
+## Implementation order
+
+1. `/home/peter/continuum-core/docs/issues/088-generate-synthesized-answers-from-thought-cards.md`
+2. `/home/peter/continuum-core/docs/issues/087-generate-lines-of-inquiry-from-thought-cards.md`
+3. This app issue.
+
+## Blocked by
+
+- `/home/peter/continuum-core/docs/issues/088-generate-synthesized-answers-from-thought-cards.md`
+- `/home/peter/continuum-core/docs/issues/087-generate-lines-of-inquiry-from-thought-cards.md`
