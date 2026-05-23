@@ -28,6 +28,12 @@ Initial seed questions:
 
 For the MVP, the selected seed can render the same Lens carousel. Later, each surprise can generate a Line of Inquiry.
 
+The entry surface may also let the user type their own question. For MVP, custom questions are topic-bounded: they should be treated as questions about tools for thought, extended thought, or brain augmentation.
+
+If a question falls outside the loaded topic, the UX should explain the product boundary rather than pretending the full future Continuum exists. Copy direction:
+
+`This MVP only has one topic loaded: tools, machines, and ideas that extend thought. In a full Continuum, your question should be valid. For now, try asking it through that lens.`
+
 ## Acceptance criteria
 
 - [ ] The public MVP entry surface uses `Extend the Mind` as the first clear product/topic signal.
@@ -36,6 +42,8 @@ For the MVP, the selected seed can render the same Lens carousel. Later, each su
 - [ ] The seeded question is visible in the Continuum surface so the user knows what they are exploring.
 - [ ] `Surprise me` does not pick raw source chunks directly.
 - [ ] Any question input placeholder uses `Ask about tools for thought` if a question input exists in this slice.
+- [ ] Custom questions are accepted only inside the loaded MVP topic boundary.
+- [ ] Off-topic questions show a clear MVP-boundary explanation and do not pretend to answer from missing data.
 - [ ] The copy avoids implying this is a complete personal Continuum.
 - [ ] Mobile layout at 360px keeps the title, setup, and action readable.
 - [ ] Public Continuum smoke checks still pass.
