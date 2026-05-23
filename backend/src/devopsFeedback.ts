@@ -12,6 +12,9 @@ import type { FastifyInstance } from 'fastify';
 const defaultMessageDir = fileURLToPath(
   new URL('../../../continuum-core/data/landing-queue/devops-messages/messages/', import.meta.url),
 );
+const feedbackRateLimitWindowMs = 60 * 60 * 1000;
+const feedbackRateLimitMax = 30;
+const feedbackRateLimits = new Map<string, { windowStartedAtMs: number; accepted: number }>();
 
 type DevopsFeedbackAction = 'review_and_fix_if_small' | 'review_and_triage';
 
@@ -32,6 +35,11 @@ type DevopsFeedbackMessage = {
 
 export async function registerDevopsFeedbackRoutes(app: FastifyInstance) {
   app.post('/api/devops-feedback', async (request, reply) => {
+    if (!acceptFeedbackRequest(rateLimitKey(request.ip, request.headers['user-agent']))) {
+      await reply.status(429).send({ error: 'Too many feedback reports' });
+      return;
+    }
+
     const parsed = DevopsFeedbackRequestSchema.safeParse(request.body);
     if (!parsed.success) {
       await reply.status(400).send({ error: 'Invalid feedback payload' });
@@ -83,4 +91,31 @@ function safeTimestamp(isoTimestamp: string) {
 function headerToString(value: string | string[] | undefined) {
   if (Array.isArray(value)) return value.join(', ');
   return value ?? null;
+}
+
+function rateLimitKey(ip: string, userAgent: string | string[] | undefined) {
+  return `${ip}:${headerToString(userAgent) ?? 'unknown'}`;
+}
+
+function acceptFeedbackRequest(key: string) {
+  const now = Date.now();
+  pruneRateLimits(now);
+
+  const bucket = feedbackRateLimits.get(key);
+  if (!bucket || now - bucket.windowStartedAtMs >= feedbackRateLimitWindowMs) {
+    feedbackRateLimits.set(key, { windowStartedAtMs: now, accepted: 1 });
+    return true;
+  }
+
+  if (bucket.accepted >= feedbackRateLimitMax) return false;
+  bucket.accepted += 1;
+  return true;
+}
+
+function pruneRateLimits(now: number) {
+  for (const [key, bucket] of feedbackRateLimits) {
+    if (now - bucket.windowStartedAtMs >= feedbackRateLimitWindowMs) {
+      feedbackRateLimits.delete(key);
+    }
+  }
 }
