@@ -1,6 +1,6 @@
 # 042: Workflow Manager Chairman Bridge
 
-Status: ready
+Status: in_progress
 
 Type: AFK
 
@@ -51,9 +51,18 @@ Current schemas:
 - `workflow-manager.phone-outbox-message.v1`
 - `workflow-manager.phone-journey-state.v1`
 
+New routing/interceptor docs to honour:
+
+- `/home/peter/workflow-manager/docs/bridge-membranes.md`
+- Route envelope: `sender`, `membrane`, `target`, `journeyId`, `intent`.
+- Continuum-origin messages should fill routing fields explicitly where possible instead of relying on Workflow Manager defaults.
+- Private delivery plans stay behind the Bridge membrane. Continuum must never render or persist tmux session names, Codex resume hashes, or worker process names.
+- V0 Bridge Policy Chain: `capture_raw`, `attach_identity`, `apply_frontend_preferences`, `rewrite_with_dictionary`, `check_confidence`, `resolve_route`, `deliver_to_destination`, `project_response`.
+- Low-confidence or unmatched-route cases must fail closed and preserve the raw message.
+
 ## Acceptance Criteria
 
-- [ ] Continuum has a TypeScript representation of the Workflow Manager Bridge event/projection contract.
+- [x] Continuum has a TypeScript representation of the Workflow Manager Bridge event/projection contract.
 - [ ] The public Chairman Send path can post a `user_message` to the Bridge instead of only writing Continuum-local SQLite.
 - [ ] The app can fetch and render `workflow-manager.phone-journey-state.v1` for the current browser/device.
 - [ ] The deterministic local `Captured...` path remains available as a fake/fallback for tests or Bridge downtime.
@@ -68,6 +77,12 @@ Current schemas:
 - Do not move Workflow Manager bridge code into Continuum.
 - Do not make the app execute shell commands or expose privileged actions.
 - Do not treat Workflow Manager local files as durable user memory.
+- Do not activate runtime delivery until the Workflow Manager AFK router/interceptor work has a stable route to call.
+
+## Implementation Notes
+
+- 2026-05-24: Added shared Zod/TypeScript schemas for Workflow Manager inbox, outbox, journey-state, route envelope, private delivery plan, and V0 Bridge Policy Chain in `shared/src/workflowManagerBridge.ts`.
+- The schemas deliberately model Workflow Manager as an external JSON boundary. Optional outbox/projection fields mirror the existing bridge log; Continuum should normalize before storing any internal state.
 
 ## Follow-Up
 
