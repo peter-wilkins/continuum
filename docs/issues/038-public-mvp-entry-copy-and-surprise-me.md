@@ -1,4 +1,4 @@
-# 038: Public MVP Entry Copy, Voice Query, And Surprise Me
+# 038: Public MVP Entry Copy And Surprise Me
 
 Status: ready
 
@@ -30,6 +30,8 @@ For the MVP, the selected seed may initially reuse the current public Continuum 
 
 The entry surface should not make typing feel like the primary path. The user should be able to speak their own query. If a text fallback exists, it is secondary and should not become the main UX.
 
+Scope split: this issue owns the public entry copy, topic boundary, and `Surprise me`. Actual browser speech recognition belongs to `039-voice-first-public-query-entry.md`.
+
 For MVP, spoken or fallback text questions are topic-bounded: they should be treated as questions about tools for thought, extended thought, or brain augmentation.
 
 If a question falls outside the loaded topic, the UX should explain the product boundary rather than pretending the full future Continuum exists. Copy direction:
@@ -43,14 +45,15 @@ If a question falls outside the loaded topic, the UX should explain the product 
 - [ ] A `Surprise me` action selects one curated seed question and takes the user into the public extended-thought Continuum.
 - [ ] The seeded question is visible in the Continuum surface so the user knows what they are exploring.
 - [ ] `Surprise me` does not pick raw source chunks directly.
-- [ ] Any custom query path is voice-first and uses `Ask out loud about tools for thought` as its prompt.
-- [ ] Any text query field is clearly a fallback, not the primary interaction.
+- [ ] The entry copy positions custom queries as voice-first and uses `Ask out loud about tools for thought` as its prompt.
+- [ ] Actual browser speech recognition is not implemented in this issue; it is left for issue 039.
+- [ ] Any visible text query field is clearly a fallback, not the primary interaction.
 - [ ] Spoken or fallback text questions are accepted only inside the loaded MVP topic boundary.
 - [ ] Off-topic questions show a clear MVP-boundary explanation and do not pretend to answer from missing data.
 - [ ] The issue leaves room for the answer-first flow: synthesized answer first, evidence/cards second, Line of Inquiry after.
 - [ ] The copy avoids implying this is a complete personal Continuum.
 - [ ] Mobile layout at 360px keeps the title, setup, and action readable.
-- [ ] Public Continuum smoke checks still pass.
+- [ ] Public Continuum smoke checks still pass: `npm run smoke:public-continuum --workspace backend`.
 
 ## Blocked by
 
