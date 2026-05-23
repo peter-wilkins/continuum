@@ -188,6 +188,14 @@ Prefer direct HTTP calls with built-in `fetch` plus Zod validation at the bounda
 
 If the user starts a side quest while a feature is in progress, challenge the scope shift briefly. Prefer capturing the side quest as a local Markdown issue, then return to the current feature unless the user explicitly reprioritises.
 
+App feedback from `/api/devops-feedback` lands in:
+
+```text
+/home/peter/continuum-core/data/landing-queue/devops-messages/messages/
+```
+
+When reviewing those messages, handle `review_and_fix_if_small` first. If the fix is genuinely small, local, and safe, implement it directly, verify, commit, and push. If not, triage it into a local Markdown issue and leave the original message for traceability until an archive flow exists.
+
 When a task changes user-visible UI, include a short final note listing the screens or flows the user should manually spot-check. Do not maintain a long-lived QA queue unless explicitly requested.
 
 ---

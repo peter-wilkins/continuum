@@ -597,6 +597,109 @@
   color: #2f6f4e;
 }
 
+.devops-feedback-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: grid;
+  align-items: end;
+  background: rgb(36 36 36 / 18%);
+  padding: 12px max(12px, env(safe-area-inset-right)) calc(env(safe-area-inset-bottom) + 12px)
+    max(12px, env(safe-area-inset-left));
+}
+
+.devops-feedback-panel {
+  display: grid;
+  width: min(100%, 440px);
+  gap: 12px;
+  justify-self: center;
+  border: 1px solid rgb(36 36 36 / 14%);
+  border-radius: 8px;
+  background: #fffdf8;
+  padding: 14px;
+  box-shadow: 0 18px 46px rgb(28 28 26 / 24%);
+}
+
+.devops-feedback-header,
+.devops-feedback-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.devops-feedback-header h2 {
+  margin: 0;
+  font-size: 1.05rem;
+}
+
+.devops-feedback-header button {
+  border: 0;
+  background: transparent;
+  color: #5f5d56;
+  font: inherit;
+  font-size: 0.82rem;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.devops-feedback-fields {
+  display: grid;
+  gap: 8px;
+}
+
+.devops-feedback-fields select,
+.devops-feedback-fields textarea {
+  width: 100%;
+  border: 1px solid #c7beb0;
+  border-radius: 8px;
+  background: #fffdf8;
+  color: #242424;
+  font: inherit;
+}
+
+.devops-feedback-fields select {
+  min-height: 38px;
+  padding: 6px 8px;
+}
+
+.devops-feedback-fields textarea {
+  min-height: 118px;
+  resize: vertical;
+  padding: 9px 10px;
+  line-height: 1.42;
+}
+
+.devops-feedback-check {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #3f3d38;
+  font-size: 0.88rem;
+  font-weight: 800;
+}
+
+.devops-feedback-check input {
+  width: 18px;
+  height: 18px;
+  accent-color: #2f6f4e;
+}
+
+.devops-feedback-actions {
+  justify-content: start;
+}
+
+.devops-feedback-status {
+  margin: 0;
+  color: #2f6f4e;
+  font-size: 0.86rem;
+  font-weight: 800;
+}
+
+.devops-feedback-status.is-error {
+  color: #8b2f24;
+}
+
 .public-lens-sections {
   display: grid;
   gap: 20px;

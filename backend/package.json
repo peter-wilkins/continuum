@@ -7,6 +7,7 @@
     "dev": "tsx watch src/index.ts",
     "build": "tsc -p tsconfig.json",
     "smoke:core": "tsx src/coreSmoke.ts",
+    "smoke:devops-feedback": "tsx src/devopsFeedbackSmoke.ts",
     "smoke:local-source-cache": "tsx src/localSourceCacheSmoke.ts",
     "smoke:public-continuum": "tsx src/publicContinuumSmoke.ts",
     "start": "node dist/index.js",

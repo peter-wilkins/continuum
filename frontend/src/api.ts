@@ -3,11 +3,14 @@ import {
   EventsListResponseSchema,
   LocalImportPreviewSummariesResponseSchema,
   PublicContinuumResponseSchema,
+  DevopsFeedbackResponseSchema,
   PublicLensFeedbackResponseSchema,
   PublicLensFeedbackSummarySchema,
   LocalSourceCacheSummaryResponseSchema,
   LocalSourceCacheTimelineResponseSchema,
   type CreateEventRequest,
+  type DevopsFeedbackRequest,
+  type DevopsFeedbackResponse,
   TranscriptionResponseSchema,
   type ContinuumEvent,
   type LocalImportPreviewSummary,
@@ -175,4 +178,22 @@ export async function submitPublicLensFeedback(
   }
 
   return PublicLensFeedbackResponseSchema.parse(await response.json());
+}
+
+export async function submitDevopsFeedback(
+  feedback: DevopsFeedbackRequest,
+): Promise<DevopsFeedbackResponse> {
+  const response = await fetch(`${API_URL}/api/devops-feedback`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(feedback),
+  });
+
+  if (!response.ok) {
+    throw new Error('Failed to send feedback');
+  }
+
+  return DevopsFeedbackResponseSchema.parse(await response.json());
 }

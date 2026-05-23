@@ -213,6 +213,43 @@ export const PublicLensFeedbackSummarySchema = z.object({
   })),
 });
 
+export const DevopsFeedbackKindSchema = z.enum([
+  'bug',
+  'confusing',
+  'improvement',
+  'content',
+  'small_fix',
+  'other',
+]);
+
+export const DevopsFeedbackContextSchema = z.object({
+  targetId: z.string().min(1),
+  scopeId: z.string().min(1).nullable(),
+  queryId: z.string().min(1).nullable(),
+  queryText: z.string().min(1).nullable(),
+  lensOutputId: z.string().min(1).nullable(),
+  path: z.string().min(1).max(500),
+  gitHash: z.string().min(1).max(80),
+  authStatus: z.enum(['loading', 'logged_in', 'logged_out']),
+  userAgent: z.string().min(1).max(500),
+  viewport: z.object({
+    width: z.number().int().positive(),
+    height: z.number().int().positive(),
+  }),
+});
+
+export const DevopsFeedbackRequestSchema = z.object({
+  kind: DevopsFeedbackKindSchema,
+  message: z.string().trim().min(1).max(4000),
+  smallFix: z.boolean(),
+  context: DevopsFeedbackContextSchema,
+});
+
+export const DevopsFeedbackResponseSchema = z.object({
+  messageId: z.string().min(1),
+  queuedAt: EventDateTimeSchema,
+});
+
 export const ErrorResponseSchema = z.object({
   error: z.string(),
 });
@@ -243,4 +280,8 @@ export type PublicLensFeedbackRequest = z.infer<typeof PublicLensFeedbackRequest
 export type PublicLensFeedbackSignal = z.infer<typeof PublicLensFeedbackSignalSchema>;
 export type PublicLensFeedbackResponse = z.infer<typeof PublicLensFeedbackResponseSchema>;
 export type PublicLensFeedbackSummary = z.infer<typeof PublicLensFeedbackSummarySchema>;
+export type DevopsFeedbackKind = z.infer<typeof DevopsFeedbackKindSchema>;
+export type DevopsFeedbackContext = z.infer<typeof DevopsFeedbackContextSchema>;
+export type DevopsFeedbackRequest = z.infer<typeof DevopsFeedbackRequestSchema>;
+export type DevopsFeedbackResponse = z.infer<typeof DevopsFeedbackResponseSchema>;
 export type ErrorResponse = z.infer<typeof ErrorResponseSchema>;

@@ -2,6 +2,7 @@ import Fastify from 'fastify';
 import cors from '@fastify/cors';
 import multipart from '@fastify/multipart';
 import { env } from './env.js';
+import { registerDevopsFeedbackRoutes } from './devopsFeedback.js';
 import { registerEventRoutes } from './events.js';
 import { registerLocalSourceCacheRoutes } from './localSourceCache.js';
 import { registerPublicContinuumRoutes } from './publicContinuum.js';
@@ -18,6 +19,7 @@ export async function buildApp() {
 
   app.get('/health', async () => ({ ok: true }));
 
+  await registerDevopsFeedbackRoutes(app);
   await registerPublicContinuumRoutes(app);
   await registerEventRoutes(app);
   await registerLocalSourceCacheRoutes(app);

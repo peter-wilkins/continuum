@@ -1,6 +1,6 @@
-import type { PublicContinuumResponse } from '@continuum/shared';
-import { useEffect, useMemo, useRef, useState } from 'react';
-import { fetchPublicContinuum } from './api.js';
+import type { DevopsFeedbackKind, PublicContinuumResponse } from '@continuum/shared';
+import { useEffect, useMemo, useRef, useState, type FormEvent, type UIEvent } from 'react';
+import { fetchPublicContinuum, submitDevopsFeedback } from './api.js';
 import { getInitialSession, onAuthChange } from './auth.js';
 import { BuildHash, gitHash } from './buildInfo.js';
 import { type PublicAuthState, usePublicLensPreference } from './usePublicLensPreference.js';
@@ -10,6 +10,12 @@ import './publicContinuum.css';
 type PublicContinuumState =
   | { status: 'loading' }
   | { status: 'ready'; continuum: PublicContinuumResponse }
+  | { status: 'error'; error: string };
+
+type DevopsFeedbackState =
+  | { status: 'idle' }
+  | { status: 'submitting' }
+  | { status: 'sent'; messageId: string }
   | { status: 'error'; error: string };
 
 function shuffleItems<T>(items: readonly T[]) {
@@ -29,6 +35,14 @@ export function PublicContinuum({ targetId }: { targetId: string }) {
   const [state, setState] = useState<PublicContinuumState>({ status: 'loading' });
   const [authState, setAuthState] = useState<PublicAuthState>({ status: 'loading' });
   const [menuOpen, setMenuOpen] = useState(false);
+  const [devopsFeedbackOpen, setDevopsFeedbackOpen] = useState(false);
+  const [devopsFeedbackKind, setDevopsFeedbackKind] = useState<DevopsFeedbackKind>('bug');
+  const [devopsFeedbackMessage, setDevopsFeedbackMessage] = useState('');
+  const [devopsFeedbackSmallFix, setDevopsFeedbackSmallFix] = useState(true);
+  const [devopsFeedbackState, setDevopsFeedbackState] = useState<DevopsFeedbackState>({
+    status: 'idle',
+  });
+  const [activeSnapIndex, setActiveSnapIndex] = useState(0);
   const pwaInstall = usePwaInstallPrompt();
   const guidePageRef = useRef<HTMLElement | null>(null);
   const readyContinuum = state.status === 'ready' ? state.continuum : null;
@@ -46,6 +60,7 @@ export function PublicContinuum({ targetId }: { targetId: string }) {
 
     return shuffleItems(readyContinuum.outputs);
   }, [readyContinuum]);
+  const activeLensOutputId = displayedOutputs[activeSnapIndex]?.id ?? null;
 
   useEffect(() => {
     if (!menuOpen) return;
@@ -60,6 +75,24 @@ export function PublicContinuum({ targetId }: { targetId: string }) {
 
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [menuOpen]);
+
+  useEffect(() => {
+    if (!devopsFeedbackOpen) return;
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setDevopsFeedbackOpen(false);
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [devopsFeedbackOpen]);
+
+  useEffect(() => {
+    setActiveSnapIndex(0);
+  }, [displayedOutputs]);
 
   useEffect(() => {
     let mounted = true;
@@ -128,6 +161,58 @@ export function PublicContinuum({ targetId }: { targetId: string }) {
     await signOut();
   }
 
+  function handleLensStripScroll(event: UIEvent<HTMLElement>) {
+    const element = event.currentTarget;
+    const pageWidth = Math.max(element.clientWidth, 1);
+    const nextIndex = Math.round(element.scrollLeft / pageWidth);
+    setActiveSnapIndex(nextIndex);
+  }
+
+  function handleFeedbackFromMenu() {
+    setMenuOpen(false);
+    setDevopsFeedbackOpen(true);
+    setDevopsFeedbackState({ status: 'idle' });
+  }
+
+  async function handleDevopsFeedbackSubmit(event: FormEvent) {
+    event.preventDefault();
+    const message = devopsFeedbackMessage.trim();
+    if (!message || !readyContinuum) return;
+
+    setDevopsFeedbackState({ status: 'submitting' });
+
+    try {
+      const response = await submitDevopsFeedback({
+        kind: devopsFeedbackSmallFix ? 'small_fix' : devopsFeedbackKind,
+        message,
+        smallFix: devopsFeedbackSmallFix,
+        context: {
+          targetId,
+          scopeId: readyContinuum.scope.id,
+          queryId: readyContinuum.query.id,
+          queryText: readyContinuum.query.text,
+          lensOutputId: activeLensOutputId,
+          path: `${window.location.pathname}${window.location.search}${window.location.hash}`,
+          gitHash,
+          authStatus: authState.status,
+          userAgent: window.navigator.userAgent,
+          viewport: {
+            width: window.innerWidth,
+            height: window.innerHeight,
+          },
+        },
+      });
+
+      setDevopsFeedbackMessage('');
+      setDevopsFeedbackState({ status: 'sent', messageId: response.messageId });
+    } catch (err: unknown) {
+      setDevopsFeedbackState({
+        status: 'error',
+        error: err instanceof Error ? err.message : 'Failed to send feedback',
+      });
+    }
+  }
+
   if (state.status === 'loading') {
     return <main className="public-screen" />;
   }
@@ -178,6 +263,9 @@ export function PublicContinuum({ targetId }: { targetId: string }) {
             <button type="button" role="menuitem" onClick={handleGuideJump}>
               Guide
             </button>
+            <button type="button" role="menuitem" onClick={handleFeedbackFromMenu}>
+              Feedback
+            </button>
             {pwaInstall.canInstall ? (
               <button
                 type="button"
@@ -199,7 +287,11 @@ export function PublicContinuum({ targetId }: { targetId: string }) {
         ) : null}
       </div>
 
-      <section className="public-lens-strip" aria-label="Lens candidates and guide">
+      <section
+        className="public-lens-strip"
+        aria-label="Lens candidates and guide"
+        onScroll={handleLensStripScroll}
+      >
         {displayedOutputs.map((output) => {
           const submitting =
             feedbackState.status === 'submitting' && feedbackState.lensOutputId === output.id;
@@ -288,6 +380,9 @@ export function PublicContinuum({ targetId }: { targetId: string }) {
               <a className="chrome-link" href="/public/lenses">
                 Open guide page
               </a>
+              <button className="chrome-button" type="button" onClick={handleFeedbackFromMenu}>
+                Feedback
+              </button>
               {pwaInstall.canInstall ? (
                 <button
                   className="chrome-button"
@@ -350,6 +445,92 @@ export function PublicContinuum({ targetId }: { targetId: string }) {
         <p className="public-feedback-error">{feedbackState.error}</p>
       ) : null}
       {authError ? <p className="public-feedback-error">{authError}</p> : null}
+      {devopsFeedbackOpen ? (
+        <div
+          className="devops-feedback-backdrop"
+          role="presentation"
+          onMouseDown={(event) => {
+            if (event.target === event.currentTarget) setDevopsFeedbackOpen(false);
+          }}
+        >
+          <form
+            className="devops-feedback-panel"
+            onSubmit={(event) => void handleDevopsFeedbackSubmit(event)}
+          >
+            <div className="devops-feedback-header">
+              <h2>Feedback</h2>
+              <button
+                type="button"
+                aria-label="Close feedback"
+                onClick={() => setDevopsFeedbackOpen(false)}
+              >
+                Close
+              </button>
+            </div>
+            <div className="devops-feedback-fields">
+              <select
+                aria-label="Feedback kind"
+                value={devopsFeedbackKind}
+                onChange={(event) =>
+                  setDevopsFeedbackKind(event.target.value as DevopsFeedbackKind)
+                }
+              >
+                <option value="bug">Bug</option>
+                <option value="confusing">Confusing</option>
+                <option value="improvement">Improvement</option>
+                <option value="content">Content</option>
+                <option value="other">Other</option>
+              </select>
+              <textarea
+                aria-label="Feedback"
+                autoFocus
+                maxLength={4000}
+                placeholder="What should change?"
+                rows={5}
+                value={devopsFeedbackMessage}
+                onChange={(event) => {
+                  setDevopsFeedbackMessage(event.target.value);
+                  if (devopsFeedbackState.status !== 'idle') {
+                    setDevopsFeedbackState({ status: 'idle' });
+                  }
+                }}
+              />
+              <label className="devops-feedback-check">
+                <input
+                  type="checkbox"
+                  checked={devopsFeedbackSmallFix}
+                  onChange={(event) => setDevopsFeedbackSmallFix(event.target.checked)}
+                />
+                <span>Small fix</span>
+              </label>
+            </div>
+            <div className="devops-feedback-actions">
+              <button
+                className="chrome-button"
+                type="submit"
+                disabled={
+                  !devopsFeedbackMessage.trim() || devopsFeedbackState.status === 'submitting'
+                }
+              >
+                {devopsFeedbackState.status === 'submitting' ? 'Sending' : 'Send'}
+              </button>
+              <button
+                className="chrome-button"
+                type="button"
+                onClick={() => setDevopsFeedbackOpen(false)}
+              >
+                Cancel
+              </button>
+            </div>
+            {devopsFeedbackState.status === 'sent' ? (
+              <p className="devops-feedback-status">Sent to agent</p>
+            ) : null}
+            {devopsFeedbackState.status === 'error' ? (
+              <p className="devops-feedback-status is-error">{devopsFeedbackState.error}</p>
+            ) : null}
+          </form>
+        </div>
+      ) : null}
     </main>
   );
 }
