@@ -68,7 +68,7 @@ New routing/interceptor docs to honour:
 - [x] The deterministic local `Captured...` path remains available as a fake/fallback for tests or Bridge downtime.
 - [x] Continuum UI does not mention or depend on tmux, Codex sessions, resume hashes, or a specific live agent.
 - [x] Dev docs name the Workflow Manager side as a dev-only Chairman adapter, not product architecture.
-- [ ] Backend or frontend smoke coverage proves: send message -> receive waiting/projection state.
+- [x] Backend or frontend smoke coverage proves: send message -> receive waiting/projection state.
 - [ ] Phone QA verifies one message can go through the Bridge and show a phone-visible response/progress state.
 
 ## Non-Goals
@@ -85,6 +85,7 @@ New routing/interceptor docs to honour:
 - The schemas deliberately model Workflow Manager as an external JSON boundary. Optional outbox/projection fields mirror the existing bridge log; Continuum should normalize before storing any internal state.
 - 2026-05-24: Added an authenticated Continuum backend proxy for Workflow Manager Bridge `POST /v1/messages` and `GET /v1/journey-state`. Logged-in public Chairman sends try the Bridge first; logged-out users and Bridge failures still use the deterministic local fake.
 - Local dev guard checked: unauthenticated Bridge proxy state request returns `401`, backend `/health` returns `200`, and Workflow Manager Bridge `/health` returns `{"ok": true}`.
+- Added `npm run smoke:workflow-manager-bridge --workspace backend`, which uses a fake Bridge server to prove message posting returns a waiting projection and state fetching parses the Bridge projection.
 
 ## Follow-Up
 
