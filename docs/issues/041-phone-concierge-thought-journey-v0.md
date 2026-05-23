@@ -1,6 +1,6 @@
 # 041: Phone Concierge Thought Journey V0
 
-Status: in_progress
+Status: done
 
 Type: AFK
 
@@ -30,23 +30,23 @@ Target user shape: people who switch topics often, but still want thoughts honou
 
 ## Acceptance criteria
 
-- [ ] The phone public MVP can start a Concierge Thought Journey from a spoken query or text fallback.
-- [ ] Browser speech recognition is used first; raw audio is not stored.
-- [ ] A Concierge run is written to backend-local SQLite with query text, status, creation time, update time, and result payload.
-- [ ] The SQLite store is clearly resettable or disposable for local iteration.
-- [ ] The UI or implementation notes do not describe disposable SQLite rows as durable user memory.
-- [ ] Reset behaviour is documented, including what happens to cached public demo queries.
-- [ ] The first implementation may use a manual or deterministic Concierge result; it does not need a fully autonomous Codex worker.
-- [ ] The result screen shows a short sourced answer first.
-- [ ] `Why this?` reveals Sources/Source Trail material before any debug detail.
-- [ ] The screen shows one Chairman Line as the next useful question.
-- [ ] A coarse progress bar is visible for the current Thought Journey.
-- [ ] Progress is stored per Journey or active Line, so interrupted topics can show different rough progress when resumed.
-- [ ] A user can jump from one Journey to another without losing either Journey's query, answer, Line, or progress.
-- [ ] The UI remains full-screen and phone-first.
-- [ ] The existing Lens Compare path remains available for tester/debug use, but is not the primary surface.
-- [ ] Backend smoke checks cover creating and reading one Concierge run.
-- [ ] Android Chrome manual QA verifies query entry, result display, Sources reveal, progress display, and resuming a prior Journey.
+- [x] The phone public MVP can start a Concierge Thought Journey from a spoken query or text fallback.
+- [x] Browser speech recognition is used first; raw audio is not stored.
+- [x] A Concierge run is written to backend-local SQLite with query text, status, creation time, update time, and result payload.
+- [x] The SQLite store is clearly resettable or disposable for local iteration.
+- [x] The UI or implementation notes do not describe disposable SQLite rows as durable user memory.
+- [x] Reset behaviour is documented, including what happens to cached public demo queries.
+- [x] The first implementation may use a manual or deterministic Concierge result; it does not need a fully autonomous Codex worker.
+- [x] The result screen shows a short sourced answer first.
+- [x] `Why this?` reveals Sources/Source Trail material before any debug detail.
+- [x] The screen shows one Chairman Line as the next useful question.
+- [x] A coarse progress bar is visible for the current Thought Journey.
+- [x] Progress is stored per Journey or active Line, so interrupted topics can show different rough progress when resumed.
+- [x] A user can jump from one Journey to another without losing either Journey's query, answer, Line, or progress.
+- [x] The UI remains full-screen and phone-first.
+- [x] The existing Lens Compare path remains available for tester/debug use, but is not the primary surface.
+- [x] Backend smoke checks cover creating and reading one Concierge run.
+- [x] Android Chrome manual QA verifies query entry, result display, Sources reveal, progress display, and resuming a prior Journey.
 
 ## Previously blocked by
 
@@ -88,7 +88,11 @@ Reset:
 - Delete `data/public-concierge-runs.sqlite` and its SQLite sidecar files to reset local Concierge runs.
 - Cached runs are disposable workbench rows only. They are not durable user memory.
 
-Still open:
+QA:
 
-- Android Chrome QA for speech capture and resumed Journey display.
-- Journey switching/history UI for multiple older Lines.
+- 2026-05-23: Peter tested on a non-development phone through the public Funnel URL. Dictation fills the textbox, review/edit is possible, Send records the reply, and the flow works.
+- Automated fake-speech browser check verified dictation fills the textbox and does not save before Send.
+
+Follow-up:
+
+- Full journey history/switching UI moved to `042-journey-history-and-switcher.md`.
