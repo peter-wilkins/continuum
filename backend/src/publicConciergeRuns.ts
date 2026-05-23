@@ -5,6 +5,7 @@ import { mkdirSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import {
+  PublicConciergeLatestRunResponseSchema,
   PublicConciergeRunResponseSchema,
   PublicConciergeRunSchema,
   type PublicConciergeRun,
@@ -18,6 +19,7 @@ const defaultDatabasePath = resolve(repoRoot, 'data/public-concierge-runs.sqlite
 type PublicConciergeRunRow = {
   id: string;
   targetId: string;
+  clientInstanceId: string;
   scopeId: string;
   queryId: string;
   queryText: string;
@@ -59,6 +61,7 @@ export class PublicConciergeRuns {
     const row: PublicConciergeRunRow = {
       id: `public-concierge-run:${randomUUID()}`,
       targetId: input.targetId,
+      clientInstanceId: input.request.clientInstanceId,
       scopeId: input.request.scopeId,
       queryId: input.request.queryId,
       queryText: input.request.queryText,
@@ -80,6 +83,7 @@ export class PublicConciergeRuns {
         insert into public_concierge_runs (
           id,
           targetId,
+          clientInstanceId,
           scopeId,
           queryId,
           queryText,
@@ -97,6 +101,7 @@ export class PublicConciergeRuns {
         ) values (
           @id,
           @targetId,
+          @clientInstanceId,
           @scopeId,
           @queryId,
           @queryText,
@@ -126,11 +131,34 @@ export class PublicConciergeRuns {
     return row ? mapRunRow(row) : null;
   }
 
+  getLatestRun(input: {
+    targetId: string;
+    clientInstanceId: string;
+    queryId: string;
+    lineId: string;
+  }): PublicConciergeRun | null {
+    const row = this.db
+      .prepare(`
+        select *
+        from public_concierge_runs
+        where targetId = @targetId
+          and clientInstanceId = @clientInstanceId
+          and queryId = @queryId
+          and lineId = @lineId
+        order by createdAt desc
+        limit 1
+      `)
+      .get(input) as PublicConciergeRunRow | undefined;
+
+    return row ? mapRunRow(row) : null;
+  }
+
   private migrate() {
     this.db.exec(`
       create table if not exists public_concierge_runs (
         id text primary key,
         targetId text not null,
+        clientInstanceId text not null default 'legacy-client',
         scopeId text not null,
         queryId text not null,
         queryText text not null,
@@ -153,6 +181,21 @@ export class PublicConciergeRuns {
       create index if not exists public_concierge_runs_target_idx
         on public_concierge_runs(targetId, createdAt desc);
     `);
+
+    const columns = this.db
+      .prepare('pragma table_info(public_concierge_runs)')
+      .all() as Array<{ name: string }>;
+    if (!columns.some((column) => column.name === 'clientInstanceId')) {
+      this.db.exec(`
+        alter table public_concierge_runs
+          add column clientInstanceId text not null default 'legacy-client';
+      `);
+    }
+
+    this.db.exec(`
+      create index if not exists public_concierge_runs_client_query_idx
+        on public_concierge_runs(clientInstanceId, queryId, lineId, createdAt desc);
+    `);
   }
 }
 
@@ -165,6 +208,10 @@ export function getPublicConciergeRuns() {
 
 export function publicConciergeRunResponse(run: PublicConciergeRun) {
   return PublicConciergeRunResponseSchema.parse({ run });
+}
+
+export function publicConciergeLatestRunResponse(run: PublicConciergeRun | null) {
+  return PublicConciergeLatestRunResponseSchema.parse({ run });
 }
 
 function mapRunRow(row: PublicConciergeRunRow): PublicConciergeRun {

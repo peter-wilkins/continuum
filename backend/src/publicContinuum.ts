@@ -1,6 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import { createLensFeedbackSignal } from '@continuum/core';
 import {
+  PublicConciergeLatestRunQuerySchema,
   PublicConciergeRunRequestSchema,
   PublicLensFeedbackRequestSchema,
   PublicLensFeedbackResponseSchema,
@@ -13,7 +14,11 @@ import {
   feedbackMatchesContinuum,
   summarizePublicLensFeedback,
 } from './publicLensFeedbackLog.js';
-import { getPublicConciergeRuns, publicConciergeRunResponse } from './publicConciergeRuns.js';
+import {
+  getPublicConciergeRuns,
+  publicConciergeLatestRunResponse,
+  publicConciergeRunResponse,
+} from './publicConciergeRuns.js';
 import { getPublicContinuumTarget, type PublicContinuumTarget } from './publicContinuumTargets.js';
 
 export async function registerPublicContinuumRoutes(app: FastifyInstance) {
@@ -55,6 +60,29 @@ export async function registerPublicContinuumRoutes(app: FastifyInstance) {
     });
 
     await reply.status(201).send(publicConciergeRunResponse(run));
+  });
+
+  app.get('/api/public-continuum/:targetId/concierge-runs/latest', async (request, reply) => {
+    const target = getTargetFromParams(request.params);
+    if (!target) {
+      await reply.status(404).send({ error: 'Unknown public Continuum target' });
+      return;
+    }
+
+    const parsed = PublicConciergeLatestRunQuerySchema.safeParse(request.query);
+    if (!parsed.success) {
+      await reply.status(400).send({ error: 'Invalid Concierge latest query' });
+      return;
+    }
+
+    const run = getPublicConciergeRuns().getLatestRun({
+      targetId: target.id,
+      clientInstanceId: parsed.data.clientInstanceId,
+      queryId: parsed.data.queryId,
+      lineId: parsed.data.lineId,
+    });
+
+    await reply.send(publicConciergeLatestRunResponse(run));
   });
 
   app.get('/api/public-continuum/:targetId/concierge-runs/:runId', async (request, reply) => {

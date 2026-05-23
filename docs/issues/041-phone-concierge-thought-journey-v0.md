@@ -79,6 +79,8 @@ First slice:
 - Text fallback is available when speech is unsupported, blocked, or awkward.
 - Backend stores each run in disposable local SQLite at `data/public-concierge-runs.sqlite`.
 - Backend smoke creates and reads one run.
+- The latest run for this browser/device reloads for the same query and active Line.
+- The answer page and Chairman panel show the exact recognized text under `Heard`.
 - The Chairman reply is deterministic for now; no autonomous research worker is implied.
 
 Reset:
@@ -88,5 +90,5 @@ Reset:
 
 Still open:
 
-- Resume UI for older journeys after navigation/reload.
 - Android Chrome QA for speech capture and resumed Journey display.
+- Journey switching/history UI for multiple older Lines.

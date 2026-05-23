@@ -612,8 +612,35 @@
   line-height: 1.35;
 }
 
+.chairman-talk-status p {
+  margin: 0;
+}
+
 .chairman-talk-status.is-error {
   color: #8b2f24;
+}
+
+.chairman-talk-heard,
+.public-chairman-heard {
+  display: grid;
+  gap: 4px;
+  margin-top: 8px;
+  border-left: 3px solid #2f6f4e;
+  padding-left: 9px;
+}
+
+.chairman-talk-heard span,
+.public-chairman-heard span {
+  color: #747169;
+  font-size: 0.7rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.chairman-talk-heard p,
+.public-chairman-heard p {
+  margin: 0;
+  color: #34322e;
 }
 
 .chairman-talk-panel textarea {
@@ -783,12 +810,6 @@
   color: #242424;
   font-size: 0.98rem;
   line-height: 1.25;
-}
-
-.public-chairman-reply > p:last-child {
-  color: #5f5d56;
-  font-size: 0.9rem;
-  line-height: 1.35;
 }
 
 .public-answer-actions {

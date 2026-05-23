@@ -1,4 +1,5 @@
 import {
+  PublicConciergeLatestRunResponseSchema,
   PublicConciergeRunResponseSchema,
   PublicContinuumResponseSchema,
   PublicLensFeedbackSummarySchema,
@@ -96,6 +97,7 @@ try {
     method: 'POST',
     url: '/api/public-continuum/extended-thought/concierge-runs',
     payload: {
+      clientInstanceId: 'public-continuum-smoke-client',
       scopeId: customQuestionContinuum.scope.id,
       queryId: customQuestionContinuum.query.id,
       queryText: customQuestionContinuum.query.text,
@@ -131,6 +133,27 @@ try {
 
   if (conciergeRead.run.id !== conciergeRun.run.id) {
     throw new Error('Expected Concierge read to return the created run.');
+  }
+
+  const latestRunResponse = await app.inject({
+    method: 'GET',
+    url:
+      '/api/public-continuum/extended-thought/concierge-runs/latest' +
+      `?clientInstanceId=${encodeURIComponent('public-continuum-smoke-client')}` +
+      `&queryId=${encodeURIComponent(customQuestionContinuum.query.id)}` +
+      `&lineId=${encodeURIComponent(recommendedLine.id)}`,
+  });
+
+  if (latestRunResponse.statusCode !== 200) {
+    throw new Error(`Expected latest Concierge run 200, got ${latestRunResponse.statusCode}.`);
+  }
+
+  const latestRun = PublicConciergeLatestRunResponseSchema.parse(
+    JSON.parse(latestRunResponse.body),
+  );
+
+  if (latestRun.run === null || latestRun.run.id !== conciergeRun.run.id) {
+    throw new Error('Expected latest Concierge run to return the created run.');
   }
 
   console.log(JSON.stringify({

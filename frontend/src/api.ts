@@ -2,6 +2,7 @@ import {
   CreateEventResponseSchema,
   EventsListResponseSchema,
   LocalImportPreviewSummariesResponseSchema,
+  PublicConciergeLatestRunResponseSchema,
   PublicContinuumResponseSchema,
   PublicConciergeRunResponseSchema,
   DevopsFeedbackResponseSchema,
@@ -15,6 +16,8 @@ import {
   TranscriptionResponseSchema,
   type ContinuumEvent,
   type LocalImportPreviewSummary,
+  type PublicConciergeLatestRunQuery,
+  type PublicConciergeLatestRunResponse,
   type PublicConciergeRunRequest,
   type PublicConciergeRunResponse,
   type PublicContinuumResponse,
@@ -187,6 +190,26 @@ export async function submitPublicConciergeRun(
   }
 
   return PublicConciergeRunResponseSchema.parse(await response.json());
+}
+
+export async function fetchLatestPublicConciergeRun(
+  targetId: string,
+  query: PublicConciergeLatestRunQuery,
+): Promise<PublicConciergeLatestRunResponse> {
+  const search = new URLSearchParams({
+    clientInstanceId: query.clientInstanceId,
+    queryId: query.queryId,
+    lineId: query.lineId,
+  });
+  const response = await fetch(
+    `${API_URL}/api/public-continuum/${targetId}/concierge-runs/latest?${search.toString()}`,
+  );
+
+  if (!response.ok) {
+    throw new Error('Failed to load latest Chairman reply');
+  }
+
+  return PublicConciergeLatestRunResponseSchema.parse(await response.json());
 }
 
 export async function submitPublicLensFeedback(

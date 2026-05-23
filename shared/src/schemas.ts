@@ -255,6 +255,7 @@ export const PublicConciergeInputModeSchema = z.enum(['speech', 'text']);
 export const PublicConciergeRunSchema = z.object({
   id: z.string().min(1),
   targetId: z.string().min(1),
+  clientInstanceId: z.string().min(1),
   scopeId: z.string().min(1),
   queryId: z.string().min(1),
   queryText: z.string().min(1),
@@ -272,6 +273,7 @@ export const PublicConciergeRunSchema = z.object({
 });
 
 export const PublicConciergeRunRequestSchema = z.object({
+  clientInstanceId: z.string().min(1),
   scopeId: z.string().min(1),
   queryId: z.string().min(1),
   queryText: z.string().trim().min(1),
@@ -283,6 +285,16 @@ export const PublicConciergeRunRequestSchema = z.object({
 
 export const PublicConciergeRunResponseSchema = z.object({
   run: PublicConciergeRunSchema,
+});
+
+export const PublicConciergeLatestRunQuerySchema = z.object({
+  clientInstanceId: z.string().min(1),
+  queryId: z.string().min(1),
+  lineId: z.string().min(1),
+});
+
+export const PublicConciergeLatestRunResponseSchema = z.object({
+  run: PublicConciergeRunSchema.nullable(),
 });
 
 export const PublicLensFeedbackRequestSchema = z.object({
@@ -381,6 +393,8 @@ export type PublicContinuumResponse = z.infer<typeof PublicContinuumResponseSche
 export type PublicConciergeRun = z.infer<typeof PublicConciergeRunSchema>;
 export type PublicConciergeRunRequest = z.infer<typeof PublicConciergeRunRequestSchema>;
 export type PublicConciergeRunResponse = z.infer<typeof PublicConciergeRunResponseSchema>;
+export type PublicConciergeLatestRunQuery = z.infer<typeof PublicConciergeLatestRunQuerySchema>;
+export type PublicConciergeLatestRunResponse = z.infer<typeof PublicConciergeLatestRunResponseSchema>;
 export type PublicLensFeedbackRequest = z.infer<typeof PublicLensFeedbackRequestSchema>;
 export type PublicLensFeedbackSignal = z.infer<typeof PublicLensFeedbackSignalSchema>;
 export type PublicLensFeedbackResponse = z.infer<typeof PublicLensFeedbackResponseSchema>;

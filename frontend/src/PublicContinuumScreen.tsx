@@ -5,6 +5,7 @@ import type {
 } from '@continuum/shared';
 import { useEffect, useMemo, useRef, useState, type FormEvent, type UIEvent } from 'react';
 import {
+  fetchLatestPublicConciergeRun,
   fetchPublicContinuum,
   submitDevopsFeedback,
   submitPublicConciergeRun,
@@ -19,6 +20,7 @@ import {
   transcriptFromSpeechEvent,
   type BrowserSpeechRecognition,
 } from './browserSpeech.js';
+import { getPublicClientInstanceId } from './publicClientInstance.js';
 import { type PublicAuthState, usePublicLensPreference } from './usePublicLensPreference.js';
 import { usePwaInstallPrompt } from './usePwaInstallPrompt.js';
 import './publicContinuum.css';
@@ -78,6 +80,7 @@ export function PublicContinuum({ targetId }: { targetId: string }) {
   const lensStripRef = useRef<HTMLElement | null>(null);
   const guidePageRef = useRef<HTMLElement | null>(null);
   const chairmanSpeechRecognitionRef = useRef<BrowserSpeechRecognition | null>(null);
+  const publicClientInstanceId = useMemo(() => getPublicClientInstanceId(), []);
   const selectedQuestion = new URLSearchParams(window.location.search).get('question');
   const readyContinuum = state.status === 'ready' ? state.continuum : null;
   const chairmanSpeechSupported = useMemo(() => getSpeechRecognitionConstructor() !== null, []);
@@ -154,7 +157,34 @@ export function PublicContinuum({ targetId }: { targetId: string }) {
     setChairmanTalkStatus({ status: 'idle' });
     setChairmanText('');
     setChairmanTalkOpen(false);
-  }, [activeQueryId]);
+  }, [activeQueryId, activeRecommendedLine?.id]);
+
+  useEffect(() => {
+    if (!readyContinuum || !activeRecommendedLine) return;
+
+    let mounted = true;
+
+    fetchLatestPublicConciergeRun(targetId, {
+      clientInstanceId: publicClientInstanceId,
+      queryId: readyContinuum.query.id,
+      lineId: activeRecommendedLine.id,
+    })
+      .then((response) => {
+        if (!mounted) return;
+        setChairmanRun(response.run);
+        if (response.run !== null) {
+          setChairmanTalkStatus({ status: 'answered' });
+        }
+      })
+      .catch(() => {
+        if (!mounted) return;
+        setChairmanRun(null);
+      });
+
+    return () => {
+      mounted = false;
+    };
+  }, [activeRecommendedLine, publicClientInstanceId, readyContinuum, targetId]);
 
   useEffect(() => {
     setActiveSnapIndex(0);
@@ -308,6 +338,7 @@ export function PublicContinuum({ targetId }: { targetId: string }) {
 
     try {
       const response = await submitPublicConciergeRun(targetId, {
+        clientInstanceId: publicClientInstanceId,
         scopeId: readyContinuum.scope.id,
         queryId: readyContinuum.query.id,
         queryText: readyContinuum.query.text,
@@ -517,7 +548,10 @@ export function PublicContinuum({ targetId }: { targetId: string }) {
                     <div className="public-chairman-reply">
                       <p>Chairman</p>
                       <h4>{chairmanRun.chairmanReply}</h4>
-                      <p>{chairmanRun.userResponse}</p>
+                      <div className="public-chairman-heard">
+                        <span>Heard</span>
+                        <p>{chairmanRun.userResponse}</p>
+                      </div>
                     </div>
                   ) : null}
                 </div>
@@ -751,7 +785,13 @@ export function PublicContinuum({ targetId }: { targetId: string }) {
                 <p className="chairman-talk-status">Saving reply...</p>
               ) : null}
               {chairmanTalkStatus.status === 'answered' && chairmanRun ? (
-                <p className="chairman-talk-status">{chairmanRun.chairmanReply}</p>
+                <div className="chairman-talk-status">
+                  <p>{chairmanRun.chairmanReply}</p>
+                  <div className="chairman-talk-heard">
+                    <span>Heard</span>
+                    <p>{chairmanRun.userResponse}</p>
+                  </div>
+                </div>
               ) : null}
               {chairmanTalkStatus.status === 'error' ? (
                 <p className="chairman-talk-status is-error">{chairmanTalkStatus.message}</p>
