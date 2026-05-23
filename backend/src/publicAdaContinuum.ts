@@ -1,11 +1,15 @@
 import {
+  createDefaultPublicThoughtCards,
   createDefaultPublicLensOutputs,
   createImportScope,
   createPublicContinuumQuery,
   defaultPublicLensDefinitions,
+  extractSourceParagraphsFromPublicDocument,
   importScopeTitle,
   normalizePublicDocument,
   normalizeWikidataEntity,
+  type SourceParagraph,
+  type ThoughtCard,
   type PublicDocumentNormalizationInput,
   type WikidataEntityNormalizationInput,
 } from '@continuum/core';
@@ -13,6 +17,9 @@ import { PublicContinuumResponseSchema } from '@continuum/shared';
 
 const adaScope = createImportScope({
   id: 'scope:ada-lovelace-through-computing',
+  membershipPolicy: {
+    mode: 'primary_required',
+  },
   primaryEntity: {
     kind: 'person',
     label: 'Ada Lovelace',
@@ -194,17 +201,22 @@ const jacquardNoteDocument = {
 } satisfies PublicDocumentNormalizationInput;
 
 export function createAdaPublicContinuum() {
+  const documents = [analyticalEngineDocument, operationsNoteDocument, jacquardNoteDocument];
   const events = [
     normalizeWikidataEntity(wikidataAda),
-    normalizePublicDocument(analyticalEngineDocument),
-    normalizePublicDocument(operationsNoteDocument),
-    normalizePublicDocument(jacquardNoteDocument),
+    ...documents.map((document) => normalizePublicDocument(document)),
   ];
   const outputs = createDefaultPublicLensOutputs(
     adaScope,
     adaQuery,
     events,
     '2026-05-22T12:30:00.000Z',
+  );
+  const sourceParagraphs = documents.flatMap((document) =>
+    extractSourceParagraphsFromPublicDocument(document),
+  );
+  const thoughtCards = outputs.flatMap((output) =>
+    createDefaultPublicThoughtCards(output, sourceParagraphs),
   );
 
   return PublicContinuumResponseSchema.parse({
@@ -224,17 +236,44 @@ export function createAdaPublicContinuum() {
       sourceFamily: event.provenance.sourceFamily,
       sourceUrl: sourceUrlForEvent(event.source.artifactId),
       subject: event.content.subject,
-      text: event.content.text,
-      license: event.provenance.license,
-    })),
+        text: event.content.text,
+        license: event.provenance.license,
+      })),
+    sourceParagraphs: sourceParagraphs.map(publicSourceParagraph),
+    thoughtCards: thoughtCards.map(publicThoughtCard),
     lenses: defaultPublicLensDefinitions,
     outputs: outputs.map((output) => ({
       id: output.id,
       lensId: output.lensId,
       lensVersion: output.lensVersion,
+      thoughtCardIds: thoughtCards
+        .filter((card) => card.lensOutputId === output.id)
+        .map((card) => card.id),
       sections: output.sections,
     })),
   });
+}
+
+function publicSourceParagraph(paragraph: SourceParagraph) {
+  return {
+    id: paragraph.id,
+    canonicalEventId: paragraph.canonicalEventId,
+    title: paragraph.context.title,
+    sourceName: paragraph.context.sourceName,
+    sourceUrl: paragraph.context.sourceUrl,
+    license: paragraph.context.license,
+    paragraphIndex: paragraph.paragraphIndex,
+  };
+}
+
+function publicThoughtCard(card: ThoughtCard) {
+  return {
+    id: card.id,
+    lensOutputId: card.lensOutputId,
+    title: card.title,
+    body: card.body,
+    sourceParagraphIds: card.sourceParagraphIds,
+  };
 }
 
 function sourceUrlForEvent(artifactId: string | null): string | null {

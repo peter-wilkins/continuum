@@ -661,6 +661,65 @@
   line-height: 1.58;
 }
 
+.public-thought-card-list {
+  display: grid;
+  gap: 16px;
+  max-width: 760px;
+  margin: 0 auto;
+  padding: 0;
+  list-style: none;
+}
+
+.public-thought-card {
+  display: grid;
+  gap: 10px;
+  border-top: 1px solid #ddd8cc;
+  padding-top: 16px;
+}
+
+.public-thought-card:first-child {
+  border-top: 0;
+  padding-top: 0;
+}
+
+.public-thought-card h2 {
+  margin: 0;
+  color: #242424;
+  font-size: clamp(1.05rem, 1rem + 0.45vw, 1.34rem);
+  line-height: 1.18;
+}
+
+.public-thought-card p {
+  margin: 0;
+  color: #34322e;
+  font-size: clamp(1rem, 0.98rem + 0.35vw, 1.18rem);
+  line-height: 1.58;
+}
+
+.public-thought-provenance {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.public-thought-provenance a {
+  border: 1px solid #d7d0c1;
+  border-radius: 999px;
+  color: #5f5d56;
+  padding: 4px 8px;
+  font-size: 0.72rem;
+  font-weight: 800;
+  line-height: 1.1;
+  text-decoration: none;
+}
+
+.public-thought-provenance a:hover,
+.public-thought-provenance a:focus-visible {
+  border-color: #8c6b4f;
+  color: #242424;
+  outline: none;
+}
+
 @media (max-width: 640px) {
   .public-app-title span {
     display: none;

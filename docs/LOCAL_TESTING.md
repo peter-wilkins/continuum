@@ -15,7 +15,7 @@ npm run dev:frontend
 Open:
 
 ```text
-http://localhost:5173/public/ada-lovelace
+http://localhost:5173/public/extended-thought
 ```
 
 The frontend uses same-origin `/api` calls. In local dev, Vite proxies `/api` to the backend on `127.0.0.1:3000`, so the same setup works through Tailscale Funnel.
@@ -26,7 +26,7 @@ Open:
 
 ```text
 http://localhost:5173/
-http://localhost:5173/public/ada-lovelace
+http://localhost:5173/public/extended-thought
 http://localhost:5173/public/lenses
 ```
 
@@ -37,7 +37,7 @@ npm run build --workspace shared
 npm run smoke:public-continuum --workspace backend
 ```
 
-The public Ada page should show `Git <hash>` near the bottom. If the hash is stale in local dev, restart the frontend server.
+The public extended-thought page should show `Git <hash>` near the guide page. If the hash is stale in local dev, restart the frontend server.
 
 ## Supabase Google OAuth
 
@@ -67,7 +67,7 @@ tailscale funnel status
 Use the HTTPS Funnel URL:
 
 ```text
-https://<your-funnel-host>/public/ada-lovelace
+https://<your-funnel-host>/public/extended-thought
 ```
 
 If Funnel is already configured, `tailscale funnel status` should show the current public URL and target.

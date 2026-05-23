@@ -134,8 +134,8 @@ export async function fetchLocalImportPreviewSummaries(
   return parsed.previews;
 }
 
-export async function fetchPublicAdaContinuum(): Promise<PublicContinuumResponse> {
-  const response = await fetch(`${API_URL}/api/public-continuum/ada-lovelace`);
+export async function fetchPublicContinuum(targetId: string): Promise<PublicContinuumResponse> {
+  const response = await fetch(`${API_URL}/api/public-continuum/${targetId}`);
 
   if (!response.ok) {
     throw new Error('Failed to load public Continuum');
@@ -144,8 +144,10 @@ export async function fetchPublicAdaContinuum(): Promise<PublicContinuumResponse
   return PublicContinuumResponseSchema.parse(await response.json());
 }
 
-export async function fetchPublicLensFeedbackSummary(): Promise<PublicLensFeedbackSummary> {
-  const response = await fetch(`${API_URL}/api/public-continuum/ada-lovelace/feedback-summary`);
+export async function fetchPublicLensFeedbackSummary(
+  targetId: string,
+): Promise<PublicLensFeedbackSummary> {
+  const response = await fetch(`${API_URL}/api/public-continuum/${targetId}/feedback-summary`);
 
   if (!response.ok) {
     throw new Error('Failed to load Lens feedback summary');
@@ -155,10 +157,11 @@ export async function fetchPublicLensFeedbackSummary(): Promise<PublicLensFeedba
 }
 
 export async function submitPublicLensFeedback(
+  targetId: string,
   session: Session,
   feedback: PublicLensFeedbackRequest,
 ): Promise<PublicLensFeedbackResponse> {
-  const response = await fetch(`${API_URL}/api/public-continuum/ada-lovelace/feedback`, {
+  const response = await fetch(`${API_URL}/api/public-continuum/${targetId}/feedback`, {
     method: 'POST',
     headers: {
       Authorization: `Bearer ${session.access_token}`,

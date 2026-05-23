@@ -139,11 +139,30 @@ export const PublicContinuumLensOutputSchema = z.object({
   id: z.string().min(1),
   lensId: z.string().min(1),
   lensVersion: z.string().min(1),
+  thoughtCardIds: z.array(z.string().min(1)),
   sections: z.array(z.object({
     id: z.string().min(1),
     title: z.string().min(1),
     eventIds: z.array(z.string().min(1)),
   })),
+});
+
+export const PublicContinuumSourceParagraphSchema = z.object({
+  id: z.string().min(1),
+  canonicalEventId: z.string().min(1),
+  title: z.string().min(1),
+  sourceName: z.string().min(1),
+  sourceUrl: z.string().url(),
+  license: z.string().min(1),
+  paragraphIndex: z.number().int().nonnegative(),
+});
+
+export const PublicContinuumThoughtCardSchema = z.object({
+  id: z.string().min(1),
+  lensOutputId: z.string().min(1),
+  title: z.string().min(1),
+  body: z.string().min(1),
+  sourceParagraphIds: z.array(z.string().min(1)).min(1),
 });
 
 export const PublicContinuumResponseSchema = z.object({
@@ -158,6 +177,8 @@ export const PublicContinuumResponseSchema = z.object({
     text: z.string().min(1),
   }),
   events: z.array(PublicContinuumEventSchema),
+  sourceParagraphs: z.array(PublicContinuumSourceParagraphSchema),
+  thoughtCards: z.array(PublicContinuumThoughtCardSchema),
   lenses: z.array(PublicContinuumLensDefinitionSchema),
   outputs: z.array(PublicContinuumLensOutputSchema),
 });
@@ -215,6 +236,8 @@ export type LocalImportPreviewSummariesResponse = z.infer<typeof LocalImportPrev
 export type PublicContinuumEvent = z.infer<typeof PublicContinuumEventSchema>;
 export type PublicContinuumLensDefinition = z.infer<typeof PublicContinuumLensDefinitionSchema>;
 export type PublicContinuumLensOutput = z.infer<typeof PublicContinuumLensOutputSchema>;
+export type PublicContinuumSourceParagraph = z.infer<typeof PublicContinuumSourceParagraphSchema>;
+export type PublicContinuumThoughtCard = z.infer<typeof PublicContinuumThoughtCardSchema>;
 export type PublicContinuumResponse = z.infer<typeof PublicContinuumResponseSchema>;
 export type PublicLensFeedbackRequest = z.infer<typeof PublicLensFeedbackRequestSchema>;
 export type PublicLensFeedbackSignal = z.infer<typeof PublicLensFeedbackSignalSchema>;

@@ -20,9 +20,12 @@ export type PreferencePulse = {
   lensOutputId: string;
 };
 
-const publicFeedbackIntentKey = 'continuum.publicAda.pendingLensOutputId';
+function publicFeedbackIntentKey(targetId: string) {
+  return `continuum.public.${targetId}.pendingLensOutputId`;
+}
 
 export function usePublicLensPreference(
+  targetId: string,
   continuum: PublicContinuumResponse | null,
   authState: PublicAuthState,
 ) {
@@ -34,15 +37,15 @@ export function usePublicLensPreference(
   const nextPreferencePulseIdRef = useRef(0);
 
   const refreshFeedbackSummary = useCallback(() => {
-    void fetchPublicLensFeedbackSummary()
+    void fetchPublicLensFeedbackSummary(targetId)
       .then(setFeedbackSummary)
       .catch(() => setFeedbackSummary(null));
-  }, []);
+  }, [targetId]);
 
   useEffect(() => {
     let mounted = true;
 
-    fetchPublicLensFeedbackSummary()
+    fetchPublicLensFeedbackSummary(targetId)
       .then((summary) => {
         if (!mounted) return;
         setFeedbackSummary(summary);
@@ -55,20 +58,20 @@ export function usePublicLensPreference(
     return () => {
       mounted = false;
     };
-  }, []);
+  }, [targetId]);
 
   const submitPreference = useCallback(
     async (activeContinuum: PublicContinuumResponse, lensOutputId: string, session: Session) => {
       setFeedbackState({ status: 'submitting', lensOutputId });
 
       try {
-        await submitPublicLensFeedback(session, {
+        await submitPublicLensFeedback(targetId, session, {
           scopeId: activeContinuum.scope.id,
           queryId: activeContinuum.query.id,
           selectedLensOutputId: lensOutputId,
           candidateLensOutputIds: activeContinuum.outputs.map((output) => output.id),
         });
-        window.sessionStorage.removeItem(publicFeedbackIntentKey);
+        window.sessionStorage.removeItem(publicFeedbackIntentKey(targetId));
         setFeedbackState({ status: 'recorded', lensOutputId });
         setPreferencePulses((current) => [
           ...current,
@@ -85,30 +88,30 @@ export function usePublicLensPreference(
         });
       }
     },
-    [refreshFeedbackSummary],
+    [refreshFeedbackSummary, targetId],
   );
 
   useEffect(() => {
     if (!continuum || authState.status !== 'logged_in') return;
 
-    const pendingLensOutputId = window.sessionStorage.getItem(publicFeedbackIntentKey);
+    const pendingLensOutputId = window.sessionStorage.getItem(publicFeedbackIntentKey(targetId));
     if (!pendingLensOutputId) return;
 
     if (!continuum.outputs.some((output) => output.id === pendingLensOutputId)) {
-      window.sessionStorage.removeItem(publicFeedbackIntentKey);
+      window.sessionStorage.removeItem(publicFeedbackIntentKey(targetId));
       return;
     }
 
     if (submittedPendingFeedbackRef.current === pendingLensOutputId) return;
     submittedPendingFeedbackRef.current = pendingLensOutputId;
     void submitPreference(continuum, pendingLensOutputId, authState.session);
-  }, [authState, continuum, submitPreference]);
+  }, [authState, continuum, submitPreference, targetId]);
 
   async function preferLens(lensOutputId: string) {
     if (!continuum) return;
 
     if (authState.status !== 'logged_in') {
-      window.sessionStorage.setItem(publicFeedbackIntentKey, lensOutputId);
+      window.sessionStorage.setItem(publicFeedbackIntentKey(targetId), lensOutputId);
       setFeedbackState({ status: 'submitting', lensOutputId });
       await signInWithGoogle(window.location.href);
       return;
@@ -120,7 +123,7 @@ export function usePublicLensPreference(
   async function signOut() {
     try {
       setAuthError(null);
-      window.sessionStorage.removeItem(publicFeedbackIntentKey);
+      window.sessionStorage.removeItem(publicFeedbackIntentKey(targetId));
       await signOutCurrentDevice();
       setFeedbackState({ status: 'idle' });
     } catch (err: unknown) {

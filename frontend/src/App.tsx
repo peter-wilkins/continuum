@@ -37,7 +37,9 @@ import {
   type PendingAudioItem,
   type PendingAudioSummary,
 } from './pendingAudioQueue.js';
-import { PublicAdaContinuum, PublicLensGuide } from './PublicContinuumScreen.js';
+import { PublicContinuum, PublicLensGuide } from './PublicContinuumScreen.js';
+
+const primaryPublicContinuumTargetId = 'extended-thought';
 
 type LoadState =
   | { status: 'loading' }
@@ -75,12 +77,16 @@ export function App() {
     return <AuthCallback />;
   }
 
+  if (path === '/public/extended-thought') {
+    return <PublicContinuum targetId={primaryPublicContinuumTargetId} />;
+  }
+
   if (path === '/public/ada-lovelace') {
-    return <PublicAdaContinuum />;
+    return <PublicContinuum targetId="ada-lovelace" />;
   }
 
   if (path === '/public/lenses') {
-    return <PublicLensGuide />;
+    return <PublicLensGuide targetId={primaryPublicContinuumTargetId} />;
   }
 
   return <ContinuumApp />;
@@ -834,10 +840,10 @@ function PrototypeIndex() {
         <article className="prototype-card">
           <div>
             <p className="status-pill">Public MVP</p>
-            <h3>Ada Lovelace through computing</h3>
+            <h3>Extended thought through brain augmentation</h3>
             <p>
-              A read-only public Continuum seeded from public source records, with Atlas, Loom, and
-              Beacon Lens candidates over the same query.
+              A read-only public Continuum seeded from Wikipedia records, with paragraph-grounded
+              Thought Cards across Atlas, Loom, and Beacon Lens candidates.
             </p>
           </div>
           <dl className="prototype-details">
@@ -847,11 +853,11 @@ function PrototypeIndex() {
             </div>
             <div>
               <dt>Status</dt>
-              <dd>Public data, source links, provenance, and reference-only Lens outputs.</dd>
+              <dd>Public data, source links, provenance, and source-backed Thought Cards.</dd>
             </div>
           </dl>
-          <a className="prototype-link" href="/public/ada-lovelace">
-            Open Ada Continuum
+          <a className="prototype-link" href="/public/extended-thought">
+            Open public Continuum
           </a>
         </article>
         <article className="prototype-card">

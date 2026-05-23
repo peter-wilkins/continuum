@@ -1,5 +1,6 @@
 import type { PublicContinuumResponse } from '@continuum/shared';
 import { createAdaPublicContinuum } from './publicAdaContinuum.js';
+import { createExtendedThoughtPublicContinuum } from './publicExtendedThoughtContinuum.js';
 
 export type PublicContinuumTarget = {
   id: string;
@@ -7,6 +8,10 @@ export type PublicContinuumTarget = {
 };
 
 const publicContinuumTargets = [
+  {
+    id: 'extended-thought',
+    createContinuum: createExtendedThoughtPublicContinuum,
+  },
   {
     id: 'ada-lovelace',
     createContinuum: createAdaPublicContinuum,

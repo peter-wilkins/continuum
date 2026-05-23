@@ -1,6 +1,6 @@
 import type { PublicContinuumResponse } from '@continuum/shared';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { fetchPublicAdaContinuum } from './api.js';
+import { fetchPublicContinuum } from './api.js';
 import { getInitialSession, onAuthChange } from './auth.js';
 import { BuildHash, gitHash } from './buildInfo.js';
 import { type PublicAuthState, usePublicLensPreference } from './usePublicLensPreference.js';
@@ -25,7 +25,7 @@ function shuffleItems<T>(items: readonly T[]) {
   return shuffled;
 }
 
-export function PublicAdaContinuum() {
+export function PublicContinuum({ targetId }: { targetId: string }) {
   const [state, setState] = useState<PublicContinuumState>({ status: 'loading' });
   const [authState, setAuthState] = useState<PublicAuthState>({ status: 'loading' });
   const [menuOpen, setMenuOpen] = useState(false);
@@ -40,7 +40,7 @@ export function PublicAdaContinuum() {
     preferencePulses,
     preferLens,
     signOut,
-  } = usePublicLensPreference(readyContinuum, authState);
+  } = usePublicLensPreference(targetId, readyContinuum, authState);
   const displayedOutputs = useMemo(() => {
     if (!readyContinuum) return [];
 
@@ -64,7 +64,7 @@ export function PublicAdaContinuum() {
   useEffect(() => {
     let mounted = true;
 
-    fetchPublicAdaContinuum()
+    fetchPublicContinuum(targetId)
       .then((continuum) => {
         if (!mounted) return;
         setState({ status: 'ready', continuum });
@@ -80,7 +80,7 @@ export function PublicAdaContinuum() {
     return () => {
       mounted = false;
     };
-  }, []);
+  }, [targetId]);
 
   useEffect(() => {
     let mounted = true;
@@ -142,6 +142,10 @@ export function PublicAdaContinuum() {
 
   const { continuum } = state;
   const eventsById = new Map(continuum.events.map((event) => [event.id, event]));
+  const sourceParagraphsById = new Map(
+    continuum.sourceParagraphs.map((paragraph) => [paragraph.id, paragraph]),
+  );
+  const thoughtCardsById = new Map(continuum.thoughtCards.map((card) => [card.id, card]));
 
   return (
     <main
@@ -226,35 +230,41 @@ export function PublicAdaContinuum() {
                   ))}
                 </button>
               </div>
-              <div className="public-lens-body public-lens-sections">
-                {output.sections.map((section) => (
-                  <section key={section.id} className="public-lens-section">
-                    <h3>{section.title}</h3>
-                    <ol className="public-event-list">
-                      {section.eventIds.map((eventId) => {
-                        const event = eventsById.get(eventId);
-                        if (!event) return null;
+              <div className="public-lens-body">
+                <ol className="public-thought-card-list">
+                  {output.thoughtCardIds.map((cardId) => {
+                    const card = thoughtCardsById.get(cardId);
+                    if (!card) return null;
+                    const sourceParagraphs = card.sourceParagraphIds
+                      .map((paragraphId) => sourceParagraphsById.get(paragraphId))
+                      .filter((paragraph) => paragraph !== undefined);
 
-                        return (
-                          <li key={event.id}>
-                            <p className="public-event-source">
-                              {event.sourceUrl ? (
-                                <a href={event.sourceUrl} target="_blank" rel="noreferrer">
-                                  {event.sourceName}
-                                </a>
-                              ) : (
-                                event.sourceName
-                              )}{' '}
-                              / {event.license ?? 'license unknown'}
-                            </p>
-                            <h4>{event.subject ?? event.id}</h4>
-                            <p>{event.text}</p>
-                          </li>
-                        );
-                      })}
-                    </ol>
-                  </section>
-                ))}
+                    return (
+                      <li className="public-thought-card" key={card.id}>
+                        <h2>{card.title}</h2>
+                        <p>{card.body}</p>
+                        <footer className="public-thought-provenance">
+                          {sourceParagraphs.map((paragraph) => {
+                            const event = eventsById.get(paragraph.canonicalEventId);
+
+                            return (
+                              <a
+                                href={paragraph.sourceUrl}
+                                key={paragraph.id}
+                                target="_blank"
+                                rel="noreferrer"
+                                title={event?.subject ?? paragraph.title}
+                              >
+                                {paragraph.sourceName} / {paragraph.title} / paragraph{' '}
+                                {paragraph.paragraphIndex + 1}
+                              </a>
+                            );
+                          })}
+                        </footer>
+                      </li>
+                    );
+                  })}
+                </ol>
               </div>
             </article>
           );
@@ -269,8 +279,8 @@ export function PublicAdaContinuum() {
               <p className="index-kicker">Guide</p>
               <h2>Lens guide</h2>
               <p>
-                Each Lens is a different projection over the same query and the same immutable
-                source events. Candidate order is shuffled each page load.
+                Each Lens is a different projection over the same query and the same source-backed
+                Thought Cards. Candidate order is shuffled each page load.
               </p>
             </section>
 
@@ -344,13 +354,13 @@ export function PublicAdaContinuum() {
   );
 }
 
-export function PublicLensGuide() {
+export function PublicLensGuide({ targetId }: { targetId: string }) {
   const [state, setState] = useState<PublicContinuumState>({ status: 'loading' });
 
   useEffect(() => {
     let mounted = true;
 
-    fetchPublicAdaContinuum()
+    fetchPublicContinuum(targetId)
       .then((continuum) => {
         if (!mounted) return;
         setState({ status: 'ready', continuum });
@@ -366,7 +376,7 @@ export function PublicLensGuide() {
     return () => {
       mounted = false;
     };
-  }, []);
+  }, [targetId]);
 
   if (state.status === 'loading') {
     return <main className="public-screen" />;
@@ -388,12 +398,12 @@ export function PublicLensGuide() {
         <p className="index-kicker">Lens guide</p>
         <h1>How the Lens candidates work</h1>
         <p>
-          Each Lens is a different projection over the same query and the same immutable source
-          events.
+          Each Lens is a different projection over the same query and the same source-backed
+          Thought Cards.
         </p>
         <div className="public-header-actions">
-          <a className="text-link" href="/public/ada-lovelace">
-            Back to Ada Continuum
+          <a className="text-link" href={`/public/${targetId}`}>
+            Back to Continuum
           </a>
         </div>
       </header>
@@ -414,7 +424,7 @@ export function PublicLensGuide() {
                 </div>
                 <div>
                   <dt>Sections</dt>
-                  <dd>{output ? output.sections.map((section) => section.title).join(', ') : 'None'}</dd>
+                  <dd>{output ? `${output.thoughtCardIds.length} Thought Cards` : 'None'}</dd>
                 </div>
               </dl>
             </article>
