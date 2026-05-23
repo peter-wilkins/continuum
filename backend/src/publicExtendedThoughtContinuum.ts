@@ -57,6 +57,67 @@ type MaterializedPreviewJson = {
       body: string;
       sourceParagraphIds: string[];
     }>;
+    synthesizedAnswer: {
+      id: string;
+      queryId: string;
+      status: 'answered' | 'insufficient_evidence';
+      answer: string;
+      sourceSupport: Array<{
+        thoughtCardId: string;
+        sourceParagraphIds: string[];
+      }>;
+      lensOutputIdsForCompare: string[];
+      generatedAt: string;
+      generation: {
+        strategy: string;
+        model: string | null;
+        parameters: Array<{
+          key: string;
+          value: string;
+        }>;
+      };
+    };
+    linesOfInquiry: {
+      queryId: string;
+      recommendedLineId: string;
+      lines: Array<{
+        id: string;
+        queryId: string;
+        title: string;
+        question: string;
+        desiredOutcome: string;
+        synthesisMove: 'core_claim' | 'tension' | 'next_question';
+        status: 'candidate';
+        recommended: boolean;
+        sourceSupport: Array<{
+          thoughtCardId: string;
+          sourceParagraphIds: string[];
+        }>;
+        whyThis: {
+          synthesisMove: 'core_claim' | 'tension' | 'next_question';
+          explanation: string;
+        };
+        confidence: number;
+        generatedAt: string;
+        generation: {
+          strategy: string;
+          model: string | null;
+          parameters: Array<{
+            key: string;
+            value: string;
+          }>;
+        };
+      }>;
+      generatedAt: string;
+      generation: {
+        strategy: string;
+        model: string | null;
+        parameters: Array<{
+          key: string;
+          value: string;
+        }>;
+      };
+    };
     lensOutputs: Array<{
       id: string;
       lensId: string;
@@ -112,6 +173,8 @@ export function createExtendedThoughtPublicContinuum() {
       body: card.body,
       sourceParagraphIds: card.sourceParagraphIds,
     })),
+    synthesizedAnswer: materialization.synthesizedAnswer,
+    linesOfInquiry: materialization.linesOfInquiry,
     lenses: defaultPublicLensDefinitions,
     outputs: materialization.lensOutputs.map((output) => ({
       id: output.id,

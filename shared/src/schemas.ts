@@ -165,6 +165,70 @@ export const PublicContinuumThoughtCardSchema = z.object({
   sourceParagraphIds: z.array(z.string().min(1)).min(1),
 });
 
+export const PublicSourceSupportSchema = z.object({
+  thoughtCardId: z.string().min(1),
+  sourceParagraphIds: z.array(z.string().min(1)).min(1),
+});
+
+export const PublicSynthesizedAnswerSchema = z.object({
+  id: z.string().min(1),
+  queryId: z.string().min(1),
+  status: z.enum(['answered', 'insufficient_evidence']),
+  answer: z.string().min(1),
+  sourceSupport: z.array(PublicSourceSupportSchema),
+  lensOutputIdsForCompare: z.array(z.string().min(1)),
+  generatedAt: EventDateTimeSchema,
+  generation: z.object({
+    strategy: z.string().min(1),
+    model: z.string().min(1).nullable(),
+    parameters: z.array(z.object({
+      key: z.string().min(1),
+      value: z.string().min(1),
+    })),
+  }),
+});
+
+export const PublicLineOfInquirySchema = z.object({
+  id: z.string().min(1),
+  queryId: z.string().min(1),
+  title: z.string().min(1),
+  question: z.string().min(1),
+  desiredOutcome: z.string().min(1),
+  synthesisMove: z.enum(['core_claim', 'tension', 'next_question']),
+  status: z.literal('candidate'),
+  recommended: z.boolean(),
+  sourceSupport: z.array(PublicSourceSupportSchema).min(1),
+  whyThis: z.object({
+    synthesisMove: z.enum(['core_claim', 'tension', 'next_question']),
+    explanation: z.string().min(1),
+  }),
+  confidence: z.number().min(0).max(1),
+  generatedAt: EventDateTimeSchema,
+  generation: z.object({
+    strategy: z.string().min(1),
+    model: z.string().min(1).nullable(),
+    parameters: z.array(z.object({
+      key: z.string().min(1),
+      value: z.string().min(1),
+    })),
+  }),
+});
+
+export const PublicLinesOfInquirySchema = z.object({
+  queryId: z.string().min(1),
+  recommendedLineId: z.string().min(1),
+  lines: z.array(PublicLineOfInquirySchema).min(1),
+  generatedAt: EventDateTimeSchema,
+  generation: z.object({
+    strategy: z.string().min(1),
+    model: z.string().min(1).nullable(),
+    parameters: z.array(z.object({
+      key: z.string().min(1),
+      value: z.string().min(1),
+    })),
+  }),
+});
+
 export const PublicContinuumResponseSchema = z.object({
   scope: z.object({
     id: z.string().min(1),
@@ -179,6 +243,8 @@ export const PublicContinuumResponseSchema = z.object({
   events: z.array(PublicContinuumEventSchema),
   sourceParagraphs: z.array(PublicContinuumSourceParagraphSchema),
   thoughtCards: z.array(PublicContinuumThoughtCardSchema),
+  synthesizedAnswer: PublicSynthesizedAnswerSchema,
+  linesOfInquiry: PublicLinesOfInquirySchema,
   lenses: z.array(PublicContinuumLensDefinitionSchema),
   outputs: z.array(PublicContinuumLensOutputSchema),
 });

@@ -43,7 +43,9 @@ export function PublicContinuum({ targetId }: { targetId: string }) {
     status: 'idle',
   });
   const [activeSnapIndex, setActiveSnapIndex] = useState(0);
+  const [whyThisOpen, setWhyThisOpen] = useState(false);
   const pwaInstall = usePwaInstallPrompt();
+  const lensStripRef = useRef<HTMLElement | null>(null);
   const guidePageRef = useRef<HTMLElement | null>(null);
   const readyContinuum = state.status === 'ready' ? state.continuum : null;
   const {
@@ -60,7 +62,8 @@ export function PublicContinuum({ targetId }: { targetId: string }) {
 
     return shuffleItems(readyContinuum.outputs);
   }, [readyContinuum]);
-  const activeLensOutputId = displayedOutputs[activeSnapIndex]?.id ?? null;
+  const activeLensOutputId =
+    activeSnapIndex > 0 ? displayedOutputs[activeSnapIndex - 1]?.id ?? null : null;
 
   useEffect(() => {
     if (!menuOpen) return;
@@ -143,6 +146,17 @@ export function PublicContinuum({ targetId }: { targetId: string }) {
       behavior: 'smooth',
       block: 'nearest',
       inline: 'start',
+    });
+    setMenuOpen(false);
+  }
+
+  function handleLensCompareJump() {
+    const strip = lensStripRef.current;
+    if (!strip) return;
+
+    strip.scrollTo({
+      left: strip.clientWidth,
+      behavior: 'smooth',
     });
     setMenuOpen(false);
   }
@@ -231,6 +245,19 @@ export function PublicContinuum({ targetId }: { targetId: string }) {
     continuum.sourceParagraphs.map((paragraph) => [paragraph.id, paragraph]),
   );
   const thoughtCardsById = new Map(continuum.thoughtCards.map((card) => [card.id, card]));
+  const answerSupport = continuum.synthesizedAnswer.sourceSupport
+    .map((support) => ({
+      support,
+      card: thoughtCardsById.get(support.thoughtCardId),
+      sourceParagraphs: support.sourceParagraphIds
+        .map((paragraphId) => sourceParagraphsById.get(paragraphId))
+        .filter((paragraph) => paragraph !== undefined),
+    }))
+    .filter((item) => item.card !== undefined);
+  const recommendedLine =
+    continuum.linesOfInquiry.lines.find(
+      (line) => line.id === continuum.linesOfInquiry.recommendedLineId,
+    ) ?? continuum.linesOfInquiry.lines[0] ?? null;
 
   return (
     <main
@@ -263,6 +290,9 @@ export function PublicContinuum({ targetId }: { targetId: string }) {
             <button type="button" role="menuitem" onClick={handleGuideJump}>
               Guide
             </button>
+            <button type="button" role="menuitem" onClick={handleLensCompareJump}>
+              Lens Compare
+            </button>
             <button type="button" role="menuitem" onClick={handleFeedbackFromMenu}>
               Feedback
             </button>
@@ -288,10 +318,75 @@ export function PublicContinuum({ targetId }: { targetId: string }) {
       </div>
 
       <section
+        ref={lensStripRef}
         className="public-lens-strip"
-        aria-label="Lens candidates and guide"
+        aria-label="Answer, Lens Compare, and guide"
         onScroll={handleLensStripScroll}
       >
+        <article className="public-lens public-answer-page" aria-label="Synthesized answer">
+          <div className="public-lens-body public-answer-body">
+            <section className="public-answer-main">
+              <p className="index-kicker">Answer</p>
+              <h2>{continuum.synthesizedAnswer.answer}</h2>
+              {recommendedLine ? (
+                <div className="public-line-of-inquiry">
+                  <p>Line</p>
+                  <h3>{recommendedLine.question}</h3>
+                  <p>{recommendedLine.desiredOutcome}</p>
+                </div>
+              ) : null}
+              <div className="public-answer-actions">
+                <button
+                  className="chrome-button"
+                  type="button"
+                  aria-expanded={whyThisOpen}
+                  onClick={() => setWhyThisOpen((current) => !current)}
+                >
+                  Why this?
+                </button>
+                <button className="chrome-button" type="button" onClick={handleLensCompareJump}>
+                  Lens Compare
+                </button>
+              </div>
+            </section>
+
+            {whyThisOpen ? (
+              <section className="public-answer-sources" aria-label="Sources">
+                <h3>Sources</h3>
+                <ol>
+                  {answerSupport.map(({ card, sourceParagraphs, support }) => {
+                    if (!card) return null;
+
+                    return (
+                      <li key={support.thoughtCardId}>
+                        <h4>{card.title}</h4>
+                        <p>{card.body}</p>
+                        <footer className="public-thought-provenance">
+                          {sourceParagraphs.map((paragraph) => {
+                            const event = eventsById.get(paragraph.canonicalEventId);
+
+                            return (
+                              <a
+                                href={paragraph.sourceUrl}
+                                key={paragraph.id}
+                                target="_blank"
+                                rel="noreferrer"
+                                title={event?.subject ?? paragraph.title}
+                              >
+                                {paragraph.sourceName} / {paragraph.title} / paragraph{' '}
+                                {paragraph.paragraphIndex + 1}
+                              </a>
+                            );
+                          })}
+                        </footer>
+                      </li>
+                    );
+                  })}
+                </ol>
+              </section>
+            ) : null}
+          </div>
+        </article>
         {displayedOutputs.map((output) => {
           const submitting =
             feedbackState.status === 'submitting' && feedbackState.lensOutputId === output.id;

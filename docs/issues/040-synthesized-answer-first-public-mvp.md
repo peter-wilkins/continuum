@@ -1,6 +1,6 @@
 # 040: Synthesized Answer First Public MVP
 
-Status: ready
+Status: done
 
 Type: AFK
 
@@ -28,24 +28,35 @@ Product decision: user-facing explanation language is `Why this?` and `Sources`,
 
 Product decision: keep Lens Compare visible in the MVP. The first users are us, and comparing Lenses is part of learning what works. This should not replace answer-first UX, but it should remain a clear, reachable surface rather than hidden diagnostics.
 
+Product decision: while the first users are testers comparing Lenses, Lens-specific `+1` remains on Lens Compare pages. Whole-result feedback can be revisited after the answer-first surface stabilizes.
+
 ## Acceptance criteria
 
-- [ ] A public query renders a synthesized answer as the primary surface.
-- [ ] The answer is built from source-backed Thought Cards, not free-floating generated text.
-- [ ] The answer is synthesized over canonical Thought Cards before Lens ordering.
-- [ ] The answer keeps source Thought Card ids or source paragraph refs behind it.
-- [ ] A `Why this?` action lets the user dig into the answer's support.
-- [ ] The `Why this?` panel shows `Sources` first.
-- [ ] `Sources` shows 2-4 supporting Thought Cards with source links.
-- [ ] Normal user-facing copy avoids `provenance`, `citation`, and `rationale`.
-- [ ] The normal answer surface does not bias the user with Lens names before feedback.
-- [ ] A visible `Lens Compare` affordance remains available for MVP testers.
-- [ ] `Lens Compare` lets testers compare Lens outputs without making the primary answer card-first again.
-- [ ] The system asks one Line of Inquiry after the answer.
-- [ ] The Line of Inquiry is grounded in the same source support as the answer.
-- [ ] The thumbs-up action records feedback against the whole visible result: query, answer, and Line of Inquiry.
-- [ ] Existing Lens carousel behaviour can be reused for `Lens Compare` if it keeps implementation small.
-- [ ] Mobile layout stays full-screen and readable.
+- [x] A public query renders a synthesized answer as the primary surface.
+- [x] The answer is built from source-backed Thought Cards, not free-floating generated text.
+- [x] The answer is synthesized over canonical Thought Cards before Lens ordering.
+- [x] The answer keeps source Thought Card ids or source paragraph refs behind it.
+- [x] A `Why this?` action lets the user dig into the answer's support.
+- [x] The `Why this?` panel shows `Sources` first.
+- [x] `Sources` shows 2-4 supporting Thought Cards with source links.
+- [x] Normal user-facing copy avoids `provenance`, `citation`, and `rationale`.
+- [x] The normal answer surface does not bias the user with Lens names before feedback.
+- [x] A visible `Lens Compare` affordance remains available for MVP testers.
+- [x] `Lens Compare` lets testers compare Lens outputs without making the primary answer card-first again.
+- [x] The system asks one Line of Inquiry after the answer.
+- [x] The Line of Inquiry is grounded in the same source support as the answer.
+- [x] Lens-specific `+1` remains available on Lens Compare pages for tester feedback.
+- [x] Existing Lens carousel behaviour can be reused for `Lens Compare` if it keeps implementation small.
+- [x] Mobile layout stays full-screen and readable.
+
+## Implementation
+
+Added answer-first public Continuum response fields and UI:
+
+- synthesized answer
+- `Why this?` / `Sources`
+- recommended Line of Inquiry
+- visible Lens Compare using the existing Lens carousel and Lens-specific `+1`
 
 ## Open questions
 

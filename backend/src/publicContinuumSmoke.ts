@@ -29,6 +29,18 @@ try {
     throw new Error(`Expected public Thought Cards, got ${continuum.thoughtCards.length}.`);
   }
 
+  if (continuum.synthesizedAnswer.status !== 'answered') {
+    throw new Error(`Expected answered synthesized answer, got ${continuum.synthesizedAnswer.status}.`);
+  }
+
+  if (continuum.synthesizedAnswer.sourceSupport.length === 0) {
+    throw new Error('Expected synthesized answer Source Support.');
+  }
+
+  if (continuum.linesOfInquiry.lines.length < 2) {
+    throw new Error(`Expected multiple Lines of Inquiry, got ${continuum.linesOfInquiry.lines.length}.`);
+  }
+
   const summaryResponse = await app.inject({
     method: 'GET',
     url: '/api/public-continuum/extended-thought/feedback-summary',
@@ -45,6 +57,8 @@ try {
     eventCount: continuum.events.length,
     thoughtCardCount: continuum.thoughtCards.length,
     lensOutputCount: continuum.outputs.length,
+    synthesizedAnswerStatus: continuum.synthesizedAnswer.status,
+    lineOfInquiryCount: continuum.linesOfInquiry.lines.length,
     feedbackTotal: summary.total,
   }, null, 2));
 } finally {
