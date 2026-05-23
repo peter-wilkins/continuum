@@ -1,6 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import { createLensFeedbackSignal } from '@continuum/core';
 import {
+  PublicConciergeRunRequestSchema,
   PublicLensFeedbackRequestSchema,
   PublicLensFeedbackResponseSchema,
   type PublicLensFeedbackSignal,
@@ -12,6 +13,7 @@ import {
   feedbackMatchesContinuum,
   summarizePublicLensFeedback,
 } from './publicLensFeedbackLog.js';
+import { getPublicConciergeRuns, publicConciergeRunResponse } from './publicConciergeRuns.js';
 import { getPublicContinuumTarget, type PublicContinuumTarget } from './publicContinuumTargets.js';
 
 export async function registerPublicContinuumRoutes(app: FastifyInstance) {
@@ -32,6 +34,49 @@ export async function registerPublicContinuumRoutes(app: FastifyInstance) {
 
     const continuum = target.createContinuum();
     return summarizePublicLensFeedback(continuum);
+  });
+
+  app.post('/api/public-continuum/:targetId/concierge-runs', async (request, reply) => {
+    const target = getTargetFromParams(request.params);
+    if (!target) {
+      await reply.status(404).send({ error: 'Unknown public Continuum target' });
+      return;
+    }
+
+    const parsed = PublicConciergeRunRequestSchema.safeParse(request.body);
+    if (!parsed.success) {
+      await reply.status(400).send({ error: 'Invalid Concierge run payload' });
+      return;
+    }
+
+    const run = getPublicConciergeRuns().createRun({
+      targetId: target.id,
+      request: parsed.data,
+    });
+
+    await reply.status(201).send(publicConciergeRunResponse(run));
+  });
+
+  app.get('/api/public-continuum/:targetId/concierge-runs/:runId', async (request, reply) => {
+    const target = getTargetFromParams(request.params);
+    if (!target) {
+      await reply.status(404).send({ error: 'Unknown public Continuum target' });
+      return;
+    }
+
+    const { runId } = request.params as { runId: unknown };
+    if (typeof runId !== 'string') {
+      await reply.status(400).send({ error: 'Invalid Concierge run id' });
+      return;
+    }
+
+    const run = getPublicConciergeRuns().getRun(runId);
+    if (!run || run.targetId !== target.id) {
+      await reply.status(404).send({ error: 'Unknown Concierge run' });
+      return;
+    }
+
+    await reply.send(publicConciergeRunResponse(run));
   });
 
   app.post('/api/public-continuum/:targetId/feedback', async (request, reply) => {

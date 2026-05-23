@@ -1,4 +1,5 @@
 import {
+  PublicConciergeRunResponseSchema,
   PublicContinuumResponseSchema,
   PublicLensFeedbackSummarySchema,
 } from '@continuum/shared';
@@ -82,6 +83,55 @@ try {
   }
 
   const summary = PublicLensFeedbackSummarySchema.parse(JSON.parse(summaryResponse.body));
+  const recommendedLine =
+    customQuestionContinuum.linesOfInquiry.lines.find(
+      (line) => line.id === customQuestionContinuum.linesOfInquiry.recommendedLineId,
+    ) ?? customQuestionContinuum.linesOfInquiry.lines[0];
+
+  if (!recommendedLine) {
+    throw new Error('Expected one Chairman Line for Concierge smoke.');
+  }
+
+  const conciergeRunResponse = await app.inject({
+    method: 'POST',
+    url: '/api/public-continuum/extended-thought/concierge-runs',
+    payload: {
+      scopeId: customQuestionContinuum.scope.id,
+      queryId: customQuestionContinuum.query.id,
+      queryText: customQuestionContinuum.query.text,
+      lineId: recommendedLine.id,
+      lineQuestion: recommendedLine.question,
+      userResponse: 'I want a concrete example.',
+      inputMode: 'text',
+    },
+  });
+
+  if (conciergeRunResponse.statusCode !== 201) {
+    throw new Error(`Expected Concierge run 201, got ${conciergeRunResponse.statusCode}.`);
+  }
+
+  const conciergeRun = PublicConciergeRunResponseSchema.parse(
+    JSON.parse(conciergeRunResponse.body),
+  );
+
+  const conciergeReadResponse = await app.inject({
+    method: 'GET',
+    url: `/api/public-continuum/extended-thought/concierge-runs/${encodeURIComponent(
+      conciergeRun.run.id,
+    )}`,
+  });
+
+  if (conciergeReadResponse.statusCode !== 200) {
+    throw new Error(`Expected Concierge run read 200, got ${conciergeReadResponse.statusCode}.`);
+  }
+
+  const conciergeRead = PublicConciergeRunResponseSchema.parse(
+    JSON.parse(conciergeReadResponse.body),
+  );
+
+  if (conciergeRead.run.id !== conciergeRun.run.id) {
+    throw new Error('Expected Concierge read to return the created run.');
+  }
 
   console.log(JSON.stringify({
     title: continuum.scope.title,
@@ -91,6 +141,7 @@ try {
     synthesizedAnswerStatus: continuum.synthesizedAnswer.status,
     lineOfInquiryCount: continuum.linesOfInquiry.lines.length,
     feedbackTotal: summary.total,
+    conciergeRunStatus: conciergeRun.run.status,
   }, null, 2));
 } finally {
   await app.close();

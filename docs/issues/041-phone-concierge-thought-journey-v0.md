@@ -1,6 +1,6 @@
 # 041: Phone Concierge Thought Journey V0
 
-Status: blocked
+Status: in_progress
 
 Type: AFK
 
@@ -48,7 +48,7 @@ Target user shape: people who switch topics often, but still want thoughts honou
 - [ ] Backend smoke checks cover creating and reading one Concierge run.
 - [ ] Android Chrome manual QA verifies query entry, result display, Sources reveal, progress display, and resuming a prior Journey.
 
-## Blocked by
+## Previously blocked by
 
 - `038-public-mvp-entry-copy-and-surprise-me.md`
 - `039-voice-first-public-query-entry.md`
@@ -57,6 +57,11 @@ Already satisfied:
 
 - `040-synthesized-answer-first-public-mvp.md`
 
+Blockers cleared:
+
+- `038-public-mvp-entry-copy-and-surprise-me.md`
+- `039-voice-first-public-query-entry.md`
+
 ## Notes
 
 This issue intentionally keeps the Concierge modest. The key product proof is not research depth. The proof is:
@@ -64,3 +69,24 @@ This issue intentionally keeps the Concierge modest. The key product proof is no
 ```text
 Continuum can honour an interrupting thought, continue the current one, and show where each one is in the thinking journey.
 ```
+
+## Implementation notes
+
+First slice:
+
+- Public answer page has a floating microphone button labelled `Talk to Chairman`.
+- Browser speech recognition captures one reply to the active Chairman Line.
+- Text fallback is available when speech is unsupported, blocked, or awkward.
+- Backend stores each run in disposable local SQLite at `data/public-concierge-runs.sqlite`.
+- Backend smoke creates and reads one run.
+- The Chairman reply is deterministic for now; no autonomous research worker is implied.
+
+Reset:
+
+- Delete `data/public-concierge-runs.sqlite` and its SQLite sidecar files to reset local Concierge runs.
+- Cached runs are disposable workbench rows only. They are not durable user memory.
+
+Still open:
+
+- Resume UI for older journeys after navigation/reload.
+- Android Chrome QA for speech capture and resumed Journey display.

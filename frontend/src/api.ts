@@ -3,6 +3,7 @@ import {
   EventsListResponseSchema,
   LocalImportPreviewSummariesResponseSchema,
   PublicContinuumResponseSchema,
+  PublicConciergeRunResponseSchema,
   DevopsFeedbackResponseSchema,
   PublicLensFeedbackResponseSchema,
   PublicLensFeedbackSummarySchema,
@@ -14,6 +15,8 @@ import {
   TranscriptionResponseSchema,
   type ContinuumEvent,
   type LocalImportPreviewSummary,
+  type PublicConciergeRunRequest,
+  type PublicConciergeRunResponse,
   type PublicContinuumResponse,
   type PublicLensFeedbackRequest,
   type PublicLensFeedbackResponse,
@@ -165,6 +168,25 @@ export async function fetchPublicLensFeedbackSummary(
   }
 
   return PublicLensFeedbackSummarySchema.parse(await response.json());
+}
+
+export async function submitPublicConciergeRun(
+  targetId: string,
+  run: PublicConciergeRunRequest,
+): Promise<PublicConciergeRunResponse> {
+  const response = await fetch(`${API_URL}/api/public-continuum/${targetId}/concierge-runs`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(run),
+  });
+
+  if (!response.ok) {
+    throw new Error('Failed to record Chairman reply');
+  }
+
+  return PublicConciergeRunResponseSchema.parse(await response.json());
 }
 
 export async function submitPublicLensFeedback(

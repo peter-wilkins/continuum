@@ -28,6 +28,14 @@ import {
   signInWithGoogle,
 } from './auth.js';
 import { BuildHash } from './buildInfo.js';
+import {
+  browserSpeechRecognitionCaveat,
+  getSpeechRecognitionConstructor,
+  normalizeSpokenText,
+  speechRecognitionUnavailableMessage,
+  transcriptFromSpeechEvent,
+  type BrowserSpeechRecognition,
+} from './browserSpeech.js';
 import { useHeadsetMediaControls } from './headsetMediaControls.js';
 import { useNativeShellBridge } from './nativeShellBridge.js';
 import {
@@ -43,51 +51,6 @@ import {
 import { PublicContinuum, PublicLensGuide } from './PublicContinuumScreen.js';
 
 const primaryPublicContinuumTargetId = 'extended-thought';
-const speechRecognitionUnavailableMessage =
-  'Speech is not available in this browser.';
-const browserSpeechRecognitionCaveat =
-  'Continuum does not store raw audio here. Browser speech recognition may use a vendor service.';
-
-type BrowserSpeechRecognitionAlternative = {
-  transcript: string;
-};
-
-type BrowserSpeechRecognitionResult = {
-  readonly isFinal: boolean;
-  readonly length: number;
-  readonly [index: number]: BrowserSpeechRecognitionAlternative | undefined;
-};
-
-type BrowserSpeechRecognitionResultList = {
-  readonly length: number;
-  readonly [index: number]: BrowserSpeechRecognitionResult | undefined;
-};
-
-type BrowserSpeechRecognitionEvent = Event & {
-  resultIndex: number;
-  results: BrowserSpeechRecognitionResultList;
-};
-
-type BrowserSpeechRecognitionErrorEvent = Event & {
-  error?: string;
-  message?: string;
-};
-
-type BrowserSpeechRecognition = {
-  continuous: boolean;
-  interimResults: boolean;
-  lang: string;
-  onend: (() => void) | null;
-  onerror: ((event: BrowserSpeechRecognitionErrorEvent) => void) | null;
-  onresult: ((event: BrowserSpeechRecognitionEvent) => void) | null;
-  onstart: (() => void) | null;
-  abort(): void;
-  start(): void;
-  stop(): void;
-};
-
-type BrowserSpeechRecognitionConstructor = new () => BrowserSpeechRecognition;
-
 type SpeechQueryStatus =
   | { status: 'idle' }
   | { status: 'listening' }
@@ -904,7 +867,7 @@ function PrototypeIndex() {
   }
 
   function openPublicQuestion(question: string) {
-    const normalizedQuestion = normalizeTypedQuestion(question);
+    const normalizedQuestion = normalizeSpokenText(question);
     if (!normalizedQuestion) return;
 
     if (!isExtendedThoughtQuestionInScope(normalizedQuestion)) {
@@ -1163,33 +1126,6 @@ function PrototypeIndex() {
       <BuildHash />
     </main>
   );
-}
-
-function getSpeechRecognitionConstructor(): BrowserSpeechRecognitionConstructor | null {
-  const browserWindow = window as Window & {
-    SpeechRecognition?: BrowserSpeechRecognitionConstructor;
-    webkitSpeechRecognition?: BrowserSpeechRecognitionConstructor;
-  };
-
-  return browserWindow.SpeechRecognition ?? browserWindow.webkitSpeechRecognition ?? null;
-}
-
-function transcriptFromSpeechEvent(event: BrowserSpeechRecognitionEvent): string {
-  const transcripts: string[] = [];
-
-  for (let index = event.resultIndex; index < event.results.length; index += 1) {
-    const result = event.results[index];
-    const transcript = result?.[0]?.transcript.trim();
-    if (transcript) {
-      transcripts.push(transcript);
-    }
-  }
-
-  return normalizeTypedQuestion(transcripts.join(' '));
-}
-
-function normalizeTypedQuestion(value: string) {
-  return value.trim().replace(/\s+/g, ' ');
 }
 
 type RecordButtonProps = {

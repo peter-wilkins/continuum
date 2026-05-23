@@ -484,6 +484,161 @@
   box-shadow: 0 10px 24px rgb(28 28 26 / 12%);
 }
 
+.chairman-talk-dock {
+  position: fixed;
+  right: max(16px, env(safe-area-inset-right));
+  bottom: calc(env(safe-area-inset-bottom) + 18px);
+  z-index: 34;
+  display: grid;
+  justify-items: end;
+  gap: 10px;
+  pointer-events: none;
+}
+
+.chairman-talk-button {
+  display: grid;
+  width: 58px;
+  height: 58px;
+  place-items: center;
+  border: 1px solid #242424;
+  border-radius: 50%;
+  background: #242424;
+  box-shadow: 0 12px 28px rgb(28 28 26 / 24%);
+  cursor: pointer;
+  pointer-events: auto;
+}
+
+.chairman-talk-button:disabled {
+  cursor: progress;
+  opacity: 0.78;
+}
+
+.chairman-talk-button.is-listening {
+  background: #8b2f24;
+  border-color: #8b2f24;
+}
+
+.chairman-mic-icon {
+  position: relative;
+  display: block;
+  width: 23px;
+  height: 28px;
+}
+
+.chairman-mic-icon > span {
+  position: absolute;
+  top: 0;
+  left: 6px;
+  width: 11px;
+  height: 17px;
+  border: 2px solid #fffdf8;
+  border-radius: 999px;
+}
+
+.chairman-mic-icon::before,
+.chairman-mic-icon::after {
+  position: absolute;
+  left: 50%;
+  display: block;
+  content: '';
+  background: #fffdf8;
+  transform: translateX(-50%);
+}
+
+.chairman-mic-icon::before {
+  top: 17px;
+  width: 17px;
+  height: 8px;
+  border-right: 2px solid #fffdf8;
+  border-bottom: 2px solid #fffdf8;
+  border-left: 2px solid #fffdf8;
+  border-radius: 0 0 999px 999px;
+  background: transparent;
+}
+
+.chairman-mic-icon::after {
+  bottom: 0;
+  width: 2px;
+  height: 8px;
+  box-shadow: -6px 8px 0 #fffdf8, 6px 8px 0 #fffdf8;
+}
+
+.chairman-talk-panel {
+  display: grid;
+  width: min(22rem, calc(100vw - 32px));
+  gap: 10px;
+  border: 1px solid rgb(36 36 36 / 14%);
+  border-radius: 8px;
+  background: rgb(255 253 248 / 98%);
+  padding: 12px;
+  box-shadow: 0 16px 36px rgb(28 28 26 / 18%);
+  pointer-events: auto;
+  backdrop-filter: blur(14px);
+}
+
+.chairman-talk-panel-header,
+.chairman-talk-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.chairman-talk-panel h2,
+.chairman-talk-status,
+.chairman-talk-note {
+  margin: 0;
+}
+
+.chairman-talk-panel h2 {
+  font-size: 1rem;
+  line-height: 1.1;
+}
+
+.chairman-talk-panel-header button {
+  border: 0;
+  background: transparent;
+  color: #5f5d56;
+  padding: 0;
+  font: inherit;
+  font-size: 0.8rem;
+  font-weight: 850;
+  cursor: pointer;
+}
+
+.chairman-talk-status {
+  color: #34322e;
+  font-size: 0.92rem;
+  line-height: 1.35;
+}
+
+.chairman-talk-status.is-error {
+  color: #8b2f24;
+}
+
+.chairman-talk-panel textarea {
+  width: 100%;
+  min-height: 5.5rem;
+  resize: vertical;
+  border: 1px solid #c7beb0;
+  border-radius: 8px;
+  background: #fffdf8;
+  color: #242424;
+  padding: 9px 10px;
+  font: inherit;
+  line-height: 1.35;
+}
+
+.chairman-talk-actions {
+  justify-content: flex-start;
+}
+
+.chairman-talk-note {
+  color: #747169;
+  font-size: 0.72rem;
+  line-height: 1.35;
+}
+
 .lens-blurb {
   display: grid;
   gap: 8px;
@@ -561,6 +716,79 @@
 .public-line-of-inquiry p:last-child {
   color: #5f5d56;
   line-height: 1.45;
+}
+
+.public-journey-progress {
+  display: grid;
+  gap: 7px;
+  margin-top: 4px;
+}
+
+.public-journey-progress-label {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  color: #747169;
+  font-size: 0.75rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.public-journey-progress-label strong {
+  color: #34322e;
+  font-size: 0.78rem;
+  text-align: right;
+  text-transform: none;
+}
+
+.public-journey-progress-track {
+  height: 9px;
+  overflow: hidden;
+  border: 1px solid #d7d0c1;
+  border-radius: 999px;
+  background: #eee8dc;
+}
+
+.public-journey-progress-track span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: #2f6f4e;
+  transition: width 180ms ease;
+}
+
+.public-chairman-reply {
+  display: grid;
+  gap: 6px;
+  border: 1px solid #d7d0c1;
+  border-radius: 8px;
+  background: #f7f5ef;
+  padding: 10px;
+}
+
+.public-chairman-reply p,
+.public-chairman-reply h4 {
+  margin: 0;
+}
+
+.public-chairman-reply > p:first-child {
+  color: #747169;
+  font-size: 0.72rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.public-chairman-reply h4 {
+  color: #242424;
+  font-size: 0.98rem;
+  line-height: 1.25;
+}
+
+.public-chairman-reply > p:last-child {
+  color: #5f5d56;
+  font-size: 0.9rem;
+  line-height: 1.35;
 }
 
 .public-answer-actions {

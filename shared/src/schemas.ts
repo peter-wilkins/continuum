@@ -249,6 +249,42 @@ export const PublicContinuumResponseSchema = z.object({
   outputs: z.array(PublicContinuumLensOutputSchema),
 });
 
+export const PublicConciergeRunStatusSchema = z.enum(['active', 'answered', 'failed']);
+export const PublicConciergeInputModeSchema = z.enum(['speech', 'text']);
+
+export const PublicConciergeRunSchema = z.object({
+  id: z.string().min(1),
+  targetId: z.string().min(1),
+  scopeId: z.string().min(1),
+  queryId: z.string().min(1),
+  queryText: z.string().min(1),
+  lineId: z.string().min(1),
+  lineQuestion: z.string().min(1),
+  userResponse: z.string().min(1),
+  inputMode: PublicConciergeInputModeSchema,
+  status: PublicConciergeRunStatusSchema,
+  progress: z.number().min(0).max(1),
+  progressLabel: z.string().min(1),
+  chairmanReply: z.string().min(1),
+  nextLineQuestion: z.string().min(1),
+  createdAt: EventDateTimeSchema,
+  updatedAt: EventDateTimeSchema,
+});
+
+export const PublicConciergeRunRequestSchema = z.object({
+  scopeId: z.string().min(1),
+  queryId: z.string().min(1),
+  queryText: z.string().trim().min(1),
+  lineId: z.string().min(1),
+  lineQuestion: z.string().trim().min(1),
+  userResponse: z.string().trim().min(1),
+  inputMode: PublicConciergeInputModeSchema,
+});
+
+export const PublicConciergeRunResponseSchema = z.object({
+  run: PublicConciergeRunSchema,
+});
+
 export const PublicLensFeedbackRequestSchema = z.object({
   scopeId: z.string().min(1),
   queryId: z.string().min(1),
@@ -342,6 +378,9 @@ export type PublicContinuumLensOutput = z.infer<typeof PublicContinuumLensOutput
 export type PublicContinuumSourceParagraph = z.infer<typeof PublicContinuumSourceParagraphSchema>;
 export type PublicContinuumThoughtCard = z.infer<typeof PublicContinuumThoughtCardSchema>;
 export type PublicContinuumResponse = z.infer<typeof PublicContinuumResponseSchema>;
+export type PublicConciergeRun = z.infer<typeof PublicConciergeRunSchema>;
+export type PublicConciergeRunRequest = z.infer<typeof PublicConciergeRunRequestSchema>;
+export type PublicConciergeRunResponse = z.infer<typeof PublicConciergeRunResponseSchema>;
 export type PublicLensFeedbackRequest = z.infer<typeof PublicLensFeedbackRequestSchema>;
 export type PublicLensFeedbackSignal = z.infer<typeof PublicLensFeedbackSignalSchema>;
 export type PublicLensFeedbackResponse = z.infer<typeof PublicLensFeedbackResponseSchema>;

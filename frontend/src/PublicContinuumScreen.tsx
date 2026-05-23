@@ -1,8 +1,24 @@
-import type { DevopsFeedbackKind, PublicContinuumResponse } from '@continuum/shared';
+import type {
+  DevopsFeedbackKind,
+  PublicConciergeRun,
+  PublicContinuumResponse,
+} from '@continuum/shared';
 import { useEffect, useMemo, useRef, useState, type FormEvent, type UIEvent } from 'react';
-import { fetchPublicContinuum, submitDevopsFeedback } from './api.js';
+import {
+  fetchPublicContinuum,
+  submitDevopsFeedback,
+  submitPublicConciergeRun,
+} from './api.js';
 import { getInitialSession, onAuthChange } from './auth.js';
 import { BuildHash, gitHash } from './buildInfo.js';
+import {
+  browserSpeechRecognitionCaveat,
+  getSpeechRecognitionConstructor,
+  normalizeSpokenText,
+  speechRecognitionUnavailableMessage,
+  transcriptFromSpeechEvent,
+  type BrowserSpeechRecognition,
+} from './browserSpeech.js';
 import { type PublicAuthState, usePublicLensPreference } from './usePublicLensPreference.js';
 import { usePwaInstallPrompt } from './usePwaInstallPrompt.js';
 import './publicContinuum.css';
@@ -17,6 +33,14 @@ type DevopsFeedbackState =
   | { status: 'submitting' }
   | { status: 'sent'; messageId: string }
   | { status: 'error'; error: string };
+
+type ChairmanTalkState =
+  | { status: 'idle' }
+  | { status: 'listening' }
+  | { status: 'unsupported' }
+  | { status: 'submitting' }
+  | { status: 'answered' }
+  | { status: 'error'; message: string };
 
 function shuffleItems<T>(items: readonly T[]) {
   const shuffled = [...items];
@@ -44,11 +68,31 @@ export function PublicContinuum({ targetId }: { targetId: string }) {
   });
   const [activeSnapIndex, setActiveSnapIndex] = useState(0);
   const [whyThisOpen, setWhyThisOpen] = useState(false);
+  const [chairmanTalkOpen, setChairmanTalkOpen] = useState(false);
+  const [chairmanTalkStatus, setChairmanTalkStatus] = useState<ChairmanTalkState>({
+    status: 'idle',
+  });
+  const [chairmanText, setChairmanText] = useState('');
+  const [chairmanRun, setChairmanRun] = useState<PublicConciergeRun | null>(null);
   const pwaInstall = usePwaInstallPrompt();
   const lensStripRef = useRef<HTMLElement | null>(null);
   const guidePageRef = useRef<HTMLElement | null>(null);
+  const chairmanSpeechRecognitionRef = useRef<BrowserSpeechRecognition | null>(null);
   const selectedQuestion = new URLSearchParams(window.location.search).get('question');
   const readyContinuum = state.status === 'ready' ? state.continuum : null;
+  const chairmanSpeechSupported = useMemo(() => getSpeechRecognitionConstructor() !== null, []);
+  const activeQueryId = readyContinuum?.query.id ?? null;
+  const activeRecommendedLine = useMemo(() => {
+    if (!readyContinuum) return null;
+
+    return (
+      readyContinuum.linesOfInquiry.lines.find(
+        (line) => line.id === readyContinuum.linesOfInquiry.recommendedLineId,
+      ) ??
+      readyContinuum.linesOfInquiry.lines[0] ??
+      null
+    );
+  }, [readyContinuum]);
   const {
     authError,
     clearPreferencePulse,
@@ -93,6 +137,24 @@ export function PublicContinuum({ targetId }: { targetId: string }) {
 
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [devopsFeedbackOpen]);
+
+  useEffect(() => {
+    return () => {
+      const recognition = chairmanSpeechRecognitionRef.current;
+      if (!recognition) return;
+      recognition.onend = null;
+      recognition.onerror = null;
+      recognition.onresult = null;
+      recognition.abort();
+    };
+  }, []);
+
+  useEffect(() => {
+    setChairmanRun(null);
+    setChairmanTalkStatus({ status: 'idle' });
+    setChairmanText('');
+    setChairmanTalkOpen(false);
+  }, [activeQueryId]);
 
   useEffect(() => {
     setActiveSnapIndex(0);
@@ -228,6 +290,105 @@ export function PublicContinuum({ targetId }: { targetId: string }) {
     }
   }
 
+  async function submitChairmanResponse(userResponse: string, inputMode: 'speech' | 'text') {
+    const normalizedResponse = normalizeSpokenText(userResponse);
+    if (!normalizedResponse) return;
+
+    if (!readyContinuum || !activeRecommendedLine) {
+      setChairmanTalkOpen(true);
+      setChairmanTalkStatus({
+        status: 'error',
+        message: 'No Chairman Line is available here yet.',
+      });
+      return;
+    }
+
+    setChairmanTalkOpen(true);
+    setChairmanTalkStatus({ status: 'submitting' });
+
+    try {
+      const response = await submitPublicConciergeRun(targetId, {
+        scopeId: readyContinuum.scope.id,
+        queryId: readyContinuum.query.id,
+        queryText: readyContinuum.query.text,
+        lineId: activeRecommendedLine.id,
+        lineQuestion: activeRecommendedLine.question,
+        userResponse: normalizedResponse,
+        inputMode,
+      });
+
+      setChairmanRun(response.run);
+      setChairmanText('');
+      setChairmanTalkStatus({ status: 'answered' });
+    } catch (err: unknown) {
+      setChairmanTalkStatus({
+        status: 'error',
+        message: err instanceof Error ? err.message : 'Chairman reply failed',
+      });
+    }
+  }
+
+  function startChairmanSpeech() {
+    setChairmanTalkOpen(true);
+
+    const SpeechRecognition = getSpeechRecognitionConstructor();
+    if (!SpeechRecognition) {
+      setChairmanTalkStatus({ status: 'unsupported' });
+      return;
+    }
+
+    chairmanSpeechRecognitionRef.current?.abort();
+    setChairmanTalkStatus({ status: 'listening' });
+
+    const recognition = new SpeechRecognition();
+    let receivedTranscript = false;
+
+    recognition.continuous = false;
+    recognition.interimResults = false;
+    recognition.lang = window.navigator.language || 'en-GB';
+    recognition.onstart = () => setChairmanTalkStatus({ status: 'listening' });
+    recognition.onresult = (event) => {
+      const transcript = transcriptFromSpeechEvent(event);
+      if (!transcript) return;
+      receivedTranscript = true;
+      void submitChairmanResponse(transcript, 'speech');
+    };
+    recognition.onerror = (event) => {
+      receivedTranscript = true;
+      const message =
+        event.error === 'not-allowed'
+          ? 'Speech permission was blocked. Type the reply instead.'
+          : 'Speech did not work here. Type the reply instead.';
+      setChairmanTalkStatus({ status: 'error', message });
+    };
+    recognition.onend = () => {
+      chairmanSpeechRecognitionRef.current = null;
+      if (!receivedTranscript) {
+        setChairmanTalkStatus({
+          status: 'error',
+          message: 'Speech ended before a reply was recognized. Type it instead.',
+        });
+      }
+    };
+
+    chairmanSpeechRecognitionRef.current = recognition;
+
+    try {
+      recognition.start();
+    } catch {
+      chairmanSpeechRecognitionRef.current = null;
+      setChairmanTalkStatus({
+        status: 'error',
+        message: 'Speech could not start in this browser. Type the reply instead.',
+      });
+    }
+  }
+
+  function handleChairmanTextSubmit(event: FormEvent) {
+    event.preventDefault();
+    void submitChairmanResponse(chairmanText, 'text');
+  }
+
   if (state.status === 'loading') {
     return <main className="public-screen" />;
   }
@@ -256,9 +417,10 @@ export function PublicContinuum({ targetId }: { targetId: string }) {
     }))
     .filter((item) => item.card !== undefined);
   const recommendedLine =
-    continuum.linesOfInquiry.lines.find(
-      (line) => line.id === continuum.linesOfInquiry.recommendedLineId,
-    ) ?? continuum.linesOfInquiry.lines[0] ?? null;
+    activeRecommendedLine;
+  const chairmanProgress = chairmanRun?.progress ?? 0.25;
+  const chairmanProgressPercent = `${Math.round(chairmanProgress * 100)}%`;
+  const chairmanProgressLabel = chairmanRun?.progressLabel ?? 'Line opened';
 
   return (
     <main
@@ -335,6 +497,29 @@ export function PublicContinuum({ targetId }: { targetId: string }) {
                   <p>Line</p>
                   <h3>{recommendedLine.question}</h3>
                   <p>{recommendedLine.desiredOutcome}</p>
+                  <div className="public-journey-progress">
+                    <div className="public-journey-progress-label">
+                      <span>Journey</span>
+                      <strong>{chairmanProgressLabel}</strong>
+                    </div>
+                    <div
+                      className="public-journey-progress-track"
+                      aria-label="Thought Journey progress"
+                      aria-valuemax={100}
+                      aria-valuemin={0}
+                      aria-valuenow={Math.round(chairmanProgress * 100)}
+                      role="progressbar"
+                    >
+                      <span style={{ width: chairmanProgressPercent }} />
+                    </div>
+                  </div>
+                  {chairmanRun ? (
+                    <div className="public-chairman-reply">
+                      <p>Chairman</p>
+                      <h4>{chairmanRun.chairmanReply}</h4>
+                      <p>{chairmanRun.userResponse}</p>
+                    </div>
+                  ) : null}
                 </div>
               ) : null}
               <div className="public-answer-actions">
@@ -542,6 +727,82 @@ export function PublicContinuum({ targetId }: { targetId: string }) {
         <p className="public-feedback-error">{feedbackState.error}</p>
       ) : null}
       {authError ? <p className="public-feedback-error">{authError}</p> : null}
+      {recommendedLine && activeSnapIndex === 0 ? (
+        <div className="chairman-talk-dock">
+          {chairmanTalkOpen ? (
+            <form className="chairman-talk-panel" onSubmit={handleChairmanTextSubmit}>
+              <div className="chairman-talk-panel-header">
+                <h2>Chairman</h2>
+                <button
+                  type="button"
+                  aria-label="Close Chairman"
+                  onClick={() => setChairmanTalkOpen(false)}
+                >
+                  Close
+                </button>
+              </div>
+              {chairmanTalkStatus.status === 'listening' ? (
+                <p className="chairman-talk-status">Listening...</p>
+              ) : null}
+              {chairmanTalkStatus.status === 'unsupported' ? (
+                <p className="chairman-talk-status">{speechRecognitionUnavailableMessage}</p>
+              ) : null}
+              {chairmanTalkStatus.status === 'submitting' ? (
+                <p className="chairman-talk-status">Saving reply...</p>
+              ) : null}
+              {chairmanTalkStatus.status === 'answered' && chairmanRun ? (
+                <p className="chairman-talk-status">{chairmanRun.chairmanReply}</p>
+              ) : null}
+              {chairmanTalkStatus.status === 'error' ? (
+                <p className="chairman-talk-status is-error">{chairmanTalkStatus.message}</p>
+              ) : null}
+              <textarea
+                aria-label="Reply to Chairman"
+                placeholder="Type reply instead"
+                rows={3}
+                value={chairmanText}
+                onChange={(event) => setChairmanText(event.target.value)}
+              />
+              <div className="chairman-talk-actions">
+                <button
+                  className="chrome-button"
+                  type="submit"
+                  disabled={
+                    !chairmanText.trim() || chairmanTalkStatus.status === 'submitting'
+                  }
+                >
+                  Send
+                </button>
+                {chairmanSpeechSupported ? (
+                  <button
+                    className="chrome-button"
+                    type="button"
+                    disabled={chairmanTalkStatus.status === 'listening'}
+                    onClick={startChairmanSpeech}
+                  >
+                    Listen
+                  </button>
+                ) : null}
+              </div>
+              <p className="chairman-talk-note">{browserSpeechRecognitionCaveat}</p>
+            </form>
+          ) : null}
+          <button
+            className={`chairman-talk-button${
+              chairmanTalkStatus.status === 'listening' ? ' is-listening' : ''
+            }`}
+            type="button"
+            aria-label="Talk to Chairman"
+            title="Talk to Chairman"
+            disabled={chairmanTalkStatus.status === 'listening'}
+            onClick={startChairmanSpeech}
+          >
+            <span className="chairman-mic-icon" aria-hidden="true">
+              <span />
+            </span>
+          </button>
+        </div>
+      ) : null}
       {devopsFeedbackOpen ? (
         <div
           className="devops-feedback-backdrop"
