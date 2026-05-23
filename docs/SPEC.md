@@ -166,7 +166,7 @@ Private personal capture and imports remain part of the long-term product, but p
 
 1. Public identity/topic import.
 2. Inspectable Continuation surfaces over imported public thought.
-3. Lightweight user feedback while people explore.
+3. Lightweight private Feedback Threads while people explore, including agent clarification when a report needs one more answer.
 4. Immutable append-only source history.
 5. Clear provenance and source links.
 6. Fast iteration without private-data compliance blocking every demo.
