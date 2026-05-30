@@ -18,6 +18,8 @@ describe('Public Continuum view', () => {
     assert.equal(view.answerSupport[0]!.card.title, 'Tools hold thought');
     assert.equal(view.answerSupport[0]!.sourceParagraphs[0]!.title, 'Extended mind');
     assert.equal(view.eventsById.get('event:1')!.subject, 'Extended thought');
+    assert.equal(view.currentQuestion, 'When does a tool become part of thinking?');
+    assert.equal(view.agreement, null);
   });
 
   it('uses Bridge progress before local Concierge progress', () => {
@@ -61,6 +63,7 @@ describe('Public Continuum view', () => {
     assert.equal(view.chairmanProgress, 0.7);
     assert.equal(view.chairmanProgressPercent, '70%');
     assert.equal(view.chairmanProgressLabel, 'Bridge active');
+    assert.equal(view.agreement, 'Bridge reply');
   });
 
   it('falls back to an opened line when no Chairman run exists yet', () => {
@@ -75,6 +78,38 @@ describe('Public Continuum view', () => {
     assert.equal(view.chairmanProgress, 0.25);
     assert.equal(view.chairmanProgressPercent, '25%');
     assert.equal(view.chairmanProgressLabel, 'Line opened');
+  });
+
+  it('uses the local Concierge next question after the user answers', () => {
+    const continuum = publicContinuumFixture();
+    const view = derivePublicContinuumView({
+      continuum,
+      activeRecommendedLine: continuum.linesOfInquiry.lines[0]!,
+      chairmanBridgeState: null,
+      chairmanRun: {
+        id: 'run:1',
+        targetId: 'extended-thought',
+        clientInstanceId: 'client:1',
+        scopeId: continuum.scope.id,
+        queryId: continuum.query.id,
+        queryText: continuum.query.text,
+        lineId: continuum.linesOfInquiry.lines[0]!.id,
+        lineQuestion: continuum.linesOfInquiry.lines[0]!.question,
+        userResponse: 'Local reply',
+        inputMode: 'text',
+        status: 'answered',
+        chairmanReply: 'Captured agreement',
+        nextLineQuestion: 'What assumption is hidden here?',
+        progress: 0.4,
+        progressLabel: 'Next question ready',
+        createdAt: '2026-05-30T15:00:00.000Z',
+        updatedAt: '2026-05-30T15:00:00.000Z',
+      },
+    });
+
+    assert.equal(view.agreement, 'Captured agreement');
+    assert.equal(view.currentQuestion, 'What assumption is hidden here?');
+    assert.equal(view.chairmanProgressPercent, '40%');
   });
 });
 

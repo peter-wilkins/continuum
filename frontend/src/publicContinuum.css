@@ -697,7 +697,7 @@
   display: grid;
   min-height: calc(100dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 180px);
   align-content: center;
-  gap: 18px;
+  gap: 14px;
 }
 
 .public-query-context {
@@ -708,18 +708,19 @@
   line-height: 1.35;
 }
 
-.public-answer-main h2 {
+.public-answer-main h2,
+.public-journey-question {
   margin: 0;
   color: #242424;
-  font-size: clamp(1.6rem, 1.36rem + 1.1vw, 2.35rem);
-  line-height: 1.12;
+  font-size: clamp(2rem, 1.7rem + 1.4vw, 3rem);
+  font-weight: 760;
+  line-height: 1.04;
 }
 
 .public-line-of-inquiry {
   display: grid;
-  gap: 7px;
-  border-top: 1px solid #ddd8cc;
-  padding-top: 16px;
+  gap: 12px;
+  padding-top: 2px;
 }
 
 .public-line-of-inquiry p,
@@ -747,7 +748,7 @@
 
 .public-journey-progress {
   display: grid;
-  gap: 7px;
+  gap: 6px;
   margin-top: 4px;
 }
 
@@ -770,11 +771,11 @@
 }
 
 .public-journey-progress-track {
-  height: 9px;
+  height: 6px;
   overflow: hidden;
-  border: 1px solid #d7d0c1;
+  border: 0;
   border-radius: 999px;
-  background: #eee8dc;
+  background: #e8e2d6;
 }
 
 .public-journey-progress-track span {
@@ -785,20 +786,22 @@
   transition: width 180ms ease;
 }
 
+.public-journey-agreement,
 .public-chairman-reply {
   display: grid;
   gap: 6px;
-  border: 1px solid #d7d0c1;
-  border-radius: 8px;
-  background: #f7f5ef;
-  padding: 10px;
+  border-left: 2px solid #2f6f4e;
+  padding: 0 0 0 10px;
 }
 
+.public-journey-agreement p,
+.public-journey-agreement h3,
 .public-chairman-reply p,
 .public-chairman-reply h4 {
   margin: 0;
 }
 
+.public-journey-agreement > p:first-child,
 .public-chairman-reply > p:first-child {
   color: #747169;
   font-size: 0.72rem;
@@ -806,10 +809,52 @@
   text-transform: uppercase;
 }
 
+.public-journey-agreement h3,
 .public-chairman-reply h4 {
   color: #242424;
   font-size: 0.98rem;
+  font-weight: 680;
   line-height: 1.25;
+}
+
+.public-journey-reply {
+  display: grid;
+  gap: 8px;
+}
+
+.public-journey-reply textarea {
+  width: 100%;
+  min-height: 5.4rem;
+  resize: vertical;
+  border: 1px solid #d7d0c1;
+  border-radius: 8px;
+  background: #fffdf8;
+  color: #242424;
+  padding: 10px;
+  font: inherit;
+  font-size: 1rem;
+  line-height: 1.35;
+}
+
+.public-journey-reply textarea:focus {
+  border-color: #242424;
+  outline: none;
+}
+
+.public-journey-reply-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.public-journey-status {
+  margin: 0;
+  color: #5f5d56;
+  font-size: 0.82rem;
+  line-height: 1.35;
+}
+
+.public-journey-status.is-error {
+  color: #8b2f24;
 }
 
 .public-answer-actions {

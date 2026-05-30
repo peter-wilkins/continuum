@@ -423,8 +423,14 @@ export function PublicContinuum({ targetId }: { targetId: string }) {
     setDevopsFeedbackState({ status: 'error', error: outcome.error });
   }
 
-  async function submitChairmanResponse(userResponse: string, inputMode: ChairmanInputMode) {
-    setChairmanTalkOpen(true);
+  async function submitChairmanResponse(
+    userResponse: string,
+    inputMode: ChairmanInputMode,
+    options: { openPanel: boolean } = { openPanel: true },
+  ) {
+    if (options.openPanel) {
+      setChairmanTalkOpen(true);
+    }
     setChairmanTalkStatus({ status: 'submitting' });
 
     const outcome = await submitPublicChairmanResponse({
@@ -477,8 +483,10 @@ export function PublicContinuum({ targetId }: { targetId: string }) {
     setChairmanTalkStatus({ status: 'error', message: outcome.message });
   }
 
-  function startChairmanSpeech() {
-    setChairmanTalkOpen(true);
+  function startChairmanSpeech(options: { openPanel: boolean } = { openPanel: true }) {
+    if (options.openPanel) {
+      setChairmanTalkOpen(true);
+    }
 
     const SpeechRecognition = getSpeechRecognitionConstructor();
     if (!SpeechRecognition) {
@@ -542,6 +550,11 @@ export function PublicContinuum({ targetId }: { targetId: string }) {
     void submitChairmanResponse(chairmanText, chairmanDraftInputMode);
   }
 
+  function handleInlineChairmanSubmit(event: FormEvent) {
+    event.preventDefault();
+    void submitChairmanResponse(chairmanText, chairmanDraftInputMode, { openPanel: false });
+  }
+
   if (state.status === 'loading') {
     return <main className="public-screen" />;
   }
@@ -557,9 +570,12 @@ export function PublicContinuum({ targetId }: { targetId: string }) {
   const { continuum } = state;
   const {
     answerSupport,
+    agreement,
     chairmanProgress,
     chairmanProgressLabel,
     chairmanProgressPercent,
+    currentQuestion,
+    desiredOutcome,
     eventsById,
     recommendedLine,
     sourceParagraphsById,
@@ -626,14 +642,19 @@ export function PublicContinuum({ targetId }: { targetId: string }) {
         <article className="public-lens public-answer-page" aria-label="Synthesized answer">
           <div className="public-lens-body public-answer-body">
             <section className="public-answer-main">
-              <p className="index-kicker">Answer</p>
-              <p className="public-query-context">Asked: {continuum.query.text}</p>
-              <h2>{continuum.synthesizedAnswer.answer}</h2>
+              <p className="index-kicker">Question</p>
+              {agreement ? (
+                <div className="public-journey-agreement">
+                  <p>Agreement</p>
+                  <h3>{agreement}</h3>
+                </div>
+              ) : null}
+              <h2 className="public-journey-question">
+                {currentQuestion ?? continuum.query.text}
+              </h2>
+              {desiredOutcome ? <p className="public-query-context">{desiredOutcome}</p> : null}
               {recommendedLine ? (
                 <div className="public-line-of-inquiry">
-                  <p>Line</p>
-                  <h3>{recommendedLine.question}</h3>
-                  <p>{recommendedLine.desiredOutcome}</p>
                   <div className="public-journey-progress">
                     <div className="public-journey-progress-label">
                       <span>Journey</span>
@@ -650,25 +671,64 @@ export function PublicContinuum({ targetId }: { targetId: string }) {
                       <span style={{ width: chairmanProgressPercent }} />
                     </div>
                   </div>
-                  {chairmanBridgeState ? (
-                    <div className="public-chairman-reply">
-                      <p>Chairman</p>
-                      <h4>{chairmanBridgeState.latestBody}</h4>
-                      {chairmanBridgeState.pendingBody ? (
-                        <div className="public-chairman-heard">
-                          <span>Heard</span>
-                          <p>{chairmanBridgeState.pendingBody}</p>
-                        </div>
+                  <form className="public-journey-reply" onSubmit={handleInlineChairmanSubmit}>
+                    <textarea
+                      aria-label="Answer the current question"
+                      placeholder="Answer in your own words"
+                      rows={3}
+                      value={chairmanText}
+                      onChange={(event) => {
+                        setChairmanText(event.target.value);
+                        if (chairmanTalkStatus.status !== 'reviewing') {
+                          setChairmanDraftInputMode('text');
+                        }
+                      }}
+                    />
+                    <div className="public-journey-reply-actions">
+                      <button
+                        className="chrome-button"
+                        type="submit"
+                        disabled={
+                          !chairmanText.trim() || chairmanTalkStatus.status === 'submitting'
+                        }
+                      >
+                        Send
+                      </button>
+                      {chairmanSpeechSupported ? (
+                        <button
+                          className="chrome-button"
+                          type="button"
+                          disabled={chairmanTalkStatus.status === 'listening'}
+                          onClick={() => startChairmanSpeech({ openPanel: false })}
+                        >
+                          Speak
+                        </button>
                       ) : null}
                     </div>
+                    {chairmanTalkStatus.status === 'listening' ? (
+                      <p className="public-journey-status">Listening...</p>
+                    ) : null}
+                    {chairmanTalkStatus.status === 'reviewing' ? (
+                      <p className="public-journey-status">Review, then Send.</p>
+                    ) : null}
+                    {chairmanTalkStatus.status === 'submitting' ? (
+                      <p className="public-journey-status">Thinking...</p>
+                    ) : null}
+                    {chairmanTalkStatus.status === 'error' ? (
+                      <p className="public-journey-status is-error">
+                        {chairmanTalkStatus.message}
+                      </p>
+                    ) : null}
+                  </form>
+                  {chairmanBridgeState?.pendingBody ? (
+                    <div className="public-chairman-heard">
+                      <span>Heard</span>
+                      <p>{chairmanBridgeState.pendingBody}</p>
+                    </div>
                   ) : chairmanRun ? (
-                    <div className="public-chairman-reply">
-                      <p>Chairman</p>
-                      <h4>{chairmanRun.chairmanReply}</h4>
-                      <div className="public-chairman-heard">
-                        <span>Heard</span>
-                        <p>{chairmanRun.userResponse}</p>
-                      </div>
+                    <div className="public-chairman-heard">
+                      <span>Heard</span>
+                      <p>{chairmanRun.userResponse}</p>
                     </div>
                   ) : null}
                 </div>
@@ -690,7 +750,8 @@ export function PublicContinuum({ targetId }: { targetId: string }) {
 
             {whyThisOpen ? (
               <section className="public-answer-sources" aria-label="Sources">
-                <h3>Sources</h3>
+                <h3>Context</h3>
+                <p>{continuum.synthesizedAnswer.answer}</p>
                 <ol>
                   {answerSupport.map(({ card, sourceParagraphs, support }) => {
                     if (!card) return null;
@@ -850,10 +911,9 @@ export function PublicContinuum({ targetId }: { targetId: string }) {
         <p className="public-feedback-error">{feedbackState.error}</p>
       ) : null}
       {authError ? <p className="public-feedback-error">{authError}</p> : null}
-      {recommendedLine && activeSnapIndex === 0 ? (
+      {recommendedLine && activeSnapIndex === 0 && chairmanTalkOpen ? (
         <div className="chairman-talk-dock">
-          {chairmanTalkOpen ? (
-            <form className="chairman-talk-panel" onSubmit={handleChairmanTextSubmit}>
+          <form className="chairman-talk-panel" onSubmit={handleChairmanTextSubmit}>
               <div className="chairman-talk-panel-header">
                 <h2>Chairman</h2>
                 <button
@@ -926,29 +986,14 @@ export function PublicContinuum({ targetId }: { targetId: string }) {
                     className="chrome-button"
                     type="button"
                     disabled={chairmanTalkStatus.status === 'listening'}
-                    onClick={startChairmanSpeech}
+                    onClick={() => startChairmanSpeech()}
                   >
                     Dictate
                   </button>
                 ) : null}
               </div>
               <p className="chairman-talk-note">{browserSpeechRecognitionCaveat}</p>
-            </form>
-          ) : null}
-          <button
-            className={`chairman-talk-button${
-              chairmanTalkStatus.status === 'listening' ? ' is-listening' : ''
-            }`}
-            type="button"
-            aria-label="Talk to Chairman"
-            title="Talk to Chairman"
-            disabled={chairmanTalkStatus.status === 'listening'}
-            onClick={startChairmanSpeech}
-          >
-            <span className="chairman-mic-icon" aria-hidden="true">
-              <span />
-            </span>
-          </button>
+          </form>
         </div>
       ) : null}
       {devopsFeedbackOpen ? (

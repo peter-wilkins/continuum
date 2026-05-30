@@ -16,6 +16,9 @@ export type PublicContinuumView = {
   thoughtCardsById: Map<string, PublicContinuumResponse['thoughtCards'][number]>;
   answerSupport: PublicAnswerSupportItem[];
   recommendedLine: PublicContinuumResponse['linesOfInquiry']['lines'][number] | null;
+  currentQuestion: string | null;
+  agreement: string | null;
+  desiredOutcome: string | null;
   chairmanProgress: number;
   chairmanProgressPercent: string;
   chairmanProgressLabel: string;
@@ -50,13 +53,21 @@ export function derivePublicContinuumView(input: {
     .filter((item) => item !== null);
   const chairmanProgress =
     input.chairmanBridgeState?.progress ?? input.chairmanRun?.progress ?? 0.25;
+  const recommendedLine = input.activeRecommendedLine;
+  const currentQuestion =
+    input.chairmanRun?.nextLineQuestion ?? recommendedLine?.question ?? null;
+  const agreement =
+    input.chairmanBridgeState?.latestBody ?? input.chairmanRun?.chairmanReply ?? null;
 
   return {
     eventsById,
     sourceParagraphsById,
     thoughtCardsById,
     answerSupport,
-    recommendedLine: input.activeRecommendedLine,
+    recommendedLine,
+    currentQuestion,
+    agreement,
+    desiredOutcome: recommendedLine?.desiredOutcome ?? null,
     chairmanProgress,
     chairmanProgressPercent: `${Math.round(chairmanProgress * 100)}%`,
     chairmanProgressLabel:

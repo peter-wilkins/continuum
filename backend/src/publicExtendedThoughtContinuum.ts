@@ -1,6 +1,9 @@
 import { readFileSync } from 'node:fs';
 
-import { defaultPublicLensDefinitions } from '@continuum/core';
+import {
+  defaultPublicLensDefinitions,
+  extendedThoughtGuidedInquiryJourney,
+} from '@continuum/core';
 import {
   isExtendedThoughtQuestionInScope,
   publicQuestionId,
@@ -148,6 +151,7 @@ export function createExtendedThoughtPublicContinuum(options: PublicContinuumTar
       : null;
   const queryText = selectedQuestion ?? preview.query.text;
   const selectedQueryId = selectedQuestion ? publicQuestionId(selectedQuestion) : preview.query.id;
+  const openingJourneyStep = extendedThoughtGuidedInquiryJourney.steps[0];
 
   return PublicContinuumResponseSchema.parse({
     scope: {
@@ -195,6 +199,18 @@ export function createExtendedThoughtPublicContinuum(options: PublicContinuumTar
       lines: materialization.linesOfInquiry.lines.map((line) => ({
         ...line,
         queryId: selectedQueryId,
+        ...(line.id === materialization.linesOfInquiry.recommendedLineId && openingJourneyStep
+          ? {
+              title: 'Start here',
+              question: openingJourneyStep.question,
+              desiredOutcome: 'A small answer that keeps the thought moving.',
+              whyThis: {
+                ...line.whyThis,
+                explanation:
+                  'This opens with a Socratic boundary question before showing more source detail.',
+              },
+            }
+          : {}),
       })),
     },
     lenses: defaultPublicLensDefinitions,

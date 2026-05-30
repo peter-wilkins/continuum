@@ -5,6 +5,10 @@ import { mkdirSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import {
+  advanceGuidedInquiryJourney,
+  extendedThoughtGuidedInquiryJourney,
+} from '@continuum/core';
+import {
   PublicConciergeLatestRunResponseSchema,
   PublicConciergeRunResponseSchema,
   PublicConciergeRunSchema,
@@ -58,6 +62,7 @@ export class PublicConciergeRuns {
     request: PublicConciergeRunRequest;
   }): PublicConciergeRun {
     const now = new Date().toISOString();
+    const journeyAdvance = advanceExtendedThoughtJourney(input.request);
     const row: PublicConciergeRunRow = {
       id: `public-concierge-run:${randomUUID()}`,
       targetId: input.targetId,
@@ -70,10 +75,11 @@ export class PublicConciergeRuns {
       userResponse: input.request.userResponse,
       inputMode: input.request.inputMode,
       status: 'answered',
-      progress: 0.55,
-      progressLabel: 'Chairman heard your reply',
-      chairmanReply: chairmanReplyFor(input.request),
-      nextLineQuestion: input.request.lineQuestion,
+      progress: journeyAdvance.progress,
+      progressLabel: journeyAdvance.progressLabel,
+      chairmanReply: journeyAdvance.agreement,
+      nextLineQuestion:
+        journeyAdvance.nextStep?.question ?? 'Which part should we inspect again?',
       createdAt: now,
       updatedAt: now,
     };
@@ -218,6 +224,19 @@ function mapRunRow(row: PublicConciergeRunRow): PublicConciergeRun {
   return PublicConciergeRunSchema.parse(row);
 }
 
-function chairmanReplyFor(request: PublicConciergeRunRequest) {
-  return `Captured. I will keep that with this Line: ${request.lineQuestion}`;
+function advanceExtendedThoughtJourney(request: PublicConciergeRunRequest) {
+  const currentStep =
+    extendedThoughtGuidedInquiryJourney.steps.find(
+      (step) => step.question === request.lineQuestion,
+    ) ?? extendedThoughtGuidedInquiryJourney.steps[0];
+
+  if (!currentStep) {
+    throw new Error('Extended Thought journey has no steps.');
+  }
+
+  return advanceGuidedInquiryJourney({
+    journey: extendedThoughtGuidedInquiryJourney,
+    currentStepId: currentStep.id,
+    userAnswer: request.userResponse,
+  });
 }
