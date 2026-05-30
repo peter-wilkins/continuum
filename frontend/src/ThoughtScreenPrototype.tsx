@@ -11,6 +11,7 @@ type PrototypeState =
 
 const variants = [
   { key: 'journey', label: 'Chairman Journey' },
+  { key: 'teacher', label: 'Socratic Teacher' },
   { key: 'constellation', label: 'Thought Constellation' },
   { key: 'compass', label: 'Synthesis Compass' },
 ] as const;
@@ -74,6 +75,7 @@ export function ThoughtScreenPrototype() {
     <main className="thought-prototype">
       <PrototypeQuestion />
       {variant === 'journey' ? <ChairmanJourneyPrototype continuum={state.continuum} /> : null}
+      {variant === 'teacher' ? <SocraticTeacherPrototype continuum={state.continuum} /> : null}
       {variant === 'constellation' ? (
         <ThoughtConstellationPrototype continuum={state.continuum} />
       ) : null}
@@ -133,6 +135,49 @@ function ChairmanJourneyPrototype({ continuum }: { continuum: PublicContinuumRes
       </div>
 
       <BuildHash />
+    </section>
+  );
+}
+
+function SocraticTeacherPrototype({ continuum }: { continuum: PublicContinuumResponse }) {
+  const model = useThoughtModel(continuum);
+  const steps = teacherSteps(model.evidence);
+
+  return (
+    <section className="teacher-prototype" aria-label="Socratic Teacher prototype">
+      <div className="teacher-progress" aria-label="Understanding progress">
+        {steps.map((step, index) => (
+          <span className={index <= 1 ? 'is-complete' : ''} key={step.label}>
+            {index + 1}
+          </span>
+        ))}
+      </div>
+
+      <div className="teacher-current">
+        <p className="thought-kicker">Teach me extended thought</p>
+        <h1>When does a tool become part of thinking?</h1>
+        <div className="teacher-prompt">
+          <span>Question 1</span>
+          <p>
+            Think of a notebook, phone, or conversation. What changes when the idea lives partly
+            outside your head?
+          </p>
+        </div>
+      </div>
+
+      <div className="teacher-clues" aria-label="Clues">
+        {steps.map((step) => (
+          <button type="button" key={step.label}>
+            <span>{step.label}</span>
+            {step.clue}
+          </button>
+        ))}
+      </div>
+
+      <div className="teacher-response">
+        <button type="button">I have an answer</button>
+        <button type="button">Give me a smaller question</button>
+      </div>
     </section>
   );
 }
@@ -298,4 +343,18 @@ function compactText(text: string, maxLength: number): string {
   if (normalized.length <= maxLength) return normalized;
 
   return `${normalized.slice(0, maxLength - 1).trim()}…`;
+}
+
+function teacherSteps(evidence: Array<{ title: string; source: string }>) {
+  const fallback = [
+    { title: 'External marks hold thoughts in place', source: 'Evidence' },
+    { title: 'Tools reshape what people can notice', source: 'Evidence' },
+    { title: 'Shared systems spread thinking across people', source: 'Evidence' },
+  ];
+  const selected = evidence.length >= 3 ? evidence.slice(0, 3) : fallback;
+
+  return selected.map((item, index) => ({
+    label: ['Notice', 'Test', 'Name'][index] ?? 'Reflect',
+    clue: compactText(item.title || item.source, 54),
+  }));
 }

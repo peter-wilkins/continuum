@@ -42,6 +42,7 @@
 }
 
 .journey-prototype,
+.teacher-prototype,
 .constellation-prototype,
 .compass-prototype {
   position: relative;
@@ -53,6 +54,118 @@
   display: grid;
   grid-template-rows: auto 1fr auto auto;
   gap: 18px;
+}
+
+.teacher-prototype {
+  display: grid;
+  grid-template-rows: auto 1fr auto auto;
+  gap: 18px;
+  background:
+    radial-gradient(circle at 82% 16%, rgb(255 255 255 / 54%), transparent 22%),
+    linear-gradient(180deg, rgb(27 27 24 / 4%), transparent 34%);
+}
+
+.teacher-progress {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+
+.teacher-progress span {
+  display: grid;
+  height: 36px;
+  place-items: center;
+  border: 1px solid rgb(27 27 24 / 16%);
+  border-radius: 999px;
+  background: rgb(255 255 255 / 54%);
+  color: #68645e;
+  font-weight: 800;
+}
+
+.teacher-progress span.is-complete {
+  background: #1b1b18;
+  color: #fff;
+}
+
+.teacher-current {
+  display: grid;
+  align-content: center;
+  gap: 18px;
+}
+
+.teacher-current h1 {
+  max-width: 11ch;
+  margin: 0;
+  font-size: clamp(3rem, 13vw, 5.1rem);
+  line-height: 0.9;
+  letter-spacing: 0;
+}
+
+.teacher-prompt {
+  max-width: 38rem;
+  border: 1px solid rgb(27 27 24 / 16%);
+  border-radius: 28px;
+  background: rgb(255 255 255 / 64%);
+  padding: 18px;
+  box-shadow: 0 16px 40px rgb(27 27 24 / 10%);
+}
+
+.teacher-prompt span,
+.teacher-clues span {
+  display: block;
+  margin-bottom: 6px;
+  color: #7a4d36;
+  font-size: 0.72rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.teacher-prompt p {
+  margin: 0;
+  font-size: clamp(1.22rem, 4.6vw, 1.75rem);
+  line-height: 1.18;
+}
+
+.teacher-clues {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding-bottom: 4px;
+}
+
+.teacher-clues button {
+  flex: 0 0 min(48vw, 220px);
+  min-height: 92px;
+  border: 1px solid rgb(27 27 24 / 16%);
+  border-radius: 22px;
+  background: rgb(255 255 255 / 70%);
+  padding: 14px;
+  color: #1b1b18;
+  font: inherit;
+  font-weight: 700;
+  text-align: left;
+}
+
+.teacher-response {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.teacher-response button {
+  min-height: 58px;
+  border: 1px solid #1b1b18;
+  border-radius: 999px;
+  background: #1b1b18;
+  color: #fff;
+  padding: 12px;
+  font: inherit;
+  font-weight: 800;
+}
+
+.teacher-response button + button {
+  background: transparent;
+  color: #1b1b18;
 }
 
 .journey-state {
@@ -399,6 +512,7 @@
 
 @media (min-width: 820px) {
   .journey-prototype,
+  .teacher-prototype,
   .constellation-prototype,
   .compass-prototype {
     width: min(100vw, 980px);
@@ -407,6 +521,10 @@
   }
 
   .journey-current h1 {
+    max-width: 14ch;
+  }
+
+  .teacher-current h1 {
     max-width: 14ch;
   }
 }

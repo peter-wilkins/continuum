@@ -1,6 +1,6 @@
 # 043: Socratic Teacher Mode From Chairman
 
-Status: backlog
+Status: prototype
 
 ## Type
 
@@ -41,13 +41,22 @@ First slice could be a prototype variant that changes only the prompt framing an
 
 ## Acceptance Notes
 
-- [ ] Capture mode as explicit journey framing, not a separate document/page type.
-- [ ] Preserve the same non-document screen constraints from issue 042.
-- [ ] Keep the user in control; teacher mode should not patronize or over-explain.
-- [ ] Prefer questions over lectures.
+- [x] Capture mode as explicit journey framing, not a separate document/page type.
+- [x] Preserve the same non-document screen constraints from issue 042.
+- [x] Keep the user in control; teacher mode should not patronize or over-explain.
+- [x] Prefer questions over lectures.
+
+## Prototype
+
+Added as `?variant=teacher` on:
+
+```text
+/prototype/thought-screen
+```
+
+The prototype teaches extended thought one question at a time. It shows one large teaching question, tiny clue steps, understanding progress, and a "Give me a smaller question" escape hatch for distracted/tired attention.
 
 ## Related
 
 - `042-non-document-thought-screen-prototypes.md`
 - `041-phone-concierge-thought-journey-v0.md`
-
