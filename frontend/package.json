@@ -13,6 +13,7 @@
     "test:public-feedback-membrane": "tsx --test src/publicFeedbackMembrane.test.ts",
     "test:public-chairman-journey": "tsx --test src/publicChairmanJourney.test.ts",
     "test:public-continuum-view": "tsx --test src/publicContinuumView.test.ts",
+    "test:public-lens-strip": "tsx --test src/publicLensStrip.test.ts",
     "typecheck": "tsc -p tsconfig.app.json --noEmit"
   },
   "dependencies": {

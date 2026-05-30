@@ -36,6 +36,10 @@ import {
   submitPublicDevopsFeedback,
   type PublicFeedbackMembraneOutcome,
 } from './publicFeedbackMembrane.js';
+import {
+  activeLensOutputId as deriveActiveLensOutputId,
+  lensSnapIndex,
+} from './publicLensStrip.js';
 import { type PublicAuthState, usePublicLensPreference } from './usePublicLensPreference.js';
 import { usePwaInstallPrompt } from './usePwaInstallPrompt.js';
 import './publicContinuum.css';
@@ -146,8 +150,10 @@ export function PublicContinuum({ targetId }: { targetId: string }) {
       pwaInstall.installing,
     ],
   );
-  const activeLensOutputId =
-    activeSnapIndex > 0 ? displayedOutputs[activeSnapIndex - 1]?.id ?? null : null;
+  const activeLensOutputId = deriveActiveLensOutputId({
+    activeSnapIndex,
+    displayedOutputs,
+  });
 
   useEffect(() => {
     if (!menuOpen) return;
@@ -359,9 +365,12 @@ export function PublicContinuum({ targetId }: { targetId: string }) {
 
   function handleLensStripScroll(event: UIEvent<HTMLElement>) {
     const element = event.currentTarget;
-    const pageWidth = Math.max(element.clientWidth, 1);
-    const nextIndex = Math.round(element.scrollLeft / pageWidth);
-    setActiveSnapIndex(nextIndex);
+    setActiveSnapIndex(
+      lensSnapIndex({
+        scrollLeft: element.scrollLeft,
+        clientWidth: element.clientWidth,
+      }),
+    );
   }
 
   function handleFeedbackFromMenu() {
