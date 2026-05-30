@@ -23,8 +23,8 @@ try {
     throw new Error(`Expected at least 6 public events, got ${continuum.events.length}.`);
   }
 
-  if (continuum.outputs.length !== 3) {
-    throw new Error(`Expected 3 Lens outputs, got ${continuum.outputs.length}.`);
+  if (continuum.outputs.length !== 4) {
+    throw new Error(`Expected 4 Lens outputs, got ${continuum.outputs.length}.`);
   }
 
   if (continuum.thoughtCards.length < 100) {
