@@ -24,6 +24,7 @@ import {
   type BrowserSpeechRecognition,
 } from './browserSpeech.js';
 import { getPublicClientInstanceId } from './publicClientInstance.js';
+import { derivePublicChromeMenu, type PublicChromeMenuEntry } from './publicChrome.js';
 import {
   submitPublicChairmanResponse,
   type ChairmanInputMode,
@@ -128,6 +129,22 @@ export function PublicContinuum({ targetId }: { targetId: string }) {
 
     return shuffleItems(readyContinuum.outputs);
   }, [readyContinuum]);
+  const publicChromeMenu = useMemo(
+    () =>
+      derivePublicChromeMenu({
+        canInstall: pwaInstall.canInstall,
+        installing: pwaInstall.installing,
+        installed: pwaInstall.installed,
+        loggedIn: authState.status === 'logged_in',
+        gitHash,
+      }),
+    [
+      authState.status,
+      pwaInstall.canInstall,
+      pwaInstall.installed,
+      pwaInstall.installing,
+    ],
+  );
   const activeLensOutputId =
     activeSnapIndex > 0 ? displayedOutputs[activeSnapIndex - 1]?.id ?? null : null;
 
@@ -318,6 +335,25 @@ export function PublicContinuum({ targetId }: { targetId: string }) {
   async function handleSignOutFromMenu() {
     setMenuOpen(false);
     await signOut();
+  }
+
+  function handleChromeMenuAction(entry: PublicChromeMenuEntry) {
+    if (entry.kind === 'action') {
+      if (entry.id === 'reload') handleReload();
+      if (entry.id === 'guide') handleGuideJump();
+      if (entry.id === 'lens_compare') handleLensCompareJump();
+      if (entry.id === 'feedback') handleFeedbackFromMenu();
+      return;
+    }
+
+    if (entry.kind === 'install') {
+      void handleInstallFromMenu();
+      return;
+    }
+
+    if (entry.kind === 'sign_out') {
+      void handleSignOutFromMenu();
+    }
   }
 
   function handleLensStripScroll(event: UIEvent<HTMLElement>) {
@@ -550,35 +586,23 @@ export function PublicContinuum({ targetId }: { targetId: string }) {
         </button>
         {menuOpen ? (
           <div className="public-menu-panel" id="public-continuum-menu" role="menu">
-            <button type="button" role="menuitem" onClick={handleReload}>
-              Reload
-            </button>
-            <button type="button" role="menuitem" onClick={handleGuideJump}>
-              Guide
-            </button>
-            <button type="button" role="menuitem" onClick={handleLensCompareJump}>
-              Lens Compare
-            </button>
-            <button type="button" role="menuitem" onClick={handleFeedbackFromMenu}>
-              Feedback
-            </button>
-            {pwaInstall.canInstall ? (
-              <button
-                type="button"
-                role="menuitem"
-                disabled={pwaInstall.installing}
-                onClick={() => void handleInstallFromMenu()}
-              >
-                {pwaInstall.installing ? 'Installing' : 'Install'}
-              </button>
-            ) : null}
-            {pwaInstall.installed ? <span className="public-menu-note">Installed</span> : null}
-            {authState.status === 'logged_in' ? (
-              <button type="button" role="menuitem" onClick={() => void handleSignOutFromMenu()}>
-                Sign out
-              </button>
-            ) : null}
-            <span className="public-menu-note">Git {gitHash}</span>
+            {publicChromeMenu.map((entry) =>
+              entry.kind === 'note' ? (
+                <span className="public-menu-note" key={entry.label}>
+                  {entry.label}
+                </span>
+              ) : (
+                <button
+                  type="button"
+                  role="menuitem"
+                  disabled={entry.kind === 'install' ? entry.disabled : false}
+                  key={entry.kind === 'action' ? entry.id : entry.kind}
+                  onClick={() => handleChromeMenuAction(entry)}
+                >
+                  {entry.label}
+                </button>
+              ),
+            )}
           </div>
         ) : null}
       </div>
