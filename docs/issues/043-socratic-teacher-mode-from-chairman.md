@@ -19,6 +19,24 @@ Add a mode switch for Chairman-style journeys:
 - **Chairman mode**: keep the meeting/thought journey moving.
 - **Socratic teacher mode**: teach by asking guided questions.
 
+## Differentiator From A Chatbot
+
+A chatbot is usually an open-ended conversation box. The user carries the structure in their head.
+
+Socratic Teacher mode should add structure the user does not have to hold:
+
+- a visible learning path
+- one current question
+- explicit progress
+- remembered branches
+- answer interpretation
+- source-backed repair when the user is confused or challenges the answer
+- a clear next move instead of an endless transcript
+
+The product value is not "the model can ask questions." ChatGPT can do that. The value is that Continuum turns those questions into a continuable learning journey with state, provenance, feedback, and low-friction return after distraction.
+
+The UI should therefore avoid looking like a chat transcript. Freeform answers are allowed, but the screen should keep showing the journey state, not a scroll of messages.
+
 The underlying state can stay similar:
 
 - current question
