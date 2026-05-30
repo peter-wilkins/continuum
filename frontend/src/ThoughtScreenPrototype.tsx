@@ -12,6 +12,7 @@ type PrototypeState =
 const variants = [
   { key: 'journey', label: 'Chairman Journey' },
   { key: 'teacher', label: 'Socratic Teacher' },
+  { key: 'learning', label: 'Learning Journey' },
   { key: 'constellation', label: 'Thought Constellation' },
   { key: 'compass', label: 'Synthesis Compass' },
 ] as const;
@@ -76,6 +77,7 @@ export function ThoughtScreenPrototype() {
       <PrototypeQuestion />
       {variant === 'journey' ? <ChairmanJourneyPrototype continuum={state.continuum} /> : null}
       {variant === 'teacher' ? <SocraticTeacherPrototype continuum={state.continuum} /> : null}
+      {variant === 'learning' ? <LearningJourneyPrototype continuum={state.continuum} /> : null}
       {variant === 'constellation' ? (
         <ThoughtConstellationPrototype continuum={state.continuum} />
       ) : null}
@@ -135,6 +137,52 @@ function ChairmanJourneyPrototype({ continuum }: { continuum: PublicContinuumRes
       </div>
 
       <BuildHash />
+    </section>
+  );
+}
+
+function LearningJourneyPrototype({ continuum }: { continuum: PublicContinuumResponse }) {
+  const model = useThoughtModel(continuum);
+
+  return (
+    <section className="learning-prototype" aria-label="Learning Journey prototype">
+      <div className="learning-topline">
+        <span>Learning Journey</span>
+        <strong>2 / 5</strong>
+      </div>
+
+      <div className="learning-tree" aria-label="Decision tree progress">
+        <span className="is-done" />
+        <span className="is-current" />
+        <span />
+        <span />
+        <span />
+      </div>
+
+      <div className="learning-question">
+        <p>Extended thought</p>
+        <h1>What changes when thinking moves outside your head?</h1>
+      </div>
+
+      <div className="learning-choice-list">
+        <button type="button">
+          <span>A</span>
+          It becomes easier to hold and revisit.
+        </button>
+        <button type="button">
+          <span>B</span>
+          It becomes shared with tools or people.
+        </button>
+        <button type="button">
+          <span>C</span>
+          It becomes less private but more powerful.
+        </button>
+      </div>
+
+      <div className="learning-context">
+        <span>Current clue</span>
+        <p>{model.evidence[0]?.title ?? model.answer}</p>
+      </div>
     </section>
   );
 }

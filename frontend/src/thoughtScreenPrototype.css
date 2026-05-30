@@ -43,11 +43,119 @@
 
 .journey-prototype,
 .teacher-prototype,
+.learning-prototype,
 .constellation-prototype,
 .compass-prototype {
   position: relative;
   min-height: 100vh;
   padding: 70px 18px 92px;
+}
+
+.learning-prototype {
+  display: grid;
+  grid-template-rows: auto auto 1fr auto auto;
+  gap: 18px;
+  background: #f8f7f2;
+}
+
+.learning-topline {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  color: #57534c;
+  font-size: 0.82rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.learning-topline strong {
+  color: #1b1b18;
+}
+
+.learning-tree {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 6px;
+}
+
+.learning-tree span {
+  height: 8px;
+  border-radius: 999px;
+  background: #dedbd0;
+}
+
+.learning-tree span.is-done,
+.learning-tree span.is-current {
+  background: #1b1b18;
+}
+
+.learning-tree span.is-current {
+  outline: 3px solid rgb(27 27 24 / 16%);
+}
+
+.learning-question {
+  display: grid;
+  align-content: center;
+  gap: 10px;
+}
+
+.learning-question p,
+.learning-context span {
+  margin: 0;
+  color: #7a4d36;
+  font-size: 0.78rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.learning-question h1 {
+  max-width: 11ch;
+  margin: 0;
+  font-size: clamp(3.1rem, 14vw, 5.8rem);
+  line-height: 0.88;
+  letter-spacing: 0;
+}
+
+.learning-choice-list {
+  display: grid;
+  gap: 8px;
+}
+
+.learning-choice-list button {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 10px;
+  align-items: center;
+  min-height: 58px;
+  border: 1px solid #d5d0c3;
+  border-radius: 10px;
+  background: #fffefa;
+  padding: 10px;
+  color: #1b1b18;
+  font: inherit;
+  font-weight: 800;
+  text-align: left;
+}
+
+.learning-choice-list span {
+  display: grid;
+  width: 36px;
+  height: 36px;
+  place-items: center;
+  border-radius: 50%;
+  background: #1b1b18;
+  color: #fff;
+}
+
+.learning-context {
+  border-top: 1px solid #d5d0c3;
+  padding-top: 12px;
+}
+
+.learning-context p {
+  margin: 4px 0 0;
+  color: #57534c;
+  line-height: 1.3;
 }
 
 .journey-prototype {
@@ -513,6 +621,7 @@
 @media (min-width: 820px) {
   .journey-prototype,
   .teacher-prototype,
+  .learning-prototype,
   .constellation-prototype,
   .compass-prototype {
     width: min(100vw, 980px);
@@ -525,6 +634,10 @@
   }
 
   .teacher-current h1 {
+    max-width: 14ch;
+  }
+
+  .learning-question h1 {
     max-width: 14ch;
   }
 }
