@@ -1,5 +1,5 @@
 import type { PublicContinuumResponse } from '@continuum/shared';
-import { useEffect, useMemo, useState, type CSSProperties } from 'react';
+import { useEffect, useMemo, useState, type CSSProperties, type FormEvent } from 'react';
 import { fetchPublicContinuum } from './api.js';
 import { BuildHash } from './buildInfo.js';
 import './thoughtScreenPrototype.css';
@@ -18,6 +18,7 @@ const variants = [
 ] as const;
 
 type VariantKey = (typeof variants)[number]['key'];
+type LearningMove = 'waiting' | 'advance' | 'clarify' | 'branch';
 
 export function ThoughtScreenPrototype() {
   const [state, setState] = useState<PrototypeState>({ status: 'loading' });
@@ -143,43 +144,68 @@ function ChairmanJourneyPrototype({ continuum }: { continuum: PublicContinuumRes
 
 function LearningJourneyPrototype({ continuum }: { continuum: PublicContinuumResponse }) {
   const model = useThoughtModel(continuum);
+  const [answer, setAnswer] = useState('');
+  const [move, setMove] = useState<LearningMove>('waiting');
+  const [step, setStep] = useState(2);
+  const [branches, setBranches] = useState(0);
+  const learningQuestion = learningQuestionForMove(move);
+  const learningClue = learningClueForMove(move, model);
+
+  function handleLearningSubmit(event: FormEvent) {
+    event.preventDefault();
+    const nextMove = classifyLearningAnswer(answer);
+
+    setMove(nextMove);
+    if (nextMove === 'advance') {
+      setStep((current) => Math.min(current + 1, 5));
+    }
+    if (nextMove === 'branch') {
+      setBranches((current) => current + 1);
+    }
+    setAnswer('');
+  }
 
   return (
-    <section className="learning-prototype" aria-label="Learning Journey prototype">
+    <section className={`learning-prototype is-${move}`} aria-label="Learning Journey prototype">
       <div className="learning-topline">
         <span>Learning Journey</span>
-        <strong>2 / 5</strong>
+        <strong>{step} / 5</strong>
       </div>
 
       <div className="learning-tree" aria-label="Decision tree progress">
-        <span className="is-done" />
-        <span className="is-current" />
-        <span />
-        <span />
-        <span />
+        {[1, 2, 3, 4, 5].map((index) => (
+          <span
+            className={
+              index < step ? 'is-done' : index === step ? 'is-current' : ''
+            }
+            key={index}
+          />
+        ))}
       </div>
 
       <div className="learning-question">
         <p>Extended thought</p>
-        <h1>What changes when thinking moves outside your head?</h1>
+        <h1>{learningQuestion}</h1>
       </div>
 
-      <form className="learning-freeform" aria-label="Freeform answer">
+      <form className="learning-freeform" aria-label="Freeform answer" onSubmit={handleLearningSubmit}>
         <label htmlFor="learning-answer">Your answer</label>
         <textarea
           id="learning-answer"
+          value={answer}
           rows={4}
           placeholder="Say it in your own words..."
+          onChange={(event) => setAnswer(event.target.value)}
         />
         <div className="learning-freeform-actions">
           <button type="button">Speak</button>
-          <button type="submit">Continue</button>
+          <button type="submit" disabled={answer.trim().length === 0}>Continue</button>
         </div>
       </form>
 
       <div className="learning-context">
-        <span>Current clue</span>
-        <p>{model.evidence[0]?.title ?? model.answer}</p>
+        <span>{learningMoveLabel(move, branches)}</span>
+        <p>{learningClue}</p>
       </div>
     </section>
   );
@@ -389,6 +415,74 @@ function compactText(text: string, maxLength: number): string {
   if (normalized.length <= maxLength) return normalized;
 
   return `${normalized.slice(0, maxLength - 1).trim()}…`;
+}
+
+function classifyLearningAnswer(answer: string): LearningMove {
+  const normalized = answer.trim().toLocaleLowerCase();
+  if (normalized.length === 0) return 'waiting';
+
+  if (
+    normalized.includes('?') ||
+    normalized.includes('not sure') ||
+    normalized.includes("don't know") ||
+    normalized.includes('confused')
+  ) {
+    return 'clarify';
+  }
+
+  if (
+    normalized.includes('but') ||
+    normalized.includes('although') ||
+    normalized.includes('what about') ||
+    normalized.includes('also')
+  ) {
+    return 'branch';
+  }
+
+  return 'advance';
+}
+
+function learningQuestionForMove(move: LearningMove): string {
+  if (move === 'clarify') {
+    return 'What is the smallest example you can picture?';
+  }
+
+  if (move === 'branch') {
+    return 'Which side path should we hold without losing the main one?';
+  }
+
+  if (move === 'advance') {
+    return 'How does that change what a person can think next?';
+  }
+
+  return 'What changes when thinking moves outside your head?';
+}
+
+function learningMoveLabel(move: LearningMove, branches: number): string {
+  if (move === 'advance') return 'Advanced';
+  if (move === 'clarify') return 'Clarifying';
+  if (move === 'branch') return `Branch held (${branches})`;
+
+  return 'Current clue';
+}
+
+function learningClueForMove(
+  move: LearningMove,
+  model: ReturnType<typeof useThoughtModel>,
+): string {
+  if (move === 'advance') {
+    return 'Your answer was treated as enough to move the path forward.';
+  }
+
+  if (move === 'clarify') {
+    return 'The answer sounded uncertain, so the journey asks for a smaller concrete example.';
+  }
+
+  if (move === 'branch') {
+    return 'The answer introduced another direction, so the journey parks it as a branch.';
+  }
+
+  return model.evidence[0]?.title ?? model.answer;
 }
 
 function teacherSteps(evidence: Array<{ title: string; source: string }>) {

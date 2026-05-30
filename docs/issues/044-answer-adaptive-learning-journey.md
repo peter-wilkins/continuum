@@ -1,6 +1,6 @@
 # 044: Answer-Adaptive Learning Journey
 
-Status: backlog
+Status: prototype
 
 ## Type
 
@@ -52,6 +52,22 @@ Prototype the smallest answer loop:
 ## Product Decision
 
 Learning Journey should use freeform answers, not multiple choice. Multiple choice feels too much like a test and removes the signal needed for adaptive journey evolution.
+
+## Prototype
+
+Added a local-only adaptation loop to:
+
+```text
+/prototype/thought-screen?variant=learning
+```
+
+The prototype keeps all state in memory. On `Continue`, it classifies the freeform answer into one visible next move:
+
+- `advance`: moves the progress step forward.
+- `clarify`: asks a smaller concrete-example question.
+- `branch`: holds a side path count and asks which side path to keep.
+
+This is deliberately fake and deterministic. It tests whether the screen can evolve as a journey without becoming a chat transcript.
 
 ## Open Questions
 

@@ -93,6 +93,18 @@
   outline: 3px solid rgb(27 27 24 / 16%);
 }
 
+.learning-prototype.is-advance .learning-tree span.is-current {
+  outline-color: rgb(37 99 76 / 24%);
+}
+
+.learning-prototype.is-clarify .learning-tree span.is-current {
+  outline-color: rgb(122 77 54 / 26%);
+}
+
+.learning-prototype.is-branch .learning-tree span.is-current {
+  outline-color: rgb(45 73 113 / 24%);
+}
+
 .learning-question {
   display: grid;
   align-content: center;
@@ -166,6 +178,10 @@
   border-color: #1b1b18;
   background: #1b1b18;
   color: #fff;
+}
+
+.learning-freeform-actions button:disabled {
+  opacity: 0.44;
 }
 
 .learning-context {
