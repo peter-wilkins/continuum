@@ -1,11 +1,6 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
-import type {
-  PublicConciergeRun,
-  PublicContinuumResponse,
-  WorkflowManagerPhoneJourneyState,
-} from '@continuum/shared';
-import type { Session } from '@supabase/supabase-js';
+import type { PublicConciergeRun, PublicContinuumResponse } from '@continuum/shared';
 
 import {
   buildPublicChairmanRequest,
@@ -35,67 +30,37 @@ describe('Public Chairman Journey', () => {
     });
   });
 
-  it('sends logged-in replies through the Bridge first', async () => {
-    const continuum = publicContinuumFixture();
-    const bridgeState = phoneJourneyStateFixture();
-    let localCalled = false;
-
-    const outcome = await submitPublicChairmanResponse({
-      targetId: 'extended-thought',
-      publicClientInstanceId: 'client:1',
-      auth: { status: 'logged_in', session: fakeSession() },
-      continuum,
-      line: continuum.linesOfInquiry.lines[0]!,
-      userResponse: '  send this to the chairman  ',
-      inputMode: 'speech',
-      dependencies: {
-        submitBridgeMessage: async (_targetId, _session, request) => {
-          assert.equal(request.userResponse, 'send this to the chairman');
-          assert.equal(request.inputMode, 'speech');
-          return { state: bridgeState };
-        },
-        submitConciergeRun: async () => {
-          localCalled = true;
-          return { run: conciergeRunFixture(continuum) };
-        },
-      },
-    });
-
-    assert.equal(outcome.status, 'bridge_answered');
-    assert.equal(localCalled, false);
-  });
-
-  it('falls back to local Concierge when Bridge delivery fails', async () => {
+  it('uses the local Concierge for logged-in replies so stale Bridge output cannot become agreement text', async () => {
     const continuum = publicContinuumFixture();
     const localRun = conciergeRunFixture(continuum);
 
     const outcome = await submitPublicChairmanResponse({
       targetId: 'extended-thought',
       publicClientInstanceId: 'client:1',
-      auth: { status: 'logged_in', session: fakeSession() },
+      auth: { status: 'logged_in' },
       continuum,
       line: continuum.linesOfInquiry.lines[0]!,
-      userResponse: 'Keep going locally.',
-      inputMode: 'text',
+      userResponse: '  send this to the chairman  ',
+      inputMode: 'speech',
       dependencies: {
-        submitBridgeMessage: async () => {
-          throw new Error('bridge unavailable');
+        submitConciergeRun: async (_targetId, request) => {
+          assert.equal(request.userResponse, 'send this to the chairman');
+          assert.equal(request.inputMode, 'speech');
+          return { run: localRun };
         },
-        submitConciergeRun: async () => ({ run: localRun }),
       },
     });
 
     assert.equal(outcome.status, 'local_answered');
+    if (outcome.status === 'local_answered') {
+      assert.equal(outcome.run.id, localRun.id);
+    }
   });
 
   it('does not submit empty or missing-line replies', async () => {
     const continuum = publicContinuumFixture();
     let calls = 0;
     const dependencies = {
-      submitBridgeMessage: async () => {
-        calls += 1;
-        return { state: phoneJourneyStateFixture() };
-      },
       submitConciergeRun: async () => {
         calls += 1;
         return { run: conciergeRunFixture(continuum) };
@@ -128,24 +93,6 @@ describe('Public Chairman Journey', () => {
     assert.equal(calls, 0);
   });
 });
-
-function fakeSession(): Session {
-  return { access_token: 'token' } as Session;
-}
-
-function phoneJourneyStateFixture(): WorkflowManagerPhoneJourneyState {
-  return {
-    schemaVersion: 'workflow-manager.phone-journey-state.v1',
-    generatedAt: '2026-05-30T15:00:00.000Z',
-    currentJourneyId: 'continuum-public-chairman-loop',
-    currentJourneyTitle: 'Chairman',
-    status: 'active',
-    latestBody: 'Bridge reply',
-    progress: 0.7,
-    progressLabel: 'Bridge active',
-    suggestedNextStep: 'Continue',
-  };
-}
 
 function conciergeRunFixture(continuum: PublicContinuumResponse): PublicConciergeRun {
   return {

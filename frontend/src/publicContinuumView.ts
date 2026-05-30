@@ -57,7 +57,7 @@ export function derivePublicContinuumView(input: {
   const currentQuestion =
     input.chairmanRun?.nextLineQuestion ?? recommendedLine?.question ?? null;
   const agreement =
-    input.chairmanBridgeState?.latestBody ?? input.chairmanRun?.chairmanReply ?? null;
+    input.chairmanRun?.chairmanReply ?? input.chairmanBridgeState?.latestBody ?? null;
 
   return {
     eventsById,

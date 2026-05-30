@@ -2,9 +2,7 @@ import type {
   PublicConciergeRun,
   PublicConciergeRunRequest,
   PublicContinuumResponse,
-  WorkflowManagerPhoneJourneyState,
 } from '@continuum/shared';
-import type { Session } from '@supabase/supabase-js';
 
 import { normalizeSpokenText } from './browserSpeech.js';
 
@@ -15,16 +13,10 @@ export type PublicChairmanLine = PublicContinuumResponse['linesOfInquiry']['line
 export type PublicChairmanSubmitOutcome =
   | { status: 'empty' }
   | { status: 'missing_line'; message: string }
-  | { status: 'bridge_answered'; state: WorkflowManagerPhoneJourneyState }
   | { status: 'local_answered'; run: PublicConciergeRun }
   | { status: 'error'; message: string };
 
 export type PublicChairmanSubmitDependencies = {
-  submitBridgeMessage: (
-    targetId: string,
-    session: Session,
-    run: PublicConciergeRunRequest,
-  ) => Promise<{ state: WorkflowManagerPhoneJourneyState }>;
   submitConciergeRun: (
     targetId: string,
     run: PublicConciergeRunRequest,
@@ -35,7 +27,7 @@ export async function submitPublicChairmanResponse(input: {
   targetId: string;
   publicClientInstanceId: string;
   auth:
-    | { status: 'logged_in'; session: Session }
+    | { status: 'logged_in' }
     | { status: 'logged_out' }
     | { status: 'loading' };
   continuum: PublicContinuumResponse | null;
@@ -61,23 +53,6 @@ export async function submitPublicChairmanResponse(input: {
     userResponse: normalizedResponse,
     inputMode: input.inputMode,
   });
-
-  if (input.auth.status === 'logged_in') {
-    try {
-      const bridgeResponse = await input.dependencies.submitBridgeMessage(
-        input.targetId,
-        input.auth.session,
-        request,
-      );
-
-      return {
-        status: 'bridge_answered',
-        state: bridgeResponse.state,
-      };
-    } catch {
-      // Logged-in bridge is preferred, but local Concierge keeps the journey moving.
-    }
-  }
 
   try {
     const response = await input.dependencies.submitConciergeRun(input.targetId, request);

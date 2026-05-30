@@ -22,7 +22,7 @@ describe('Public Continuum view', () => {
     assert.equal(view.agreement, null);
   });
 
-  it('uses Bridge progress before local Concierge progress', () => {
+  it('uses Bridge progress without letting stale Bridge text replace local agreement', () => {
     const continuum = publicContinuumFixture();
     const view = derivePublicContinuumView({
       continuum,
@@ -63,7 +63,7 @@ describe('Public Continuum view', () => {
     assert.equal(view.chairmanProgress, 0.7);
     assert.equal(view.chairmanProgressPercent, '70%');
     assert.equal(view.chairmanProgressLabel, 'Bridge active');
-    assert.equal(view.agreement, 'Bridge reply');
+    assert.equal(view.agreement, 'Local chairman');
   });
 
   it('falls back to an opened line when no Chairman run exists yet', () => {

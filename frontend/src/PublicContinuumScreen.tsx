@@ -10,7 +10,6 @@ import {
   fetchPublicChairmanBridgeState,
   fetchPublicContinuum,
   submitDevopsFeedback,
-  submitPublicChairmanBridgeMessage,
   submitPublicConciergeRun,
 } from './api.js';
 import { getInitialSession, onAuthChange } from './auth.js';
@@ -442,7 +441,6 @@ export function PublicContinuum({ targetId }: { targetId: string }) {
       userResponse,
       inputMode,
       dependencies: {
-        submitBridgeMessage: submitPublicChairmanBridgeMessage,
         submitConciergeRun: submitPublicConciergeRun,
       },
     });
@@ -458,16 +456,6 @@ export function PublicContinuum({ targetId }: { targetId: string }) {
 
     if (outcome.status === 'missing_line') {
       setChairmanTalkStatus({ status: 'error', message: outcome.message });
-      return;
-    }
-
-    if (outcome.status === 'bridge_answered') {
-      setChairmanBridgeState(outcome.state);
-      setChairmanBridgePollingEnabled(true);
-      setChairmanRun(null);
-      setChairmanText('');
-      setChairmanDraftInputMode('text');
-      setChairmanTalkStatus({ status: 'answered' });
       return;
     }
 
