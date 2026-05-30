@@ -23,6 +23,7 @@ import {
   transcriptFromSpeechEvent,
   type BrowserSpeechRecognition,
 } from './browserSpeech.js';
+import { PublicSourceLinks } from './PublicSourceLinks.js';
 import { getPublicClientInstanceId } from './publicClientInstance.js';
 import { derivePublicChromeMenu, type PublicChromeMenuEntry } from './publicChrome.js';
 import {
@@ -689,24 +690,10 @@ export function PublicContinuum({ targetId }: { targetId: string }) {
                       <li key={support.thoughtCardId}>
                         <h4>{card.title}</h4>
                         <p>{card.body}</p>
-                        <footer className="public-thought-provenance">
-                          {sourceParagraphs.map((paragraph) => {
-                            const event = eventsById.get(paragraph.canonicalEventId);
-
-                            return (
-                              <a
-                                href={paragraph.sourceUrl}
-                                key={paragraph.id}
-                                target="_blank"
-                                rel="noreferrer"
-                                title={event?.subject ?? paragraph.title}
-                              >
-                                {paragraph.sourceName} / {paragraph.title} / paragraph{' '}
-                                {paragraph.paragraphIndex + 1}
-                              </a>
-                            );
-                          })}
-                        </footer>
+                        <PublicSourceLinks
+                          eventsById={eventsById}
+                          sourceParagraphs={sourceParagraphs}
+                        />
                       </li>
                     );
                   })}
@@ -758,24 +745,10 @@ export function PublicContinuum({ targetId }: { targetId: string }) {
                       <li className="public-thought-card" key={card.id}>
                         <h2>{card.title}</h2>
                         <p>{card.body}</p>
-                        <footer className="public-thought-provenance">
-                          {sourceParagraphs.map((paragraph) => {
-                            const event = eventsById.get(paragraph.canonicalEventId);
-
-                            return (
-                              <a
-                                href={paragraph.sourceUrl}
-                                key={paragraph.id}
-                                target="_blank"
-                                rel="noreferrer"
-                                title={event?.subject ?? paragraph.title}
-                              >
-                                {paragraph.sourceName} / {paragraph.title} / paragraph{' '}
-                                {paragraph.paragraphIndex + 1}
-                              </a>
-                            );
-                          })}
-                        </footer>
+                        <PublicSourceLinks
+                          eventsById={eventsById}
+                          sourceParagraphs={sourceParagraphs}
+                        />
                       </li>
                     );
                   })}
