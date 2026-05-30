@@ -49,6 +49,7 @@ import {
   type PendingAudioSummary,
 } from './pendingAudioQueue.js';
 import { PublicContinuum, PublicLensGuide } from './PublicContinuumScreen.js';
+import { ThoughtScreenPrototype } from './ThoughtScreenPrototype.js';
 
 const primaryPublicContinuumTargetId = 'extended-thought';
 type SpeechQueryStatus =
@@ -103,6 +104,10 @@ export function App() {
 
   if (path === '/public/lenses') {
     return <PublicLensGuide targetId={primaryPublicContinuumTargetId} />;
+  }
+
+  if (path === '/prototype/thought-screen') {
+    return <ThoughtScreenPrototype />;
   }
 
   return <ContinuumApp />;
