@@ -30,7 +30,7 @@ Five throwaway UI variants using the real public extended-thought data:
 
 1. **Chairman Journey**: one active question, one current claim, progress/branch state, evidence chips, and two thumb actions.
 2. **Socratic Teacher**: one teaching question, three tiny clue steps, understanding progress, and a smaller-question escape hatch.
-3. **Learning Journey**: a very simple decision-tree learning path with one question, three choices, and minimal visual noise.
+3. **Learning Journey**: a very simple decision-tree learning path with one question, freeform answer input, and minimal visual noise.
 4. **Thought Constellation**: central claim with surrounding thought/source nodes and relationship lines.
 5. **Synthesis Compass**: central signal with synthesis moves orbiting it and one next pressure at the bottom.
 

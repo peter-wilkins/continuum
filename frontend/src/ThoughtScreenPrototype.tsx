@@ -164,20 +164,18 @@ function LearningJourneyPrototype({ continuum }: { continuum: PublicContinuumRes
         <h1>What changes when thinking moves outside your head?</h1>
       </div>
 
-      <div className="learning-choice-list">
-        <button type="button">
-          <span>A</span>
-          It becomes easier to hold and revisit.
-        </button>
-        <button type="button">
-          <span>B</span>
-          It becomes shared with tools or people.
-        </button>
-        <button type="button">
-          <span>C</span>
-          It becomes less private but more powerful.
-        </button>
-      </div>
+      <form className="learning-freeform" aria-label="Freeform answer">
+        <label htmlFor="learning-answer">Your answer</label>
+        <textarea
+          id="learning-answer"
+          rows={4}
+          placeholder="Say it in your own words..."
+        />
+        <div className="learning-freeform-actions">
+          <button type="button">Speak</button>
+          <button type="submit">Continue</button>
+        </div>
+      </form>
 
       <div className="learning-context">
         <span>Current clue</span>

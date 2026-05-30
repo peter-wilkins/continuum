@@ -41,13 +41,17 @@ The interpretation is not truth. It is model output or deterministic feedback th
 Prototype the smallest answer loop:
 
 1. User taps `I have an answer`.
-2. UI opens a tiny answer box or speech capture.
+2. UI opens a freeform answer box or speech capture.
 3. User submits answer.
 4. System chooses one of three visible next moves:
    - `advance`
    - `clarify`
    - `branch`
 5. UI updates the Learning Journey progress/path without becoming a chat transcript.
+
+## Product Decision
+
+Learning Journey should use freeform answers, not multiple choice. Multiple choice feels too much like a test and removes the signal needed for adaptive journey evolution.
 
 ## Open Questions
 
@@ -59,4 +63,3 @@ Prototype the smallest answer loop:
 
 - `042-non-document-thought-screen-prototypes.md`
 - `043-socratic-teacher-mode-from-chairman.md`
-
