@@ -24,6 +24,11 @@ import {
   type BrowserSpeechRecognition,
 } from './browserSpeech.js';
 import { getPublicClientInstanceId } from './publicClientInstance.js';
+import {
+  submitPublicChairmanResponse,
+  type ChairmanInputMode,
+  type PublicChairmanSubmitOutcome,
+} from './publicChairmanJourney.js';
 import { derivePublicContinuumView } from './publicContinuumView.js';
 import { type PublicAuthState, usePublicLensPreference } from './usePublicLensPreference.js';
 import { usePwaInstallPrompt } from './usePwaInstallPrompt.js';
@@ -80,7 +85,7 @@ export function PublicContinuum({ targetId }: { targetId: string }) {
     status: 'idle',
   });
   const [chairmanText, setChairmanText] = useState('');
-  const [chairmanDraftInputMode, setChairmanDraftInputMode] = useState<'speech' | 'text'>('text');
+  const [chairmanDraftInputMode, setChairmanDraftInputMode] = useState<ChairmanInputMode>('text');
   const [chairmanRun, setChairmanRun] = useState<PublicConciergeRun | null>(null);
   const [chairmanBridgeState, setChairmanBridgeState] =
     useState<WorkflowManagerPhoneJourneyState | null>(null);
@@ -363,68 +368,58 @@ export function PublicContinuum({ targetId }: { targetId: string }) {
     }
   }
 
-  async function submitChairmanResponse(userResponse: string, inputMode: 'speech' | 'text') {
-    const normalizedResponse = normalizeSpokenText(userResponse);
-    if (!normalizedResponse) return;
-
-    if (!readyContinuum || !activeRecommendedLine) {
-      setChairmanTalkOpen(true);
-      setChairmanTalkStatus({
-        status: 'error',
-        message: 'No Chairman Line is available here yet.',
-      });
-      return;
-    }
-
+  async function submitChairmanResponse(userResponse: string, inputMode: ChairmanInputMode) {
     setChairmanTalkOpen(true);
     setChairmanTalkStatus({ status: 'submitting' });
 
-    try {
-      const bridgeRequest = {
-        clientInstanceId: publicClientInstanceId,
-        scopeId: readyContinuum.scope.id,
-        queryId: readyContinuum.query.id,
-        queryText: readyContinuum.query.text,
-        lineId: activeRecommendedLine.id,
-        lineQuestion: activeRecommendedLine.question,
-        userResponse: normalizedResponse,
-        inputMode,
-      };
+    const outcome = await submitPublicChairmanResponse({
+      targetId,
+      publicClientInstanceId,
+      auth: authState,
+      continuum: readyContinuum,
+      line: activeRecommendedLine,
+      userResponse,
+      inputMode,
+      dependencies: {
+        submitBridgeMessage: submitPublicChairmanBridgeMessage,
+        submitConciergeRun: submitPublicConciergeRun,
+      },
+    });
 
-      if (authState.status === 'logged_in') {
-        try {
-          const bridgeResponse = await submitPublicChairmanBridgeMessage(
-            targetId,
-            authState.session,
-            bridgeRequest,
-          );
+    applyChairmanSubmitOutcome(outcome);
+  }
 
-          setChairmanBridgeState(bridgeResponse.state);
-          setChairmanBridgePollingEnabled(true);
-          setChairmanRun(null);
-          setChairmanText('');
-          setChairmanDraftInputMode('text');
-          setChairmanTalkStatus({ status: 'answered' });
-          return;
-        } catch {
-          setChairmanBridgeState(null);
-        }
-      }
+  function applyChairmanSubmitOutcome(outcome: PublicChairmanSubmitOutcome) {
+    if (outcome.status === 'empty') {
+      setChairmanTalkStatus({ status: 'idle' });
+      return;
+    }
 
-      const response = await submitPublicConciergeRun(targetId, {
-        ...bridgeRequest,
-      });
+    if (outcome.status === 'missing_line') {
+      setChairmanTalkStatus({ status: 'error', message: outcome.message });
+      return;
+    }
 
-      setChairmanRun(response.run);
+    if (outcome.status === 'bridge_answered') {
+      setChairmanBridgeState(outcome.state);
+      setChairmanBridgePollingEnabled(true);
+      setChairmanRun(null);
       setChairmanText('');
       setChairmanDraftInputMode('text');
       setChairmanTalkStatus({ status: 'answered' });
-    } catch (err: unknown) {
-      setChairmanTalkStatus({
-        status: 'error',
-        message: err instanceof Error ? err.message : 'Chairman reply failed',
-      });
+      return;
     }
+
+    if (outcome.status === 'local_answered') {
+      setChairmanBridgeState(null);
+      setChairmanRun(outcome.run);
+      setChairmanText('');
+      setChairmanDraftInputMode('text');
+      setChairmanTalkStatus({ status: 'answered' });
+      return;
+    }
+
+    setChairmanTalkStatus({ status: 'error', message: outcome.message });
   }
 
   function startChairmanSpeech() {
