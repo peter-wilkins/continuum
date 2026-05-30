@@ -24,6 +24,7 @@ import {
   type BrowserSpeechRecognition,
 } from './browserSpeech.js';
 import { getPublicClientInstanceId } from './publicClientInstance.js';
+import { derivePublicContinuumView } from './publicContinuumView.js';
 import { type PublicAuthState, usePublicLensPreference } from './usePublicLensPreference.js';
 import { usePwaInstallPrompt } from './usePwaInstallPrompt.js';
 import './publicContinuum.css';
@@ -504,26 +505,21 @@ export function PublicContinuum({ targetId }: { targetId: string }) {
   }
 
   const { continuum } = state;
-  const eventsById = new Map(continuum.events.map((event) => [event.id, event]));
-  const sourceParagraphsById = new Map(
-    continuum.sourceParagraphs.map((paragraph) => [paragraph.id, paragraph]),
-  );
-  const thoughtCardsById = new Map(continuum.thoughtCards.map((card) => [card.id, card]));
-  const answerSupport = continuum.synthesizedAnswer.sourceSupport
-    .map((support) => ({
-      support,
-      card: thoughtCardsById.get(support.thoughtCardId),
-      sourceParagraphs: support.sourceParagraphIds
-        .map((paragraphId) => sourceParagraphsById.get(paragraphId))
-        .filter((paragraph) => paragraph !== undefined),
-    }))
-    .filter((item) => item.card !== undefined);
-  const recommendedLine =
-    activeRecommendedLine;
-  const chairmanProgress = chairmanBridgeState?.progress ?? chairmanRun?.progress ?? 0.25;
-  const chairmanProgressPercent = `${Math.round(chairmanProgress * 100)}%`;
-  const chairmanProgressLabel =
-    chairmanBridgeState?.progressLabel ?? chairmanRun?.progressLabel ?? 'Line opened';
+  const {
+    answerSupport,
+    chairmanProgress,
+    chairmanProgressLabel,
+    chairmanProgressPercent,
+    eventsById,
+    recommendedLine,
+    sourceParagraphsById,
+    thoughtCardsById,
+  } = derivePublicContinuumView({
+    continuum,
+    activeRecommendedLine,
+    chairmanBridgeState,
+    chairmanRun,
+  });
 
   return (
     <main

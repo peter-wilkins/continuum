@@ -8,6 +8,7 @@
     "build": "tsc -b && vite build",
     "preview": "vite preview --host 0.0.0.0",
     "test:learning-journey": "tsx --test src/learningJourney.test.ts",
+    "test:public-continuum-view": "tsx --test src/publicContinuumView.test.ts",
     "typecheck": "tsc -p tsconfig.app.json --noEmit"
   },
   "dependencies": {
