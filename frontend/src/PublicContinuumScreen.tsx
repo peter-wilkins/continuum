@@ -30,6 +30,10 @@ import {
   type PublicChairmanSubmitOutcome,
 } from './publicChairmanJourney.js';
 import { derivePublicContinuumView } from './publicContinuumView.js';
+import {
+  submitPublicDevopsFeedback,
+  type PublicFeedbackMembraneOutcome,
+} from './publicFeedbackMembrane.js';
 import { type PublicAuthState, usePublicLensPreference } from './usePublicLensPreference.js';
 import { usePwaInstallPrompt } from './usePwaInstallPrompt.js';
 import './publicContinuum.css';
@@ -331,41 +335,46 @@ export function PublicContinuum({ targetId }: { targetId: string }) {
 
   async function handleDevopsFeedbackSubmit(event: FormEvent) {
     event.preventDefault();
-    const message = devopsFeedbackMessage.trim();
-    if (!message || !readyContinuum) return;
-
     setDevopsFeedbackState({ status: 'submitting' });
 
-    try {
-      const response = await submitDevopsFeedback({
-        kind: devopsFeedbackSmallFix ? 'small_fix' : devopsFeedbackKind,
-        message,
-        smallFix: devopsFeedbackSmallFix,
-        context: {
-          targetId,
-          scopeId: readyContinuum.scope.id,
-          queryId: readyContinuum.query.id,
-          queryText: readyContinuum.query.text,
-          lensOutputId: activeLensOutputId,
-          path: `${window.location.pathname}${window.location.search}${window.location.hash}`,
-          gitHash,
-          authStatus: authState.status,
-          userAgent: window.navigator.userAgent,
-          viewport: {
-            width: window.innerWidth,
-            height: window.innerHeight,
-          },
+    const outcome = await submitPublicDevopsFeedback({
+      kind: devopsFeedbackKind,
+      message: devopsFeedbackMessage,
+      smallFix: devopsFeedbackSmallFix,
+      targetId,
+      continuum: readyContinuum,
+      activeLensOutputId,
+      authState,
+      environment: {
+        path: `${window.location.pathname}${window.location.search}${window.location.hash}`,
+        gitHash,
+        userAgent: window.navigator.userAgent,
+        viewport: {
+          width: window.innerWidth,
+          height: window.innerHeight,
         },
-      });
+      },
+      dependencies: {
+        submitFeedback: submitDevopsFeedback,
+      },
+    });
 
-      setDevopsFeedbackMessage('');
-      setDevopsFeedbackState({ status: 'sent', messageId: response.messageId });
-    } catch (err: unknown) {
-      setDevopsFeedbackState({
-        status: 'error',
-        error: err instanceof Error ? err.message : 'Failed to send feedback',
-      });
+    applyDevopsFeedbackOutcome(outcome);
+  }
+
+  function applyDevopsFeedbackOutcome(outcome: PublicFeedbackMembraneOutcome) {
+    if (outcome.status === 'empty' || outcome.status === 'missing_context') {
+      setDevopsFeedbackState({ status: 'idle' });
+      return;
     }
+
+    if (outcome.status === 'sent') {
+      setDevopsFeedbackMessage('');
+      setDevopsFeedbackState({ status: 'sent', messageId: outcome.messageId });
+      return;
+    }
+
+    setDevopsFeedbackState({ status: 'error', error: outcome.error });
   }
 
   async function submitChairmanResponse(userResponse: string, inputMode: ChairmanInputMode) {
