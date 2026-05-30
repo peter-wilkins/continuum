@@ -438,6 +438,7 @@ export function PublicContinuum({ targetId }: { targetId: string }) {
       auth: authState,
       continuum: readyContinuum,
       line: activeRecommendedLine,
+      currentQuestion,
       userResponse,
       inputMode,
       dependencies: {

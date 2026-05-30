@@ -13,6 +13,7 @@ describe('Public Chairman Journey', () => {
     const request = buildPublicChairmanRequest({
       continuum,
       line: continuum.linesOfInquiry.lines[0]!,
+      currentQuestion: null,
       publicClientInstanceId: 'client:1',
       userResponse: 'A notebook lets me compare thoughts.',
       inputMode: 'text',
@@ -30,6 +31,23 @@ describe('Public Chairman Journey', () => {
     });
   });
 
+  it('submits the visible current journey question instead of the original source line', () => {
+    const continuum = publicContinuumFixture();
+    const request = buildPublicChairmanRequest({
+      continuum,
+      line: continuum.linesOfInquiry.lines[0]!,
+      currentQuestion: 'What are you assuming a mind can do on its own?',
+      publicClientInstanceId: 'client:1',
+      userResponse: 'It can hold context without help.',
+      inputMode: 'text',
+    });
+
+    assert.equal(
+      request.lineQuestion,
+      'What are you assuming a mind can do on its own?',
+    );
+  });
+
   it('uses the local Concierge for logged-in replies so stale Bridge output cannot become agreement text', async () => {
     const continuum = publicContinuumFixture();
     const localRun = conciergeRunFixture(continuum);
@@ -40,12 +58,17 @@ describe('Public Chairman Journey', () => {
       auth: { status: 'logged_in' },
       continuum,
       line: continuum.linesOfInquiry.lines[0]!,
+      currentQuestion: 'What are you assuming a mind can do on its own?',
       userResponse: '  send this to the chairman  ',
       inputMode: 'speech',
       dependencies: {
         submitConciergeRun: async (_targetId, request) => {
           assert.equal(request.userResponse, 'send this to the chairman');
           assert.equal(request.inputMode, 'speech');
+          assert.equal(
+            request.lineQuestion,
+            'What are you assuming a mind can do on its own?',
+          );
           return { run: localRun };
         },
       },
@@ -73,6 +96,7 @@ describe('Public Chairman Journey', () => {
       auth: { status: 'logged_out' },
       continuum,
       line: continuum.linesOfInquiry.lines[0]!,
+      currentQuestion: null,
       userResponse: '   ',
       inputMode: 'text',
       dependencies,
@@ -83,6 +107,7 @@ describe('Public Chairman Journey', () => {
       auth: { status: 'logged_out' },
       continuum: null,
       line: null,
+      currentQuestion: null,
       userResponse: 'I have an answer.',
       inputMode: 'text',
       dependencies,

@@ -32,6 +32,7 @@ export async function submitPublicChairmanResponse(input: {
     | { status: 'loading' };
   continuum: PublicContinuumResponse | null;
   line: PublicChairmanLine | null;
+  currentQuestion: string | null;
   userResponse: string;
   inputMode: ChairmanInputMode;
   dependencies: PublicChairmanSubmitDependencies;
@@ -49,6 +50,7 @@ export async function submitPublicChairmanResponse(input: {
   const request = buildPublicChairmanRequest({
     continuum: input.continuum,
     line: input.line,
+    currentQuestion: input.currentQuestion,
     publicClientInstanceId: input.publicClientInstanceId,
     userResponse: normalizedResponse,
     inputMode: input.inputMode,
@@ -72,6 +74,7 @@ export async function submitPublicChairmanResponse(input: {
 export function buildPublicChairmanRequest(input: {
   continuum: PublicContinuumResponse;
   line: PublicChairmanLine;
+  currentQuestion: string | null;
   publicClientInstanceId: string;
   userResponse: string;
   inputMode: ChairmanInputMode;
@@ -82,7 +85,7 @@ export function buildPublicChairmanRequest(input: {
     queryId: input.continuum.query.id,
     queryText: input.continuum.query.text,
     lineId: input.line.id,
-    lineQuestion: input.line.question,
+    lineQuestion: input.currentQuestion ?? input.line.question,
     userResponse: input.userResponse,
     inputMode: input.inputMode,
   };
