@@ -173,6 +173,11 @@ Before implementation work, check `git status --short`.
 
 The user prefers a clean tree. Commit completed work before starting new implementation threads unless the user explicitly asks to keep changes uncommitted.
 
+Context guard default: if a request clearly belongs to another specialist
+agent/project, say no briefly and name the likely lane. Do not run routing
+tools or prepare handoffs unless Peter explicitly asks for the context guard or
+clipboard path.
+
 For this solo prototype, do not open pull requests by default. Prefer:
 
 ```text
